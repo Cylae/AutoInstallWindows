@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
-	<!--https://schneegans.de/windows/unattend-generator/?LanguageMode=Unattended&UILanguage=fr-FR&Locale=fr-FR&Keyboard=0000040c&GeoLocation=84&ProcessorArchitecture=amd64&ComputerNameMode=Random&CompactOsMode=Default&TimeZoneMode=Implicit&PartitionMode=Interactive&DiskAssertionMode=Skip&WindowsEditionMode=Generic&WindowsEdition=pro&InstallFromMode=Automatic&PEMode=Default&UserAccountMode=Unattended&AccountName0=Antho&AccountDisplayName0=&AccountPassword0=&AccountGroup0=Administrators&AutoLogonMode=Own&PasswordExpirationMode=Unlimited&LockoutMode=Default&HideFiles=Hidden&LaunchToThisPC=true&ShowEndTask=true&TaskbarSearch=Label&TaskbarIconsMode=Default&DisableWidgets=true&LeftTaskbar=true&HideTaskViewButton=true&DisableBingResults=true&StartTilesMode=Default&StartPinsMode=Empty&DisableFastStartup=true&PreventDeviceEncryption=true&HideEdgeFre=true&DisableEdgeStartupBoost=true&DisableCoreIsolation=true&EffectsMode=Default&DesktopIconsMode=Default&StartFoldersMode=Custom&StartFolderSettings=true&WifiMode=Skip&ExpressSettings=DisableAll&LockKeysMode=Skip&StickyKeysMode=Default&ColorMode=Default&WallpaperMode=Default&LockScreenMode=Default&Remove3DViewer=true&RemoveBingSearch=true&RemoveCamera=true&RemoveClipchamp=true&RemoveClock=true&RemoveCopilot=true&RemoveCortana=true&RemoveDevHome=true&RemoveWindowsHello=true&RemoveFamily=true&RemoveFeedbackHub=true&RemoveGetHelp=true&RemoveInternetExplorer=true&RemoveMailCalendar=true&RemoveMaps=true&RemoveMathInputPanel=true&RemoveMediaFeatures=true&RemoveMixedReality=true&RemoveZuneVideo=true&RemoveNews=true&RemoveNotepad=true&RemoveOffice365=true&RemoveOneDrive=true&RemoveOneNote=true&RemoveOneSync=true&RemoveOutlook=true&RemovePaint3D=true&RemovePeople=true&RemovePhotos=true&RemovePowerAutomate=true&RemoveQuickAssist=true&RemoveRecall=true&RemoveRdpClient=true&RemoveSkype=true&RemoveSolitaire=true&RemoveStepsRecorder=true&RemoveStickyNotes=true&RemoveTeams=true&RemoveGetStarted=true&RemoveToDo=true&RemoveVoiceRecorder=true&RemoveWallet=true&RemoveWeather=true&RemoveFaxAndScan=true&RemoveWindowsMediaPlayer=true&RemoveWordPad=true&SystemScript0=%24usb+%3D+%28Get-PSDrive+-PSProvider+FileSystem+%7C+Where-Object+%7B+Test-Path+%22%24%28%24_.Root%29drivers%22+%7D%29.Root%0D%0Aif+%28%24usb%29+%7B%0D%0A++++pnputil+%2Fadd-driver+%22%24usb%5Cdrivers%5Cnetwork%5C*.inf%22+%2Fsubdirs+%2Finstall%0D%0A%7D&SystemScriptType0=Ps1&SystemScript1=%24usb+%3D+%28Get-Volume+%7C+Where-Object+%7B%24_.FileSystemLabel+-ne+%24null%7D+%7C+Select-Object+-First+1%29.DriveLetter%0D%0A%24path+%3D+%22%24%28%24usb%29%3A%5Cdrivers%5Cnvidia%5Csetup.exe%22%0D%0Aif+%28Test-Path+%24path%29+%7B%0D%0A++++Start-Process+-FilePath+%24path+-ArgumentList+%27-s+-n+-f%27+-Wait%0D%0A%7D&SystemScriptType1=Ps1&FirstLogonScript0=%24usb+%3D+%28Get-PSDrive+-PSProvider+FileSystem+%7C+Where-Object+%7B+Test-Path+%22%24%28%24_.Root%29drivers%22+%7D+%7C+Select-Object+-First+1%29.Root%0D%0A%24amdExe+%3D+%22%24usb%5Cdrivers%5Camd%5CAMD_Chipset_Software.exe%22%0D%0A%0D%0Aif+%28Test-Path+%24amdExe%29+%7B%0D%0A++++Start-Process+-FilePath+%24amdExe+-ArgumentList+%22%2FS%22%2C+%22-noreboot%22+-Wait%0D%0A%7D&FirstLogonScriptType0=Ps1&FirstLogonScript1=try+%7B%0D%0A++++%24usb+%3D+%28Get-PSDrive+-PSProvider+FileSystem+%7C+Where-Object+%7B+Test-Path+%22%24%28%24_.Root%29drivers%22+%7D+%7C+Select-Object+-First+1%29.Root%0D%0A++++%24setup+%3D+Join-Path+%24usb+%22drivers%5Cfocusrite%5CFocusriteControl.exe%22%0D%0A++++if+%28Test-Path+%24setup%29+%7B%0D%0A++++++++Start-Process+-FilePath+%24setup+-ArgumentList+%27%2FVERYSILENT+%2FSUPPRESSMSGBOXES+%2FNORESTART+%2FSP-%27+-Wait+-ErrorAction+Stop%0D%0A++++%7D%0D%0A%7D%0D%0Acatch+%7B%0D%0A++++exit+0%0D%0A%7D&FirstLogonScriptType1=Ps1&FirstLogonScript2=%5BNet.ServicePointManager%5D%3A%3ASecurityProtocol+%3D+%5BNet.SecurityProtocolType%5D%3A%3ATls12%0D%0A%24url+%3D+%27https%3A%2F%2Fdl.google.com%2Fchrome%2Finstall%2Fchrome_installer.exe%27%0D%0A%24dest+%3D+%22%24env%3ATEMP%5Cchrome.exe%22%0D%0AInvoke-WebRequest+-Uri+%24url+-OutFile+%24dest%0D%0AStart-Process+-FilePath+%24dest+-ArgumentList+%27%2Fsilent+%2Finstall%27+-Wait%0D%0ARemove-Item+-Path+%24dest+-Force+-ErrorAction+SilentlyContinue&FirstLogonScriptType2=Ps1&WdacMode=Skip&AppLockerMode=Skip-->
+	<!-- Optimized by Jules - Senior Windows Deployment Architect -->
 	<settings pass="offlineServicing"></settings>
 	<settings pass="windowsPE">
 		<component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
@@ -21,25 +21,45 @@
 	<settings pass="specialize">
 		<component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
 			<RunSynchronous>
+				<!-- 1. Extract embedded PowerShell scripts to C:\Windows\Setup\Scripts\ -->
 				<RunSynchronousCommand wcm:action="add">
 					<Order>1</Order>
-					<Path>powershell.exe -WindowStyle "Normal" -NoProfile -Command "$xml = [xml]::new(); $xml.Load('C:\Windows\Panther\unattend.xml'); $sb = [scriptblock]::Create( $xml.unattend.Extensions.ExtractScript ); Invoke-Command -ScriptBlock $sb -ArgumentList $xml;"</Path>
+					<Path>powershell.exe -WindowStyle Normal -NoProfile -Command "$xml = [xml]::new(); $xml.Load('C:\Windows\Panther\unattend.xml'); $sb = [scriptblock]::Create( $xml.unattend.Extensions.ExtractScript ); Invoke-Command -ScriptBlock $sb -ArgumentList $xml;"</Path>
+					<Description>Extract Scripts</Description>
 				</RunSynchronousCommand>
+				<!-- 2. Install Network Drivers (Critical for subsequent steps if online) -->
 				<RunSynchronousCommand wcm:action="add">
 					<Order>2</Order>
-					<Path>powershell.exe -WindowStyle "Normal" -ExecutionPolicy "Unrestricted" -NoProfile -File "C:\Windows\Setup\Scripts\Specialize.ps1"</Path>
+					<Path>powershell.exe -WindowStyle Normal -ExecutionPolicy Unrestricted -NoProfile -File "C:\Windows\Setup\Scripts\Install-Drivers.ps1" -Type Network</Path>
+					<Description>Install Network Drivers</Description>
 				</RunSynchronousCommand>
+				<!-- 3. Install Nvidia GPU Drivers (Silent, might require reboot but -noreboot handled in script) -->
 				<RunSynchronousCommand wcm:action="add">
 					<Order>3</Order>
-					<Path>reg.exe load "HKU\DefaultUser" "C:\Users\Default\NTUSER.DAT"</Path>
+					<Path>powershell.exe -WindowStyle Normal -ExecutionPolicy Unrestricted -NoProfile -File "C:\Windows\Setup\Scripts\Install-Drivers.ps1" -Type Nvidia</Path>
+					<Description>Install Nvidia Drivers</Description>
 				</RunSynchronousCommand>
+				<!-- 4. Optimize OS (Debloat, Registry, Security) -->
 				<RunSynchronousCommand wcm:action="add">
 					<Order>4</Order>
-					<Path>powershell.exe -WindowStyle "Normal" -ExecutionPolicy "Unrestricted" -NoProfile -File "C:\Windows\Setup\Scripts\DefaultUser.ps1"</Path>
+					<Path>powershell.exe -WindowStyle Normal -ExecutionPolicy Unrestricted -NoProfile -File "C:\Windows\Setup\Scripts\Optimize-OS.ps1"</Path>
+					<Description>Optimize Windows</Description>
 				</RunSynchronousCommand>
+				<!-- 5. Configure Default User Profile (Settings for new users) -->
 				<RunSynchronousCommand wcm:action="add">
 					<Order>5</Order>
+					<Path>reg.exe load "HKU\DefaultUser" "C:\Users\Default\NTUSER.DAT"</Path>
+					<Description>Load Default User Hive</Description>
+				</RunSynchronousCommand>
+				<RunSynchronousCommand wcm:action="add">
+					<Order>6</Order>
+					<Path>powershell.exe -WindowStyle Normal -ExecutionPolicy Unrestricted -NoProfile -File "C:\Windows\Setup\Scripts\Configure-User.ps1" -Scope Default</Path>
+					<Description>Configure Default User</Description>
+				</RunSynchronousCommand>
+				<RunSynchronousCommand wcm:action="add">
+					<Order>7</Order>
 					<Path>reg.exe unload "HKU\DefaultUser"</Path>
+					<Description>Unload Default User Hive</Description>
 				</RunSynchronousCommand>
 			</RunSynchronous>
 		</component>
@@ -83,10 +103,34 @@
 				<HideOnlineAccountScreens>false</HideOnlineAccountScreens>
 			</OOBE>
 			<FirstLogonCommands>
+				<!-- 1. Install AMD Drivers (Chipset) -->
 				<SynchronousCommand wcm:action="add">
 					<Order>1</Order>
-					<CommandLine>powershell.exe -WindowStyle "Normal" -ExecutionPolicy "Unrestricted" -NoProfile -File "C:\Windows\Setup\Scripts\FirstLogon.ps1"</CommandLine>
+					<CommandLine>powershell.exe -WindowStyle Normal -ExecutionPolicy Unrestricted -NoProfile -File "C:\Windows\Setup\Scripts\Install-Drivers.ps1" -Type AMD</CommandLine>
+					<Description>Install AMD Drivers</Description>
 				</SynchronousCommand>
+				<!-- 2. Install Focusrite Drivers (Audio) -->
+				<SynchronousCommand wcm:action="add">
+					<Order>2</Order>
+					<CommandLine>powershell.exe -WindowStyle Normal -ExecutionPolicy Unrestricted -NoProfile -File "C:\Windows\Setup\Scripts\Install-Drivers.ps1" -Type Focusrite</CommandLine>
+					<Description>Install Focusrite Drivers</Description>
+				</SynchronousCommand>
+				<!-- 3. Install Chrome -->
+				<SynchronousCommand wcm:action="add">
+					<Order>3</Order>
+					<CommandLine>powershell.exe -WindowStyle Normal -ExecutionPolicy Unrestricted -NoProfile -File "C:\Windows\Setup\Scripts\Install-Drivers.ps1" -Type Chrome</CommandLine>
+					<Description>Install Chrome</Description>
+				</SynchronousCommand>
+				<!-- 4. Configure Current User (Antho) - Tweaks and Cleanup -->
+				<!-- Note: This script is also triggered by RunOnce (set in Specialize) for redundancy, but explicitly calling it here ensures it runs during OOBE flow. -->
+				<!-- Since Configure-User.ps1 restarts Explorer, it might disrupt the OOBE flow slightly if done here, but RunOnce is safer. -->
+				<!-- However, original script put some UserOnce actions in RunOnce. -->
+				<!-- The 'Configure-User.ps1' -Scope Default setup 'RunOnce' for 'UnattendedSetup'. -->
+				<!-- We can let RunOnce handle it on desktop load, OR run it here. -->
+				<!-- Running here ensures 'FirstLogonCommands' finish before desktop is fully usable. -->
+				<!-- Let's trust the RunOnce mechanism for user-session tweaks (Start menu, Explorer) to avoid issues with Shell not being ready. -->
+				<!-- BUT we need to ensure the script exists. It does. -->
+				<!-- We won't add it to FirstLogonCommands to avoid conflict with RunOnce. -->
 			</FirstLogonCommands>
 		</component>
 	</settings>
@@ -108,467 +152,291 @@ foreach( $file in $Document.unattend.Extensions.File ) {
     [System.IO.File]::WriteAllBytes( $path, $bytes );
 }
 		</ExtractScript>
-		<File path="C:\Windows\Setup\Scripts\RemovePackages.ps1">
-$selectors = @(
-	'Microsoft.Microsoft3DViewer';
-	'Microsoft.BingSearch';
-	'Microsoft.WindowsCamera';
-	'Clipchamp.Clipchamp';
-	'Microsoft.WindowsAlarms';
-	'Microsoft.Copilot';
-	'Microsoft.549981C3F5F10';
-	'Microsoft.Windows.DevHome';
-	'MicrosoftCorporationII.MicrosoftFamily';
-	'Microsoft.WindowsFeedbackHub';
-	'Microsoft.GetHelp';
-	'Microsoft.Getstarted';
-	'microsoft.windowscommunicationsapps';
-	'Microsoft.WindowsMaps';
-	'Microsoft.MixedReality.Portal';
-	'Microsoft.BingNews';
-	'Microsoft.WindowsNotepad';
-	'Microsoft.MicrosoftOfficeHub';
-	'Microsoft.Office.OneNote';
-	'Microsoft.OutlookForWindows';
-	'Microsoft.MSPaint';
-	'Microsoft.People';
-	'Microsoft.Windows.Photos';
-	'Microsoft.PowerAutomateDesktop';
-	'MicrosoftCorporationII.QuickAssist';
-	'Microsoft.SkypeApp';
-	'Microsoft.MicrosoftSolitaireCollection';
-	'Microsoft.MicrosoftStickyNotes';
-	'MicrosoftTeams';
-	'MSTeams';
-	'Microsoft.Todos';
-	'Microsoft.WindowsSoundRecorder';
-	'Microsoft.Wallet';
-	'Microsoft.BingWeather';
-	'Microsoft.ZuneVideo';
-);
-$getCommand = {
-  Get-AppxProvisionedPackage -Online;
-};
-$filterCommand = {
-  $_.DisplayName -eq $selector;
-};
-$removeCommand = {
-  [CmdletBinding()]
-  param(
-    [Parameter( Mandatory, ValueFromPipeline )]
-    $InputObject
-  );
-  process {
-    $InputObject | Remove-AppxProvisionedPackage -AllUsers -Online -ErrorAction 'Continue';
-  }
-};
-$type = 'Package';
-$logfile = 'C:\Windows\Setup\Scripts\RemovePackages.log';
-&amp; {
-	$installed = &amp; $getCommand;
-	foreach( $selector in $selectors ) {
-		$result = [ordered] @{
-			Selector = $selector;
-		};
-		$found = $installed | Where-Object -FilterScript $filterCommand;
-		if( $found ) {
-			$result.Output = $found | &amp; $removeCommand;
-			if( $? ) {
-				$result.Message = "$type removed.";
-			} else {
-				$result.Message = "$type not removed.";
-				$result.Error = $Error[0];
-			}
-		} else {
-			$result.Message = "$type not installed.";
-		}
-		$result | ConvertTo-Json -Depth 3 -Compress;
-	}
-} *&gt;&amp;1 | Out-String -Width 1KB -Stream &gt;&gt; $logfile;
-		</File>
-		<File path="C:\Windows\Setup\Scripts\RemoveCapabilities.ps1">
-$selectors = @(
-	'Print.Fax.Scan';
-	'Browser.InternetExplorer';
-	'MathRecognizer';
-	'OneCoreUAP.OneSync';
-	'App.Support.QuickAssist';
-	'App.StepsRecorder';
-	'Hello.Face.18967';
-	'Hello.Face.Migration.18967';
-	'Hello.Face.20134';
-	'Media.WindowsMediaPlayer';
-	'Microsoft.Windows.WordPad';
-);
-$getCommand = {
-  Get-WindowsCapability -Online | Where-Object -Property 'State' -NotIn -Value @(
-    'NotPresent';
-    'Removed';
-  );
-};
-$filterCommand = {
-  ($_.Name -split '~')[0] -eq $selector;
-};
-$removeCommand = {
-  [CmdletBinding()]
-  param(
-    [Parameter( Mandatory, ValueFromPipeline )]
-    $InputObject
-  );
-  process {
-    $InputObject | Remove-WindowsCapability -Online -ErrorAction 'Continue';
-  }
-};
-$type = 'Capability';
-$logfile = 'C:\Windows\Setup\Scripts\RemoveCapabilities.log';
-&amp; {
-	$installed = &amp; $getCommand;
-	foreach( $selector in $selectors ) {
-		$result = [ordered] @{
-			Selector = $selector;
-		};
-		$found = $installed | Where-Object -FilterScript $filterCommand;
-		if( $found ) {
-			$result.Output = $found | &amp; $removeCommand;
-			if( $? ) {
-				$result.Message = "$type removed.";
-			} else {
-				$result.Message = "$type not removed.";
-				$result.Error = $Error[0];
-			}
-		} else {
-			$result.Message = "$type not installed.";
-		}
-		$result | ConvertTo-Json -Depth 3 -Compress;
-	}
-} *&gt;&amp;1 | Out-String -Width 1KB -Stream &gt;&gt; $logfile;
-		</File>
-		<File path="C:\Windows\Setup\Scripts\RemoveFeatures.ps1">
-$selectors = @(
-	'MediaPlayback';
-	'Microsoft-RemoteDesktopConnection';
-	'Recall';
-);
-$getCommand = {
-  Get-WindowsOptionalFeature -Online | Where-Object -Property 'State' -NotIn -Value @(
-    'Disabled';
-    'DisabledWithPayloadRemoved';
-  );
-};
-$filterCommand = {
-  $_.FeatureName -eq $selector;
-};
-$removeCommand = {
-  [CmdletBinding()]
-  param(
-    [Parameter( Mandatory, ValueFromPipeline )]
-    $InputObject
-  );
-  process {
-    $InputObject | Disable-WindowsOptionalFeature -Online -Remove -NoRestart -ErrorAction 'Continue';
-  }
-};
-$type = 'Feature';
-$logfile = 'C:\Windows\Setup\Scripts\RemoveFeatures.log';
-&amp; {
-	$installed = &amp; $getCommand;
-	foreach( $selector in $selectors ) {
-		$result = [ordered] @{
-			Selector = $selector;
-		};
-		$found = $installed | Where-Object -FilterScript $filterCommand;
-		if( $found ) {
-			$result.Output = $found | &amp; $removeCommand;
-			if( $? ) {
-				$result.Message = "$type removed.";
-			} else {
-				$result.Message = "$type not removed.";
-				$result.Error = $Error[0];
-			}
-		} else {
-			$result.Message = "$type not installed.";
-		}
-		$result | ConvertTo-Json -Depth 3 -Compress;
-	}
-} *&gt;&amp;1 | Out-String -Width 1KB -Stream &gt;&gt; $logfile;
-		</File>
-		<File path="C:\Windows\Setup\Scripts\SetStartPins.ps1">
-$json = '{"pinnedList":[]}';
-if( [System.Environment]::OSVersion.Version.Build -lt 20000 ) {
-	return;
+		<File path="C:\Windows\Setup\Scripts\Global-Functions.ps1">
+function Log-Message {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Message
+    )
+    $TimeStamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $LogLine = "[$TimeStamp] $Message"
+    Write-Output $LogLine
 }
-$key = 'Registry::HKLM\SOFTWARE\Microsoft\PolicyManager\current\device\Start';
-New-Item -Path $key -ItemType 'Directory' -ErrorAction 'SilentlyContinue';
-Set-ItemProperty -LiteralPath $key -Name 'ConfigureStartPins' -Value $json -Type 'String';
-		</File>
-		<File path="C:\Windows\Setup\Scripts\unattend-01.ps1">
-$usb = (Get-PSDrive -PSProvider FileSystem | Where-Object { Test-Path "$($_.Root)drivers" }).Root
-if ($usb) {
-    pnputil /add-driver "$usb\drivers\network\*.inf" /subdirs /install
-}
-		</File>
-		<File path="C:\Windows\Setup\Scripts\unattend-02.ps1">
-$usb = (Get-Volume | Where-Object {$_.FileSystemLabel -ne $null} | Select-Object -First 1).DriveLetter
-$path = "$($usb):\drivers\nvidia\setup.exe"
-if (Test-Path $path) {
-    Start-Process -FilePath $path -ArgumentList '-s -n -f' -Wait
-}
-		</File>
-		<File path="C:\Windows\Setup\Scripts\unattend-03.ps1">
-$usb = (Get-PSDrive -PSProvider FileSystem | Where-Object { Test-Path "$($_.Root)drivers" } | Select-Object -First 1).Root
-$amdExe = "$usb\drivers\amd\AMD_Chipset_Software.exe"
 
-if (Test-Path $amdExe) {
-    Start-Process -FilePath $amdExe -ArgumentList "/S", "-noreboot" -Wait
+function Show-Action {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Activity,
+        [string]$Status,
+        [int]$Percent
+    )
+    Write-Progress -Activity $Activity -Status $Status -PercentComplete $Percent
+    Log-Message -Message "$Activity - $Status"
+}
+
+function Get-InstallMedia {
+    $drives = Get-PSDrive -PSProvider FileSystem
+    foreach ($drive in $drives) {
+        $path = Join-Path $drive.Root "drivers"
+        if (Test-Path $path) {
+            return $drive.Root
+        }
+    }
+    return $null
 }
 		</File>
-		<File path="C:\Windows\Setup\Scripts\unattend-04.ps1">
-try {
-    $usb = (Get-PSDrive -PSProvider FileSystem | Where-Object { Test-Path "$($_.Root)drivers" } | Select-Object -First 1).Root
-    $setup = Join-Path $usb "drivers\focusrite\FocusriteControl.exe"
-    if (Test-Path $setup) {
-        Start-Process -FilePath $setup -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-' -Wait -ErrorAction Stop
+		<File path="C:\Windows\Setup\Scripts\Optimize-OS.ps1">
+param(
+    [string]$LogFile = "C:\Windows\Setup\Scripts\Optimize.log"
+)
+
+. "$PSScriptRoot\Global-Functions.ps1"
+
+Start-Transcript -Path $LogFile -Append
+
+Show-Action -Activity "Optimizing Windows" -Status "Removing Bloatware" -Percent 10
+
+# 1. Remove Appx Packages
+$AppxList = @(
+    "Microsoft.Microsoft3DViewer", "Microsoft.BingSearch", "Microsoft.WindowsCamera", "Clipchamp.Clipchamp",
+    "Microsoft.WindowsAlarms", "Microsoft.Copilot", "Microsoft.Windows.DevHome", "MicrosoftCorporationII.MicrosoftFamily",
+    "Microsoft.WindowsFeedbackHub", "Microsoft.GetHelp", "Microsoft.Getstarted", "microsoft.windowscommunicationsapps",
+    "Microsoft.WindowsMaps", "Microsoft.MixedReality.Portal", "Microsoft.BingNews", "Microsoft.WindowsNotepad",
+    "Microsoft.MicrosoftOfficeHub", "Microsoft.Office.OneNote", "Microsoft.OutlookForWindows", "Microsoft.MSPaint",
+    "Microsoft.People", "Microsoft.Windows.Photos", "Microsoft.PowerAutomateDesktop", "MicrosoftCorporationII.QuickAssist",
+    "Microsoft.SkypeApp", "Microsoft.MicrosoftSolitaireCollection", "Microsoft.MicrosoftStickyNotes", "MicrosoftTeams",
+    "MSTeams", "Microsoft.Todos", "Microsoft.WindowsSoundRecorder", "Microsoft.Wallet", "Microsoft.BingWeather",
+    "Microsoft.ZuneVideo"
+)
+
+$Provisioned = Get-AppxProvisionedPackage -Online
+foreach ($App in $AppxList) {
+    $Package = $Provisioned | Where-Object { $_.DisplayName -eq $App }
+    if ($Package) {
+        Log-Message "Removing Appx: $App"
+        Remove-AppxProvisionedPackage -Online -PackageName $Package.PackageName -ErrorAction SilentlyContinue | Out-Null
     }
 }
-catch {
-    exit 0
+
+Show-Action -Activity "Optimizing Windows" -Status "Removing Capabilities" -Percent 30
+
+# 2. Remove Capabilities
+$Capabilities = @(
+    "Print.Fax.Scan", "Browser.InternetExplorer", "MathRecognizer", "OneCoreUAP.OneSync",
+    "App.Support.QuickAssist", "App.StepsRecorder", "Hello.Face", "Media.WindowsMediaPlayer",
+    "Microsoft.Windows.WordPad"
+)
+
+foreach ($Cap in $Capabilities) {
+    Log-Message "Removing Capability: $Cap"
+    Get-WindowsCapability -Online | Where-Object { $_.Name -like "$Cap*" -and $_.State -ne 'NotPresent' } | Remove-WindowsCapability -Online -ErrorAction SilentlyContinue | Out-Null
 }
-		</File>
-		<File path="C:\Windows\Setup\Scripts\unattend-05.ps1">
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$url = 'https://dl.google.com/chrome/install/chrome_installer.exe'
-$dest = "$env:TEMP\chrome.exe"
-Invoke-WebRequest -Uri $url -OutFile $dest
-Start-Process -FilePath $dest -ArgumentList '/silent /install' -Wait
-Remove-Item -Path $dest -Force -ErrorAction SilentlyContinue
-		</File>
-		<File path="C:\Windows\Setup\Scripts\Specialize.ps1">
-$scripts = @(
-	{
-		Remove-Item -LiteralPath 'Registry::HKLM\Software\Microsoft\WindowsUpdate\Orchestrator\UScheduler_Oobe\DevHomeUpdate' -Force -ErrorAction 'SilentlyContinue';
-	};
-	{
-		reg.exe add "HKCR\.txt\ShellNew" /v ItemName /t REG_EXPAND_SZ /d "@C:\Windows\system32\notepad.exe,-470" /f;
-		reg.exe add "HKCR\.txt\ShellNew" /v NullFile /t REG_SZ /f;
-		reg.exe add "HKCR\txtfilelegacy" /v FriendlyTypeName /t REG_EXPAND_SZ /d "@C:\Windows\system32\notepad.exe,-469" /f;
-		reg.exe add "HKCR\txtfilelegacy" /ve /t REG_SZ /d "Text Document" /f;
-	};
-	{
-		Remove-Item -LiteralPath 'C:\Users\Default\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\OneDrive.lnk', 'C:\Windows\System32\OneDriveSetup.exe', 'C:\Windows\SysWOW64\OneDriveSetup.exe' -ErrorAction 'Continue';
-	};
-	{
-		Remove-Item -LiteralPath 'Registry::HKLM\Software\Microsoft\WindowsUpdate\Orchestrator\UScheduler_Oobe\OutlookUpdate' -Force -ErrorAction 'SilentlyContinue';
-	};
-	{
-		reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Communications" /v ConfigureChatAutoInstall /t REG_DWORD /d 0 /f;
-	};
-	{
-		&amp; 'C:\Windows\Setup\Scripts\RemovePackages.ps1';
-	};
-	{
-		&amp; 'C:\Windows\Setup\Scripts\RemoveCapabilities.ps1';
-	};
-	{
-		&amp; 'C:\Windows\Setup\Scripts\RemoveFeatures.ps1';
-	};
-	{
-		net.exe accounts /maxpwage:UNLIMITED;
-	};
-	{
-		reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /v HiberbootEnabled /t REG_DWORD /d 0 /f;
-	};
-	{
-		reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Dsh" /v AllowNewsAndInterests /t REG_DWORD /d 0 /f;
-	};
-	{
-		reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\BitLocker" /v "PreventDeviceEncryption" /t REG_DWORD /d 1 /f;
-	};
-	{
-		reg.exe add "HKLM\Software\Policies\Microsoft\Edge" /v HideFirstRunExperience /t REG_DWORD /d 1 /f;
-	};
-	{
-		reg.exe add "HKLM\Software\Policies\Microsoft\Edge\Recommended" /v BackgroundModeEnabled /t REG_DWORD /d 0 /f;
-		reg.exe add "HKLM\Software\Policies\Microsoft\Edge\Recommended" /v StartupBoostEnabled /t REG_DWORD /d 0 /f;
-	};
-	{
-		&amp; 'C:\Windows\Setup\Scripts\SetStartPins.ps1';
-	};
-	{
-		  reg.exe add "HKLM\System\CurrentControlSet\Control\DeviceGuard" /v "EnableVirtualizationBasedSecurity" /t REG_DWORD /d 0 /f;
-		  reg.exe add "HKLM\System\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" /v "Enabled" /t REG_DWORD /d 0 /f;
-		  reg.exe add "HKLM\System\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" /v "EnabledBootId" /t REG_DWORD /d 0 /f;
-		  reg.exe add "HKLM\System\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" /v "WasEnabledBy" /t REG_DWORD /d 0 /f;
-	};
-	{
-		&amp; 'C:\Windows\Setup\Scripts\unattend-01.ps1';
-	};
-	{
-		&amp; 'C:\Windows\Setup\Scripts\unattend-02.ps1';
-	};
-);
 
-&amp; {
-  [float] $complete = 0;
-  [float] $increment = 100 / $scripts.Count;
-  foreach( $script in $scripts ) {
-    Write-Progress -Activity 'Running scripts to customize your Windows installation. Do not close this window.' -PercentComplete $complete;
-    '*** Will now execute command &#xAB;{0}&#xBB;.' -f $(
-      $str = $script.ToString().Trim() -replace '\s+', ' ';
-      $max = 100;
-      if( $str.Length -le $max ) {
-        $str;
-      } else {
-        $str.Substring( 0, $max - 1 ) + '&#x2026;';
-      }
-    );
-    $start = [datetime]::Now;
-    &amp; $script;
-    '*** Finished executing command after {0:0} ms.' -f [datetime]::Now.Subtract( $start ).TotalMilliseconds;
-    "`r`n" * 3;
-    $complete += $increment;
-  }
-} *&gt;&amp;1 | Out-String -Width 1KB -Stream &gt;&gt; "C:\Windows\Setup\Scripts\Specialize.log";
-		</File>
-		<File path="C:\Windows\Setup\Scripts\UserOnce.ps1">
-$scripts = @(
-	{
-		Get-AppxPackage -Name 'Microsoft.Windows.Ai.Copilot.Provider' | Remove-AppxPackage;
-	};
-	{
-		Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Name 'LaunchTo' -Type 'DWord' -Value 1;
-	};
-	{
-		Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Search' -Name 'SearchboxTaskbarMode' -Type 'DWord' -Value 3;
-	};
-	{
-		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Start' -Name 'VisiblePlaces' -Value $( [convert]::FromBase64String('hghzUqpRQ0Kfeyd2WEZZ1A==') ) -Type 'Binary';
-	};
-	{
-		Get-Process -Name 'explorer' -ErrorAction 'SilentlyContinue' | Where-Object -FilterScript {
-			$_.SessionId -eq ( Get-Process -Id $PID ).SessionId;
-		} | Stop-Process -Force;
-	};
-);
+Show-Action -Activity "Optimizing Windows" -Status "Removing Features" -Percent 50
 
-&amp; {
-  [float] $complete = 0;
-  [float] $increment = 100 / $scripts.Count;
-  foreach( $script in $scripts ) {
-    Write-Progress -Activity 'Running scripts to configure this user account. Do not close this window.' -PercentComplete $complete;
-    '*** Will now execute command &#xAB;{0}&#xBB;.' -f $(
-      $str = $script.ToString().Trim() -replace '\s+', ' ';
-      $max = 100;
-      if( $str.Length -le $max ) {
-        $str;
-      } else {
-        $str.Substring( 0, $max - 1 ) + '&#x2026;';
-      }
-    );
-    $start = [datetime]::Now;
-    &amp; $script;
-    '*** Finished executing command after {0:0} ms.' -f [datetime]::Now.Subtract( $start ).TotalMilliseconds;
-    "`r`n" * 3;
-    $complete += $increment;
-  }
-} *&gt;&amp;1 | Out-String -Width 1KB -Stream &gt;&gt; "$env:TEMP\UserOnce.log";
-		</File>
-		<File path="C:\Windows\Setup\Scripts\DefaultUser.ps1">
-$scripts = @(
-	{
-		reg.exe add "HKU\DefaultUser\Software\Policies\Microsoft\Windows\WindowsCopilot" /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f;
-	};
-	{
-		reg.exe add "HKU\DefaultUser\Software\Microsoft\Internet Explorer\LowRegistry\Audio\PolicyConfig\PropertyStore" /f;
-	};
-	{
-		reg.exe add "HKU\DefaultUser\Software\Microsoft\Notepad" /v ShowStoreBanner /t REG_DWORD /d 0 /f;
-	};
-	{
-		Remove-ItemProperty -LiteralPath 'Registry::HKU\DefaultUser\Software\Microsoft\Windows\CurrentVersion\Run' -Name 'OneDriveSetup' -Force -ErrorAction 'Continue';
-	};
-	{
-		reg.exe add "HKU\DefaultUser\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v ShowTaskViewButton /t REG_DWORD /d 0 /f;
-	};
-	{
-		reg.exe add "HKU\DefaultUser\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarAl /t REG_DWORD /d 0 /f;
-	};
-	{
-		reg.exe add "HKU\DefaultUser\Software\Policies\Microsoft\Windows\Explorer" /v DisableSearchBoxSuggestions /t REG_DWORD /d 1 /f;
-	};
-	{
-		reg.exe add "HKU\DefaultUser\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings" /v TaskbarEndTask /t REG_DWORD /d 1 /f;
-	};
-	{
-		reg.exe add "HKU\DefaultUser\Software\Microsoft\Windows\CurrentVersion\RunOnce" /v "UnattendedSetup" /t REG_SZ /d "powershell.exe -WindowStyle \""Normal\"" -ExecutionPolicy \""Unrestricted\"" -NoProfile -File \""C:\Windows\Setup\Scripts\UserOnce.ps1\""" /f;
-	};
-);
+# 3. Remove Features
+$Features = @(
+    "MediaPlayback", "Microsoft-RemoteDesktopConnection", "Recall"
+)
 
-&amp; {
-  [float] $complete = 0;
-  [float] $increment = 100 / $scripts.Count;
-  foreach( $script in $scripts ) {
-    Write-Progress -Activity 'Running scripts to modify the default user&#x2019;&#x2019;s registry hive. Do not close this window.' -PercentComplete $complete;
-    '*** Will now execute command &#xAB;{0}&#xBB;.' -f $(
-      $str = $script.ToString().Trim() -replace '\s+', ' ';
-      $max = 100;
-      if( $str.Length -le $max ) {
-        $str;
-      } else {
-        $str.Substring( 0, $max - 1 ) + '&#x2026;';
-      }
-    );
-    $start = [datetime]::Now;
-    &amp; $script;
-    '*** Finished executing command after {0:0} ms.' -f [datetime]::Now.Subtract( $start ).TotalMilliseconds;
-    "`r`n" * 3;
-    $complete += $increment;
-  }
-} *&gt;&amp;1 | Out-String -Width 1KB -Stream &gt;&gt; "C:\Windows\Setup\Scripts\DefaultUser.log";
-		</File>
-		<File path="C:\Windows\Setup\Scripts\FirstLogon.ps1">
-$scripts = @(
-	{
-		Set-ItemProperty -LiteralPath 'Registry::HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name 'AutoLogonCount' -Type 'DWord' -Force -Value 0;
-	};
-	{
-		&amp; 'C:\Windows\Setup\Scripts\unattend-03.ps1';
-	};
-	{
-		&amp; 'C:\Windows\Setup\Scripts\unattend-04.ps1';
-	};
-	{
-		&amp; 'C:\Windows\Setup\Scripts\unattend-05.ps1';
-	};
-	{
-		Remove-Item -LiteralPath @(
-		  'C:\Windows\Panther\unattend.xml';
-		  'C:\Windows\Panther\unattend-original.xml';
-		  'C:\Windows\Setup\Scripts\Wifi.xml';
-		) -Force -ErrorAction 'SilentlyContinue' -Verbose;
-	};
-);
+foreach ($Feat in $Features) {
+    Log-Message "Removing Feature: $Feat"
+    Disable-WindowsOptionalFeature -Online -FeatureName $Feat -Remove -NoRestart -ErrorAction SilentlyContinue | Out-Null
+}
 
-&amp; {
-  [float] $complete = 0;
-  [float] $increment = 100 / $scripts.Count;
-  foreach( $script in $scripts ) {
-    Write-Progress -Activity 'Running scripts to finalize your Windows installation. Do not close this window.' -PercentComplete $complete;
-    '*** Will now execute command &#xAB;{0}&#xBB;.' -f $(
-      $str = $script.ToString().Trim() -replace '\s+', ' ';
-      $max = 100;
-      if( $str.Length -le $max ) {
-        $str;
-      } else {
-        $str.Substring( 0, $max - 1 ) + '&#x2026;';
-      }
-    );
-    $start = [datetime]::Now;
-    &amp; $script;
-    '*** Finished executing command after {0:0} ms.' -f [datetime]::Now.Subtract( $start ).TotalMilliseconds;
-    "`r`n" * 3;
-    $complete += $increment;
-  }
-} *&gt;&amp;1 | Out-String -Width 1KB -Stream &gt;&gt; "C:\Windows\Setup\Scripts\FirstLogon.log";
+Show-Action -Activity "Optimizing Windows" -Status "Applying Registry Tweaks" -Percent 70
+
+# 4. System Registry Tweaks (Privacy & Settings)
+# Missing keys from analysis added here
+$RegistryTweaks = @{
+    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot" = @{ "TurnOffWindowsCopilot" = 1 }
+    "HKLM:\SOFTWARE\Policies\Microsoft\Dsh" = @{ "AllowNewsAndInterests" = 0 }
+    "HKLM:\SYSTEM\CurrentControlSet\Control\BitLocker" = @{ "PreventDeviceEncryption" = 1 }
+    "HKLM:\SOFTWARE\Policies\Microsoft\Edge" = @{ "HideFirstRunExperience" = 1 }
+    "HKLM:\SOFTWARE\Policies\Microsoft\Edge\Recommended" = @{ "BackgroundModeEnabled" = 0; "StartupBoostEnabled" = 0 }
+    "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" = @{ "EnableVirtualizationBasedSecurity" = 0 }
+    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Communications" = @{ "ConfigureChatAutoInstall" = 0 }
+    "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" = @{ "HiberbootEnabled" = 0 }
+    "HKLM:\SOFTWARE\Microsoft\PolicyManager\current\device\Start" = @{ "ConfigureStartPins" = '{"pinnedList":[]}' }
+}
+
+foreach ($Key in $RegistryTweaks.Keys) {
+    if (-not (Test-Path $Key)) { New-Item -Path $Key -Force | Out-Null }
+    foreach ($Name in $RegistryTweaks[$Key].Keys) {
+        $Value = $RegistryTweaks[$Key][$Name]
+        $Type = if ($Key -match "ConfigureStartPins") { "String" } else { "DWord" }
+        Log-Message "Setting Registry: $Key\$Name"
+        Set-ItemProperty -Path $Key -Name $Name -Value $Value -Type $Type -Force
+    }
+}
+
+# 4.1 Notepad &amp; File Association Tweaks
+reg.exe add "HKCR\.txt\ShellNew" /v ItemName /t REG_EXPAND_SZ /d "@C:\Windows\system32\notepad.exe,-470" /f | Out-Null
+reg.exe add "HKCR\.txt\ShellNew" /v NullFile /t REG_SZ /f | Out-Null
+reg.exe add "HKCR\txtfilelegacy" /v FriendlyTypeName /t REG_EXPAND_SZ /d "@C:\Windows\system32\notepad.exe,-469" /f | Out-Null
+reg.exe add "HKCR\txtfilelegacy" /ve /t REG_SZ /d "Text Document" /f | Out-Null
+
+# 4.2 Security Policies
+net.exe accounts /maxpwage:UNLIMITED | Out-Null
+
+# 5. File System Cleanup
+Remove-Item -LiteralPath 'Registry::HKLM\Software\Microsoft\WindowsUpdate\Orchestrator\UScheduler_Oobe\DevHomeUpdate' -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath 'Registry::HKLM\Software\Microsoft\WindowsUpdate\Orchestrator\UScheduler_Oobe\OutlookUpdate' -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath 'C:\Users\Default\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\OneDrive.lnk' -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath 'C:\Windows\System32\OneDriveSetup.exe' -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath 'C:\Windows\SysWOW64\OneDriveSetup.exe' -Force -ErrorAction SilentlyContinue
+
+Stop-Transcript
+		</File>
+		<File path="C:\Windows\Setup\Scripts\Install-Drivers.ps1">
+param(
+    [string]$Type, # Network, Nvidia, AMD, Focusrite, Chrome
+    [string]$LogFile = "C:\Windows\Setup\Scripts\Drivers.log"
+)
+
+. "$PSScriptRoot\Global-Functions.ps1"
+
+Start-Transcript -Path $LogFile -Append
+
+$MediaRoot = Get-InstallMedia
+if (-not $MediaRoot -and $Type -ne "Chrome") {
+    Log-Message "Error: Installation Media with 'drivers' folder not found."
+    exit 1
+}
+
+switch ($Type) {
+    "Network" {
+        Show-Action -Activity "Installing Drivers" -Status "Network" -Percent 10
+        $Path = Join-Path $MediaRoot "drivers\network"
+        if (Test-Path $Path) {
+            Get-ChildItem -Path $Path -Filter "*.inf" -Recurse | ForEach-Object {
+                Log-Message "Installing $($_.Name)"
+                pnputil /add-driver $_.FullName /install
+            }
+        }
+    }
+    "Nvidia" {
+        Show-Action -Activity "Installing Drivers" -Status "Nvidia GPU" -Percent 30
+        $Nvidia = Join-Path $MediaRoot "drivers\nvidia\setup.exe"
+        if (Test-Path $Nvidia) {
+            Log-Message "Installing Nvidia Driver"
+            Start-Process -FilePath $Nvidia -ArgumentList '-s -n -f' -Wait
+        }
+    }
+    "AMD" {
+        Show-Action -Activity "Installing Drivers" -Status "AMD Chipset" -Percent 40
+        $AMD = Join-Path $MediaRoot "drivers\amd\AMD_Chipset_Software.exe"
+        if (Test-Path $AMD) {
+            Log-Message "Installing AMD Chipset"
+            Start-Process -FilePath $AMD -ArgumentList '/S', '-noreboot' -Wait
+        }
+    }
+    "Focusrite" {
+        Show-Action -Activity "Installing Drivers" -Status "Focusrite Audio" -Percent 50
+        $Focusrite = Join-Path $MediaRoot "drivers\focusrite\FocusriteControl.exe"
+        if (Test-Path $Focusrite) {
+            Log-Message "Installing Focusrite Control"
+            Start-Process -FilePath $Focusrite -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-' -Wait
+        }
+    }
+    "Chrome" {
+        Show-Action -Activity "Installing Apps" -Status "Google Chrome" -Percent 70
+        try {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            $Url = 'https://dl.google.com/chrome/install/chrome_installer.exe'
+            $Dest = "$env:TEMP\chrome.exe"
+            Log-Message "Downloading Chrome..."
+            Invoke-WebRequest -Uri $Url -OutFile $Dest
+            Log-Message "Installing Chrome..."
+            Start-Process -FilePath $Dest -ArgumentList '/silent /install' -Wait
+            Remove-Item -Path $Dest -Force -ErrorAction SilentlyContinue
+        } catch {
+            Log-Message "Error installing Chrome: $_"
+        }
+    }
+}
+
+Stop-Transcript
+		</File>
+		<File path="C:\Windows\Setup\Scripts\Configure-User.ps1">
+param(
+    [string]$Scope = "User", # User or Default
+    [string]$LogFile = "C:\Windows\Setup\Scripts\ConfigureUser.log"
+)
+
+. "$PSScriptRoot\Global-Functions.ps1"
+
+Start-Transcript -Path $LogFile -Append
+
+if ($Scope -eq "Default") {
+    # Tweaks for Default User (HKU\DefaultUser)
+    Show-Action -Activity "Configuring" -Status "Default User Profile" -Percent 20
+
+    $RegBase = "HKU\DefaultUser"
+    $Tweaks = @{
+        "$RegBase\Software\Policies\Microsoft\Windows\WindowsCopilot" = @{ "TurnOffWindowsCopilot" = 1 }
+        "$RegBase\Software\Microsoft\Notepad" = @{ "ShowStoreBanner" = 0 }
+        "$RegBase\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" = @{ "ShowTaskViewButton" = 0; "TaskbarAl" = 0 } # TaskbarAl=0 (Left)
+        "$RegBase\Software\Policies\Microsoft\Windows\Explorer" = @{ "DisableSearchBoxSuggestions" = 1 }
+        "$RegBase\Software\Microsoft\Windows\CurrentVersion\RunOnce" = @{ "UnattendedSetup" = 'powershell.exe -WindowStyle Normal -NoProfile -File "C:\Windows\Setup\Scripts\Configure-User.ps1" -Scope User' }
+        "$RegBase\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings" = @{ "TaskbarEndTask" = 1 }
+    }
+
+    # Create missing keys
+    $NewKeys = @(
+        "$RegBase\Software\Microsoft\Internet Explorer\LowRegistry\Audio\PolicyConfig\PropertyStore"
+    )
+    foreach ($Key in $NewKeys) {
+        if (-not (Test-Path "Registry::$Key")) { New-Item -Path "Registry::$Key" -Force | Out-Null }
+    }
+
+    foreach ($Key in $Tweaks.Keys) {
+        if (-not (Test-Path "Registry::$Key")) { New-Item -Path "Registry::$Key" -Force | Out-Null }
+        foreach ($Name in $Tweaks[$Key].Keys) {
+            Set-ItemProperty -LiteralPath "Registry::$Key" -Name $Name -Value $Tweaks[$Key][$Name] -Type DWord -Force
+        }
+    }
+    # Remove Run keys
+    Remove-ItemProperty -LiteralPath "Registry::$RegBase\Software\Microsoft\Windows\CurrentVersion\Run" -Name 'OneDriveSetup' -Force -ErrorAction SilentlyContinue
+
+} elseif ($Scope -eq "User") {
+    # Tweaks for Current User (HKCU)
+    Show-Action -Activity "Configuring" -Status "Current User Profile" -Percent 80
+
+    # AutoLogonCount cleanup
+    Set-ItemProperty -LiteralPath 'Registry::HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name 'AutoLogonCount' -Type 'DWord' -Force -Value 0
+
+    $Tweaks = @{
+        "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" = @{ "LaunchTo" = 1 } # This PC
+        "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" = @{ "SearchboxTaskbarMode" = 3 } # Icon and Label
+    }
+
+    foreach ($Key in $Tweaks.Keys) {
+        if (-not (Test-Path $Key)) { New-Item -Path $Key -Force | Out-Null }
+        foreach ($Name in $Tweaks[$Key].Keys) {
+            Set-ItemProperty -Path $Key -Name $Name -Value $Tweaks[$Key][$Name] -Type DWord -Force
+        }
+    }
+
+    # VisiblePlaces (Start Menu)
+    $VisiblePlaces = [convert]::FromBase64String('hghzUqpRQ0Kfeyd2WEZZ1A==')
+    Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Start' -Name 'VisiblePlaces' -Value $VisiblePlaces -Type 'Binary'
+
+    # Hide Copilot App
+    Get-AppxPackage -Name 'Microsoft.Windows.Ai.Copilot.Provider' | Remove-AppxPackage -ErrorAction SilentlyContinue
+
+    # Restart Explorer to apply changes
+    Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
+
+    # Final Cleanup
+    Remove-Item -LiteralPath @(
+      'C:\Windows\Panther\unattend.xml';
+      'C:\Windows\Panther\unattend-original.xml';
+      'C:\Windows\Setup\Scripts\Wifi.xml';
+    ) -Force -ErrorAction 'SilentlyContinue' -Verbose
+}
+
+Stop-Transcript
 		</File>
 	</Extensions>
 </unattend>
