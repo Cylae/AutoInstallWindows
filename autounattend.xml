@@ -82,12 +82,6 @@
 				<HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
 				<HideOnlineAccountScreens>false</HideOnlineAccountScreens>
 			</OOBE>
-			<FirstLogonCommands>
-				<SynchronousCommand wcm:action="add">
-					<Order>1</Order>
-					<CommandLine>powershell.exe -WindowStyle "Normal" -ExecutionPolicy "Unrestricted" -NoProfile -File "C:\Windows\Setup\Scripts\FirstLogon.ps1"</CommandLine>
-				</SynchronousCommand>
-			</FirstLogonCommands>
 		</component>
 	</settings>
 	<Extensions xmlns="https://schneegans.de/windows/unattend-generator/">
@@ -274,28 +268,81 @@ $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Chrome Installation...&quot;
-try {
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    $url = 'https://dl.google.com/chrome/install/chrome_installer.exe'
-    $dest = &quot;$env:TEMP\chrome.exe&quot;
+$mediaRoot = Get-InstallMedia
+$localInstaller = $null
 
-    Write-Log &quot;Downloading Chrome from $url...&quot;
-    Write-Progress -Activity &quot;Installing Apps&quot; -Status &quot;Downloading Chrome...&quot;
-    Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
+if ($mediaRoot) {
+    # Check for local installer in common locations
+    $possiblePaths = @(
+        (Join-Path $mediaRoot &quot;apps\chrome&quot;),
+        (Join-Path $mediaRoot &quot;drivers\apps\chrome&quot;),
+        (Join-Path $mediaRoot &quot;Apps&quot;),
+        (Join-Path $mediaRoot &quot;Drivers\Apps&quot;)
+    )
 
-    if (Test-Path -Path $dest -And (Get-Item $dest).Length -gt 0) {
-        Write-Log &quot;Installing Chrome...&quot;
-        Write-Progress -Activity &quot;Installing Apps&quot; -Status &quot;Installing Chrome...&quot;
-        Unblock-File -Path $dest -ErrorAction SilentlyContinue
-        Start-Process -FilePath $dest -ArgumentList '/silent /install' -Wait
-        Remove-Item -Path $dest -Force -ErrorAction SilentlyContinue
-        Write-Log &quot;Chrome installation completed.&quot;
-    } else {
-        Write-Log &quot;Failed to download Chrome installer.&quot;
+    foreach ($path in $possiblePaths) {
+         if (Test-Path $path) {
+             $localInstaller = Get-InstallerFile -Path $path
+             if ($localInstaller) { break }
+         }
     }
 }
-catch {
-    Write-Log &quot;Error installing Chrome: $_&quot;
+
+if ($localInstaller) {
+    Write-Log &quot;Found local Chrome installer at $localInstaller&quot;
+    Write-Progress -Activity &quot;Installing Apps&quot; -Status &quot;Installing Chrome from local media...&quot;
+    try {
+        Unblock-File -Path $localInstaller -ErrorAction SilentlyContinue
+        Start-Process -FilePath $localInstaller -ArgumentList '/silent /install' -Wait
+        Write-Log &quot;Chrome installation (local) completed.&quot;
+    } catch {
+        Write-Log &quot;Error installing Chrome locally: $_&quot;
+    }
+} else {
+    Write-Log &quot;Local installer not found. Attempting download...&quot;
+    # Network wait loop
+    $maxRetries = 30 # 30 * 2s = 60 seconds wait
+    $retry = 0
+    $connected = $false
+
+    while (-not $connected -and $retry -lt $maxRetries) {
+        try {
+            # Simple connectivity check
+            $null = [System.Net.Dns]::GetHostEntry(&quot;dl.google.com&quot;)
+            $connected = $true
+        } catch {
+            $retry++
+            Write-Log &quot;Waiting for network connectivity... ($retry/$maxRetries)&quot;
+            Start-Sleep -Seconds 2
+        }
+    }
+
+    if ($connected) {
+        try {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            $url = 'https://dl.google.com/chrome/install/chrome_installer.exe'
+            $dest = &quot;$env:TEMP\chrome.exe&quot;
+
+            Write-Log &quot;Downloading Chrome from $url...&quot;
+            Write-Progress -Activity &quot;Installing Apps&quot; -Status &quot;Downloading Chrome...&quot;
+            Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
+
+            if (Test-Path -Path $dest -And (Get-Item $dest).Length -gt 0) {
+                Write-Log &quot;Installing Chrome...&quot;
+                Write-Progress -Activity &quot;Installing Apps&quot; -Status &quot;Installing Chrome...&quot;
+                Unblock-File -Path $dest -ErrorAction SilentlyContinue
+                Start-Process -FilePath $dest -ArgumentList '/silent /install' -Wait
+                Remove-Item -Path $dest -Force -ErrorAction SilentlyContinue
+                Write-Log &quot;Chrome installation completed.&quot;
+            } else {
+                Write-Log &quot;Failed to download Chrome installer.&quot;
+            }
+        } catch {
+            Write-Log &quot;Error downloading/installing Chrome: $_&quot;
+        }
+    } else {
+        Write-Log &quot;No network connectivity. Skipping Chrome installation.&quot;
+    }
 }
 finally {
     Write-Progress -Activity &quot;Installing Apps&quot; -Completed
@@ -476,14 +523,17 @@ $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 $scripts = @(
-    &quot;$PSScriptRoot\Tweaks\Configure-Privacy.ps1&quot;,
-    &quot;$PSScriptRoot\Tweaks\Remove-Bloatware.ps1&quot;,
-    &quot;$PSScriptRoot\Tweaks\SetStartPins.ps1&quot;,
     &quot;$PSScriptRoot\Drivers\Install-Network.ps1&quot;,
-    &quot;$PSScriptRoot\Drivers\Install-Nvidia.ps1&quot;
+    &quot;$PSScriptRoot\Tweaks\Remove-Bloatware.ps1&quot;,
+    &quot;$PSScriptRoot\Tweaks\Configure-Privacy.ps1&quot;,
+    &quot;$PSScriptRoot\Drivers\Install-Nvidia.ps1&quot;,
+    &quot;$PSScriptRoot\Drivers\Install-AMD.ps1&quot;,
+    &quot;$PSScriptRoot\Drivers\Install-Focusrite.ps1&quot;,
+    &quot;$PSScriptRoot\Apps\Install-Chrome.ps1&quot;,
+    &quot;$PSScriptRoot\Tweaks\SetStartPins.ps1&quot;
 )
 
-Write-Log &quot;Starting Specialize Pass...&quot;
+Write-Log &quot;Starting Specialize Pass (Optimized)...&quot;
 
 foreach ($script in $scripts) {
     if (Test-Path $script) {
@@ -496,41 +546,24 @@ foreach ($script in $scripts) {
     } else {
         Write-Log &quot;Script not found: $script&quot;
     }
+}
+
+# Generate SetupComplete.cmd for post-OOBE cleanup
+# This ensures unattend.xml remains available for OOBE but is removed before login
+$setupCompleteContent = @&quot;
+del /q /f &quot;%WINDIR%\Panther\unattend.xml&quot;
+del /q /f &quot;%WINDIR%\Panther\unattend-original.xml&quot;
+&quot;@
+
+$setupCompletePath = &quot;$env:SystemRoot\Setup\Scripts\SetupComplete.cmd&quot;
+try {
+    Set-Content -Path $setupCompletePath -Value $setupCompleteContent -Force
+    Write-Log &quot;Generated SetupComplete.cmd for cleanup.&quot;
+} catch {
+    Write-Log &quot;Error creating SetupComplete.cmd: $_&quot;
 }
 
 Write-Log &quot;Specialize Pass Completed.&quot;
-
-		</File>
-		<File path="C:\Windows\Setup\Scripts\FirstLogon.ps1">
-$ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
-
-$scripts = @(
-    &quot;$PSScriptRoot\Drivers\Install-AMD.ps1&quot;,
-    &quot;$PSScriptRoot\Drivers\Install-Focusrite.ps1&quot;,
-    &quot;$PSScriptRoot\Apps\Install-Chrome.ps1&quot;
-)
-
-Write-Log &quot;Starting FirstLogon Pass...&quot;
-
-foreach ($script in $scripts) {
-    if (Test-Path $script) {
-        Write-Log &quot;Executing $script...&quot;
-        try {
-            &amp; $script
-        } catch {
-            Write-Log &quot;Error executing $script: $_&quot;
-        }
-    } else {
-        Write-Log &quot;Script not found: $script&quot;
-    }
-}
-
-# Cleanup
-Remove-Item -LiteralPath 'C:\Windows\Panther\unattend.xml' -Force -ErrorAction SilentlyContinue
-Remove-Item -LiteralPath 'C:\Windows\Panther\unattend-original.xml' -Force -ErrorAction SilentlyContinue
-
-Write-Log &quot;FirstLogon Pass Completed.&quot;
 
 		</File>
 		<File path="C:\Windows\Setup\Scripts\DefaultUser.ps1">
