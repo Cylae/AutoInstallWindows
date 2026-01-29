@@ -148,7 +148,8 @@ function Download-File {
 
     Write-Log &quot;Attempting to download $Name from $Url...&quot;
 
-    $maxRetries = 30
+    # Increase timeout to ~5 minutes (150 * 2s) to handle slow network initialization
+    $maxRetries = 150
     $retry = 0
     $connected = $false
 
@@ -341,6 +342,30 @@ if ($setupPath) {
     }
 } else {
     Write-Log &quot;Focusrite installer not found locally and no download URL provided.&quot;
+}
+		</File>
+		<File path="C:\Windows\Setup\Scripts\Apps\Install-Runtimes.ps1">
+$ErrorActionPreference = 'Stop'
+. "$PSScriptRoot\Lib\Helper.ps1"
+
+Write-Log "Starting Visual C++ Runtimes Installation..."
+
+# Official Microsoft Link for Latest Supported VC++ 2015-2022 (x64)
+$url = "https://aka.ms/vc14/vc_redist.x64.exe"
+$dest = "$env:TEMP\vc_redist.x64.exe"
+
+if (Download-File -Url $url -Destination $dest -Name "Visual C++ Runtimes") {
+    Write-Log "Installing Visual C++ Runtimes..."
+    try {
+        Unblock-File -Path $dest -ErrorAction SilentlyContinue
+        # /install /quiet /norestart
+        Start-Process -FilePath $dest -ArgumentList "/install /quiet /norestart" -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\vcredist_install.log"
+        Write-Log "Visual C++ Runtimes installation completed."
+    } catch {
+        Write-Log "Error installing Visual C++ Runtimes: $_"
+    }
+} else {
+    Write-Log "Failed to download Visual C++ Runtimes."
 }
 		</File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Chrome.ps1">
@@ -561,6 +586,7 @@ $scripts = @(
     &quot;$PSScriptRoot\Drivers\Install-Nvidia.ps1&quot;,
     &quot;$PSScriptRoot\Drivers\Install-AMD.ps1&quot;,
     &quot;$PSScriptRoot\Drivers\Install-Focusrite.ps1&quot;,
+    "$PSScriptRoot\Apps\Install-Runtimes.ps1",
     &quot;$PSScriptRoot\Apps\Install-Chrome.ps1&quot;,
     &quot;$PSScriptRoot\Tweaks\SetStartPins.ps1&quot;
 )

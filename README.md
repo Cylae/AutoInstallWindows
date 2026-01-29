@@ -18,7 +18,38 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Included Support**: Scripts for Network, Nvidia GPU, AMD Chipset, and Focusrite Audio drivers.
 *   **🌐 Robust App Installation**:
     *   **Offline First**: Prioritizes local installers from your USB drive (e.g., `drivers/apps/chrome`).
-    *   **Internet Download**: Automatically waits for network connectivity and downloads Chrome if no local installer is found.
+    *   **Internet Download**: Automatically waits for network connectivity.
+        *   **Chrome**: Downloads automatically if not found.
+        *   **Visual C++ Runtimes**: Downloads and installs the latest VC++ 2015-2022 Redistributable (x64) automatically.
+
+## 📂 Folder Structure
+
+To utilize the offline installation features, organize your USB drive as follows:
+
+```text
+USB_ROOT/
+├── autounattend.xml
+└── drivers/
+    ├── network/      (Place .inf files here)
+    ├── nvidia/       (Place Installer .exe here)
+    ├── amd/          (Place Installer .exe here)
+    ├── focusrite/    (Place Installer .exe here)
+    └── apps/
+        └── chrome/   (Place Chrome Installer .exe here)
+```
+
+### 🌍 Internet Download
+
+*   **Chrome**: Automatically downloads if not found locally.
+*   **Nvidia**: Automatically queries Nvidia servers and downloads the latest driver if not found locally.
+*   **Other Drivers**: Can be configured to download via URL in the `.ps1` scripts.
+
+## 📝 Usage
+
+1.  **Prepare USB**: Place `autounattend.xml` in the root of your Windows Installation Media.
+2.  **Add Drivers/Apps**: Create the `drivers` folder structure and copy your installers (optional, but recommended for speed).
+3.  **Boot**: Boot from the USB.
+4.  **Relax**: The system will install Windows, drivers, and apps, and clean itself up automatically. When you see the desktop, it's ready.
 
 ## 📂 Folder Structure
 
@@ -51,6 +82,7 @@ USB_ROOT/
 
 ---
 ---
+---
 
 # 🇫🇷 Ultimate Windows Autounattend (Français)
 
@@ -72,7 +104,9 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
     *   **Support Inclus**: Scripts pour Réseau, GPU Nvidia, Chipset AMD et Audio Focusrite.
 *   **🌐 Installation d'Applications Robuste**:
     *   **Hors-Ligne en Priorité**: Privilégie les installateurs locaux sur votre clé USB (ex: `drivers/apps/chrome`).
-    *   **Téléchargement Internet**: Attend automatiquement la connexion réseau et télécharge Chrome si aucun installateur local n'est trouvé.
+    *   **Téléchargement Internet**: Attend automatiquement la connexion réseau.
+        *   **Chrome**: Télécharge automatiquement si non trouvé.
+        *   **Runtimes Visual C++**: Télécharge et installe automatiquement les derniers Runtimes VC++ 2015-2022 (x64).
 
 ## 📂 Structure des Dossiers
 
