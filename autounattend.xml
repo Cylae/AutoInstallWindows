@@ -57,7 +57,7 @@
 			<UserAccounts>
 				<LocalAccounts>
 					<LocalAccount wcm:action="add">
-						<Name>Antho</Name>
+						<Name>User</Name>
 						<DisplayName></DisplayName>
 						<Group>Administrators</Group>
 						<Password>
@@ -68,7 +68,7 @@
 				</LocalAccounts>
 			</UserAccounts>
 			<AutoLogon>
-				<Username>Antho</Username>
+				<Username>User</Username>
 				<Enabled>true</Enabled>
 				<LogonCount>1</LogonCount>
 				<Password>
@@ -216,38 +216,13 @@ Write-Log &quot;Starting Nvidia Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
 $setupPath = $null
 
-# 1. Try Download Latest (Online First Strategy)
-Write-Log &quot;Checking for latest Nvidia driver online...&quot;
-try {
-    $url = &quot;https://gfwsl.geforce.com/services_WNS/TIPS.php?ver=1.4&amp;type=1&quot;
-    $nvidiaXml = (Invoke-WebRequest -Uri $url -UseBasicParsing).Content
-    if ($nvidiaXml -is [string]) { $nvidiaXml = [xml]$nvidiaXml }
+# Online check removed due to API deprecation.
+# To use a direct download, set the URL below manually or use the local drivers folder.
+# $url = &quot;https://...&quot;
 
-    $update = $nvidiaXml.updates.update | Where-Object {
-        $_.name -eq &quot;DisplayDriver&quot; -and
-        $_.downloadURL -match &quot;Win10_64&quot; -and
-        $_.downloadURL -match &quot;DCH&quot;
-    } | Select-Object -First 1
-
-    if ($update) {
-        $dlUrl = $update.downloadURL
-        $version = $update.version
-        Write-Log &quot;Found latest Nvidia Driver: $version&quot;
-
-        $dest = &quot;$env:TEMP\nvidia_driver.exe&quot;
-        if (Download-File -Url $dlUrl -Destination $dest -Name &quot;Nvidia Driver $version&quot;) {
-            $setupPath = $dest
-        }
-    } else {
-        Write-Log &quot;Could not find a matching DCH driver in Nvidia XML.&quot;
-    }
-} catch {
-    Write-Log &quot;Failed to check/download latest Nvidia driver (Offline?): $_&quot;
-}
-
-# 2. Try Local (Fallback)
+# Try Local (Fallback/Primary)
 if (-not $setupPath -and $mediaRoot) {
-    Write-Log &quot;Online download failed or skipped. Checking local storage...&quot;
+    Write-Log &quot;Checking local storage...&quot;
     $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\nvidia&quot;
     $setupPath = Get-InstallerFile -Path $driverDir
 }
@@ -264,7 +239,7 @@ if ($setupPath) {
         Write-Log &quot;Error installing Nvidia drivers: $_&quot;
     }
 } else {
-    Write-Log &quot;Nvidia installer not found locally and download failed/skipped.&quot;
+    Write-Log &quot;Nvidia installer not found locally.&quot;
 }
 		</File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-AMD.ps1">
@@ -345,26 +320,43 @@ if ($setupPath) {
 		</File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Runtimes.ps1">
 $ErrorActionPreference = 'Stop'
-. "$PSScriptRoot\Lib\Helper.ps1"
+. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
-Write-Log "Starting Visual C++ Runtimes Installation..."
+Write-Log &quot;Starting Visual C++ Runtimes Installation...&quot;
 
-# Official Microsoft Link for Latest Supported VC++ 2015-2022 (x64)
-$url = "https://aka.ms/vc14/vc_redist.x64.exe"
-$dest = "$env:TEMP\vc_redist.x64.exe"
+# Official Microsoft Link for Latest Supported VC++ 2015-2022
+$url64 = &quot;https://aka.ms/vc14/vc_redist.x64.exe&quot;
+$url86 = &quot;https://aka.ms/vc14/vc_redist.x86.exe&quot;
 
-if (Download-File -Url $url -Destination $dest -Name "Visual C++ Runtimes") {
-    Write-Log "Installing Visual C++ Runtimes..."
+$dest64 = &quot;$env:TEMP\vc_redist.x64.exe&quot;
+$dest86 = &quot;$env:TEMP\vc_redist.x86.exe&quot;
+
+# Install x64
+if (Download-File -Url $url64 -Destination $dest64 -Name &quot;Visual C++ Runtimes (x64)&quot;) {
+    Write-Log &quot;Installing Visual C++ Runtimes (x64)...&quot;
     try {
-        Unblock-File -Path $dest -ErrorAction SilentlyContinue
-        # /install /quiet /norestart
-        Start-Process -FilePath $dest -ArgumentList "/install /quiet /norestart" -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\vcredist_install.log"
-        Write-Log "Visual C++ Runtimes installation completed."
+        Unblock-File -Path $dest64 -ErrorAction SilentlyContinue
+        Start-Process -FilePath $dest64 -ArgumentList &quot;/install /quiet /norestart&quot; -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\vcredist_x64_install.log&quot;
+        Write-Log &quot;Visual C++ Runtimes (x64) installation completed.&quot;
     } catch {
-        Write-Log "Error installing Visual C++ Runtimes: $_"
+        Write-Log &quot;Error installing Visual C++ Runtimes (x64): $_&quot;
     }
 } else {
-    Write-Log "Failed to download Visual C++ Runtimes."
+    Write-Log &quot;Failed to download Visual C++ Runtimes (x64).&quot;
+}
+
+# Install x86
+if (Download-File -Url $url86 -Destination $dest86 -Name &quot;Visual C++ Runtimes (x86)&quot;) {
+    Write-Log &quot;Installing Visual C++ Runtimes (x86)...&quot;
+    try {
+        Unblock-File -Path $dest86 -ErrorAction SilentlyContinue
+        Start-Process -FilePath $dest86 -ArgumentList &quot;/install /quiet /norestart&quot; -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\vcredist_x86_install.log&quot;
+        Write-Log &quot;Visual C++ Runtimes (x86) installation completed.&quot;
+    } catch {
+        Write-Log &quot;Error installing Visual C++ Runtimes (x86): $_&quot;
+    }
+} else {
+    Write-Log &quot;Failed to download Visual C++ Runtimes (x86).&quot;
 }
 		</File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Chrome.ps1">
@@ -639,6 +631,12 @@ try {
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v TaskbarAl /t REG_DWORD /d 0 /f # Left align taskbar
     reg.exe add &quot;$defaultUserHive\Software\Policies\Microsoft\Windows\Explorer&quot; /v DisableSearchBoxSuggestions /t REG_DWORD /d 1 /f
 
+    # Show File Extensions
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v HideFileExt /t REG_DWORD /d 0 /f
+
+    # Classic Context Menu (Windows 11)
+    reg.exe add &quot;$defaultUserHive\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32&quot; /ve /t REG_SZ /d &quot;&quot; /f
+
     # Disable Copilot for Default User
     reg.exe add &quot;$defaultUserHive\Software\Policies\Microsoft\Windows\WindowsCopilot&quot; /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f
 
@@ -671,7 +669,7 @@ Get-Process -Name 'explorer' -ErrorAction 'SilentlyContinue' | Stop-Process -For
 
 # Register Daily Winget Auto-Update Task (Transparent)
 $taskName = "DailySoftwareUpdate"
-$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-WindowStyle Hidden -Command `&quot;winget upgrade --all --include-unknown --silent --accept-source-agreements --accept-package-agreements`&quot;"
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-WindowStyle Hidden -Command `&quot;winget source update; winget upgrade --all --include-unknown --silent --accept-source-agreements --accept-package-agreements`&quot;"
 $trigger = New-ScheduledTaskTrigger -Daily -At 13:00
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
 Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description "Automatically updates all software via Winget silently." -RunLevel Highest -Force | Out-Null

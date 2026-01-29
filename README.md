@@ -8,21 +8,18 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 
 *   **⚡ Zero-Interruption Setup**: All software (Chrome, Drivers, etc.) is installed during the `Specialize` pass, *before* the user logs in. No popups, no waiting at the desktop.
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
-*   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana, and other tracking features by default.
+*   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
 *   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, etc.) and unnecessary Windows capabilities.
 *   **🔧 Intelligent Driver Installation**:
     *   **Auto-Detection**: Automatically scans all drives for a `drivers` folder.
-    *   **Online First**: Prioritizes downloading the latest official drivers (Nvidia) from the internet. Falls back to local USB drivers only if offline.
     *   **Smart Matching**: Finds installer executables (`*.exe`) automatically—no need to rename files to `setup.exe`.
-    *   **Included Support**: Scripts for Network, Nvidia GPU (Auto-Download), AMD Chipset, and Focusrite Audio drivers.
+    *   **Included Support**: Scripts for Network, Nvidia GPU, AMD Chipset, and Focusrite Audio drivers.
 *   **🌐 Robust App Installation**:
     *   **Online First**: Prioritizes downloading the latest Chrome installer from the internet. Falls back to USB if offline.
-    *   **Visual C++ Runtimes**: Automatically downloads and installs the latest VC++ 2015-2022 Redistributable (x64).
+    *   **Visual C++ Runtimes**: Automatically downloads and installs the latest VC++ 2015-2022 Redistributable (**x64 and x86**).
 *   **🔄 Transparent Auto-Updates**:
-    *   **Daily Updates**: Registers a hidden scheduled task to run `winget upgrade --all` daily.
+    *   **Daily Updates**: Registers a hidden scheduled task to run `winget upgrade --all` daily (includes `source update`).
     *   **Silent**: Updates happen in the background without user intervention.
-
-## 📂 Folder Structure
 
 ## 📂 Folder Structure
 
@@ -43,8 +40,8 @@ USB_ROOT/
 ### 🌍 Internet Download
 
 *   **Chrome**: Automatically downloads if not found locally.
-*   **Nvidia**: Automatically queries Nvidia servers and downloads the latest driver if not found locally.
-*   **Other Drivers**: Can be configured to download via URL in the `.ps1` scripts.
+*   **Nvidia**: Requires local installer in `drivers/nvidia` or manual URL configuration in script (Auto-download API is deprecated).
+*   **Visual C++**: Automatically downloads from Microsoft.
 
 ## 📝 Usage
 
@@ -66,16 +63,15 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 
 *   **⚡ Installation Zéro-Interruption**: Tous les logiciels (Chrome, Pilotes, etc.) sont installés durant la phase `Specialize`, **avant** la connexion de l'utilisateur. Aucun popup, aucune attente sur le bureau.
 *   **🤫 Totalement Silencieux**: Tous les scripts sont optimisés pour masquer les sorties et fenêtres. Vous ne verrez rien avant l'écran "Bienvenue".
-*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, Copilot, la recherche Bing, Cortana et d'autres pisteurs par défaut.
+*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, Copilot, la recherche Bing, Cortana. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
 *   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, etc.) et les fonctionnalités Windows inutiles.
 *   **🔧 Installation Intelligente des Pilotes**:
     *   **Auto-Détection**: Scanne tous les lecteurs pour trouver le dossier `drivers`.
-    *   **En Ligne en Priorité**: Privilégie le téléchargement des derniers pilotes officiels (Nvidia) depuis Internet. Bascule sur la clé USB uniquement si hors ligne.
     *   **Recherche Intelligente**: Trouve automatiquement les exécutables (`*.exe`)—pas besoin de renommer en `setup.exe`.
-    *   **Support Inclus**: Scripts pour Réseau, GPU Nvidia (Auto-Téléchargement), Chipset AMD et Audio Focusrite.
+    *   **Support Inclus**: Scripts pour Réseau, GPU Nvidia, Chipset AMD et Audio Focusrite.
 *   **🌐 Installation d'Applications Robuste**:
     *   **En Ligne en Priorité**: Privilégie le téléchargement du dernier installateur Chrome depuis Internet. Bascule sur l'USB si hors ligne.
-    *   **Runtimes Visual C++**: Télécharge et installe automatiquement les derniers Runtimes VC++ 2015-2022 (x64).
+    *   **Runtimes Visual C++**: Télécharge et installe automatiquement les derniers Runtimes VC++ 2015-2022 (**x64 et x86**).
 *   **🔄 Mises à Jour Automatiques Transparentes**:
     *   **Quotidien**: Enregistre une tâche planifiée masquée pour exécuter `winget upgrade --all` chaque jour.
     *   **Silencieux**: Les mises à jour se font en arrière-plan sans intervention de l'utilisateur.
@@ -99,8 +95,8 @@ RACINE_USB/
 ### 🌍 Téléchargement Internet
 
 *   **Chrome**: Télécharge automatiquement si non trouvé localement.
-*   **Nvidia**: Interroge automatiquement les serveurs Nvidia et télécharge le dernier pilote si non trouvé localement.
-*   **Autres Pilotes**: Peuvent être configurés pour être téléchargés via URL dans les fichiers `.ps1`.
+*   **Nvidia**: Nécessite un installateur local ou une configuration manuelle de l'URL (L'API d'auto-téléchargement est obsolète).
+*   **Visual C++**: Télécharge automatiquement depuis Microsoft.
 
 ## 📝 Utilisation
 
