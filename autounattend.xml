@@ -173,7 +173,8 @@ if ($mediaRoot) {
     if (Test-Path -Path $setupPath) {
         Write-Log &quot;Found Nvidia setup at $setupPath&quot;
         try {
-            Start-Process -FilePath $setupPath -ArgumentList '-s -n -f' -Wait
+            Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
+            Start-Process -FilePath $setupPath -ArgumentList '-s -n -f -noreboot' -Wait
             Write-Log &quot;Nvidia driver installation completed.&quot;
         }
         catch {
@@ -199,6 +200,7 @@ if ($mediaRoot) {
     if (Test-Path -Path $setupPath) {
         Write-Log &quot;Found AMD setup at $setupPath&quot;
         try {
+            Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
             Start-Process -FilePath $setupPath -ArgumentList &quot;/S&quot;, &quot;-noreboot&quot; -Wait
             Write-Log &quot;AMD Chipset driver installation completed.&quot;
         }
@@ -225,6 +227,7 @@ if ($mediaRoot) {
     if (Test-Path -Path $setupPath) {
         Write-Log &quot;Found Focusrite setup at $setupPath&quot;
         try {
+            Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
             Start-Process -FilePath $setupPath -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-' -Wait
             Write-Log &quot;Focusrite driver installation completed.&quot;
         }
@@ -254,6 +257,7 @@ try {
 
     if (Test-Path -Path $dest) {
         Write-Log &quot;Installing Chrome...&quot;
+        Unblock-File -Path $dest -ErrorAction SilentlyContinue
         Start-Process -FilePath $dest -ArgumentList '/silent /install' -Wait
         Remove-Item -Path $dest -Force -ErrorAction SilentlyContinue
         Write-Log &quot;Chrome installation completed.&quot;
