@@ -122,6 +122,15 @@ function Get-InstallMedia {
     return $null
 }
 
+function Get-InstallerFile {
+    param([string]$Path)
+    if (Test-Path -Path $Path) {
+        $file = Get-ChildItem -Path $Path -Filter &quot;*.exe&quot; | Select-Object -First 1
+        if ($file) { return $file.FullName }
+    }
+    return $null
+}
+
 function Write-Log {
     param(
         [string]$Message,
@@ -169,9 +178,12 @@ Write-Log &quot;Starting Nvidia Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
 
 if ($mediaRoot) {
-    $setupPath = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\nvidia\setup.exe&quot;
-    if (Test-Path -Path $setupPath) {
+    $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\nvidia&quot;
+    $setupPath = Get-InstallerFile -Path $driverDir
+
+    if ($setupPath) {
         Write-Log &quot;Found Nvidia setup at $setupPath&quot;
+        Write-Progress -Activity &quot;Installing Drivers&quot; -Status &quot;Installing Nvidia GPU Driver...&quot; -PercentComplete 0
         try {
             Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
             Start-Process -FilePath $setupPath -ArgumentList '-s -n -f -noreboot' -Wait
@@ -180,8 +192,11 @@ if ($mediaRoot) {
         catch {
             Write-Log &quot;Error installing Nvidia drivers: $_&quot;
         }
+        finally {
+            Write-Progress -Activity &quot;Installing Drivers&quot; -Completed
+        }
     } else {
-        Write-Log &quot;Nvidia setup not found at $setupPath&quot;
+        Write-Log &quot;Nvidia installer not found in $driverDir&quot;
     }
 } else {
     Write-Log &quot;Install media not found.&quot;
@@ -196,9 +211,12 @@ Write-Log &quot;Starting AMD Chipset Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
 
 if ($mediaRoot) {
-    $setupPath = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\amd\AMD_Chipset_Software.exe&quot;
-    if (Test-Path -Path $setupPath) {
+    $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\amd&quot;
+    $setupPath = Get-InstallerFile -Path $driverDir
+
+    if ($setupPath) {
         Write-Log &quot;Found AMD setup at $setupPath&quot;
+        Write-Progress -Activity &quot;Installing Drivers&quot; -Status &quot;Installing AMD Chipset Driver...&quot; -PercentComplete 0
         try {
             Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
             Start-Process -FilePath $setupPath -ArgumentList &quot;/S&quot;, &quot;-noreboot&quot; -Wait
@@ -207,8 +225,11 @@ if ($mediaRoot) {
         catch {
             Write-Log &quot;Error installing AMD Chipset drivers: $_&quot;
         }
+        finally {
+            Write-Progress -Activity &quot;Installing Drivers&quot; -Completed
+        }
     } else {
-        Write-Log &quot;AMD setup not found at $setupPath&quot;
+        Write-Log &quot;AMD installer not found in $driverDir&quot;
     }
 } else {
     Write-Log &quot;Install media not found.&quot;
@@ -223,9 +244,12 @@ Write-Log &quot;Starting Focusrite Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
 
 if ($mediaRoot) {
-    $setupPath = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\focusrite\FocusriteControl.exe&quot;
-    if (Test-Path -Path $setupPath) {
+    $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\focusrite&quot;
+    $setupPath = Get-InstallerFile -Path $driverDir
+
+    if ($setupPath) {
         Write-Log &quot;Found Focusrite setup at $setupPath&quot;
+        Write-Progress -Activity &quot;Installing Drivers&quot; -Status &quot;Installing Focusrite Audio Driver...&quot; -PercentComplete 0
         try {
             Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
             Start-Process -FilePath $setupPath -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-' -Wait
@@ -234,8 +258,11 @@ if ($mediaRoot) {
         catch {
             Write-Log &quot;Error installing Focusrite drivers: $_&quot;
         }
+        finally {
+            Write-Progress -Activity &quot;Installing Drivers&quot; -Completed
+        }
     } else {
-        Write-Log &quot;Focusrite setup not found at $setupPath&quot;
+        Write-Log &quot;Focusrite installer not found in $driverDir&quot;
     }
 } else {
     Write-Log &quot;Install media not found.&quot;
@@ -253,10 +280,12 @@ try {
     $dest = &quot;$env:TEMP\chrome.exe&quot;
 
     Write-Log &quot;Downloading Chrome from $url...&quot;
+    Write-Progress -Activity &quot;Installing Apps&quot; -Status &quot;Downloading Chrome...&quot;
     Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
 
-    if (Test-Path -Path $dest) {
+    if (Test-Path -Path $dest -And (Get-Item $dest).Length -gt 0) {
         Write-Log &quot;Installing Chrome...&quot;
+        Write-Progress -Activity &quot;Installing Apps&quot; -Status &quot;Installing Chrome...&quot;
         Unblock-File -Path $dest -ErrorAction SilentlyContinue
         Start-Process -FilePath $dest -ArgumentList '/silent /install' -Wait
         Remove-Item -Path $dest -Force -ErrorAction SilentlyContinue
@@ -267,6 +296,9 @@ try {
 }
 catch {
     Write-Log &quot;Error installing Chrome: $_&quot;
+}
+finally {
+    Write-Progress -Activity &quot;Installing Apps&quot; -Completed
 }
 
 		</File>
@@ -335,7 +367,11 @@ Write-Log &quot;Starting Debloating Process...&quot;
 # Remove Appx Provisioned Packages
 Write-Log &quot;Removing Appx Provisioned Packages...&quot;
 $provisioned = Get-AppxProvisionedPackage -Online
+$total = $packagesToRemove.Count
+$i = 0
 foreach ($package in $packagesToRemove) {
+    $i++
+    Write-Progress -Activity &quot;Debloating Windows&quot; -Status &quot;Removing Appx: $package&quot; -PercentComplete (($i / $total) * 100)
     $found = $provisioned | Where-Object { $_.DisplayName -eq $package }
     if ($found) {
         Write-Log &quot;Removing $package...&quot;
@@ -350,7 +386,11 @@ foreach ($package in $packagesToRemove) {
 # Remove Capabilities
 Write-Log &quot;Removing Windows Capabilities...&quot;
 $capabilities = Get-WindowsCapability -Online
+$totalCaps = $capabilitiesToRemove.Count
+$j = 0
 foreach ($capName in $capabilitiesToRemove) {
+    $j++
+    Write-Progress -Activity &quot;Debloating Windows&quot; -Status &quot;Removing Capability: $capName&quot; -PercentComplete (($j / $totalCaps) * 100)
     $cap = $capabilities | Where-Object { ($_.Name -split '~')[0] -eq $capName -and $_.State -ne 'NotPresent' }
     if ($cap) {
         Write-Log &quot;Removing capability $capName...&quot;
@@ -376,6 +416,7 @@ foreach ($feature in $featuresToRemove) {
 }
 
 Write-Log &quot;Debloating Process Completed.&quot;
+Write-Progress -Activity &quot;Debloating Windows&quot; -Completed
 
 		</File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Configure-Privacy.ps1">

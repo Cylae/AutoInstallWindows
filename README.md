@@ -8,11 +8,13 @@ This repository contains a highly optimized `autounattend.xml` for a silent, cle
 *   **🧹 Debloated**: Removes bloatware apps (Candy Crush, Clipchamp, etc.) and unnecessary Windows capabilities.
 *   **🔧 Robust Driver Installation**:
     *   Automatically detects installation media (USB/Drive).
+    *   **Flexible Detection**: Automatically finds installer executables (`*.exe`) in driver folders, so exact renaming (e.g., to `setup.exe`) is no longer required.
+    *   **Visual Feedback**: Progress bars indicate the status of driver installations and debloating.
     *   Installs Network drivers (`pnputil`).
     *   Installs Nvidia GPU drivers.
     *   Installs AMD Chipset drivers.
     *   Installs Focusrite Audio drivers.
-*   **🌐 Chrome Installation**: Downloads and installs the latest Google Chrome.
+*   **🌐 Chrome Installation**: Downloads and installs the latest Google Chrome with validation and error checking.
 *   **⚡ Optimized**: Scripts are modular and use efficient PowerShell techniques.
 
 ## 🇫🇷 Fonctionnalités (Français)
@@ -21,6 +23,8 @@ This repository contains a highly optimized `autounattend.xml` for a silent, cle
 *   **🧹 Nettoyage**: Supprime les applications préinstallées (bloatware) et fonctionnalités inutiles.
 *   **🔧 Installation de Pilotes Robuste**:
     *   Détecte automatiquement le support d'installation.
+    *   **Détection Flexible**: Trouve automatiquement les exécutables d'installation (`*.exe`) dans les dossiers de pilotes (renommage en `setup.exe` non requis).
+    *   **Feedback Visuel**: Des barres de progression indiquent l'état des installations et du nettoyage.
     *   Installe les pilotes réseau via `pnputil`.
     *   Installe les pilotes GPU Nvidia.
     *   Installe les pilotes Chipset AMD.
@@ -32,7 +36,7 @@ This repository contains a highly optimized `autounattend.xml` for a silent, cle
 
 The scripts are embedded in `autounattend.xml` and extracted to `C:\Windows\Setup\Scripts\` during installation:
 
-*   `Lib\Helper.ps1`: Shared functions (`Get-InstallMedia`, `Write-Log`).
+*   `Lib\Helper.ps1`: Shared functions (`Get-InstallMedia`, `Get-InstallerFile`, `Write-Log`).
 *   `Drivers\`: Scripts for driver installation.
 *   `Apps\`: Scripts for app installation (Chrome).
 *   `Tweaks\`: Scripts for debloating and privacy settings.
@@ -43,8 +47,8 @@ The scripts are embedded in `autounattend.xml` and extracted to `C:\Windows\Setu
 
 1.  Place the `autounattend.xml` file in the root of your Windows Installation Media (USB).
 2.  Ensure your drivers are organized in a `drivers` folder on the USB stick as follows:
-    *   `drivers/network/` (Inf files)
-    *   `drivers/nvidia/setup.exe`
-    *   `drivers/amd/AMD_Chipset_Software.exe`
-    *   `drivers/focusrite/FocusriteControl.exe`
+    *   `drivers/network/` (Place `.inf` files here)
+    *   `drivers/nvidia/` (Place your Nvidia installer `.exe` here)
+    *   `drivers/amd/` (Place your AMD Chipset installer `.exe` here)
+    *   `drivers/focusrite/` (Place your Focusrite installer `.exe` here)
 3.  Boot from the USB and let the magic happen!
