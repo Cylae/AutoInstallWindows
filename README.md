@@ -12,15 +12,17 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 *   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, etc.) and unnecessary Windows capabilities.
 *   **🔧 Intelligent Driver Installation**:
     *   **Auto-Detection**: Automatically scans all drives for a `drivers` folder.
+    *   **Online First**: Prioritizes downloading the latest official drivers (Nvidia) from the internet. Falls back to local USB drivers only if offline.
     *   **Smart Matching**: Finds installer executables (`*.exe`) automatically—no need to rename files to `setup.exe`.
-    *   **Latest Nvidia Drivers**: Automatically checks Nvidia's servers and downloads the latest Game Ready Driver (DCH) if a local installer is not found.
-    *   **Network Fallback**: Can attempt to download generic files from the internet if configured.
-    *   **Included Support**: Scripts for Network, Nvidia GPU, AMD Chipset, and Focusrite Audio drivers.
+    *   **Included Support**: Scripts for Network, Nvidia GPU (Auto-Download), AMD Chipset, and Focusrite Audio drivers.
 *   **🌐 Robust App Installation**:
-    *   **Offline First**: Prioritizes local installers from your USB drive (e.g., `drivers/apps/chrome`).
-    *   **Internet Download**: Automatically waits for network connectivity.
-        *   **Chrome**: Downloads automatically if not found.
-        *   **Visual C++ Runtimes**: Downloads and installs the latest VC++ 2015-2022 Redistributable (x64) automatically.
+    *   **Online First**: Prioritizes downloading the latest Chrome installer from the internet. Falls back to USB if offline.
+    *   **Visual C++ Runtimes**: Automatically downloads and installs the latest VC++ 2015-2022 Redistributable (x64).
+*   **🔄 Transparent Auto-Updates**:
+    *   **Daily Updates**: Registers a hidden scheduled task to run `winget upgrade --all` daily.
+    *   **Silent**: Updates happen in the background without user intervention.
+
+## 📂 Folder Structure
 
 ## 📂 Folder Structure
 
@@ -51,36 +53,6 @@ USB_ROOT/
 3.  **Boot**: Boot from the USB.
 4.  **Relax**: The system will install Windows, drivers, and apps, and clean itself up automatically. When you see the desktop, it's ready.
 
-## 📂 Folder Structure
-
-To utilize the offline installation features, organize your USB drive as follows:
-
-```text
-USB_ROOT/
-├── autounattend.xml
-└── drivers/
-    ├── network/      (Place .inf files here)
-    ├── nvidia/       (Place Installer .exe here)
-    ├── amd/          (Place Installer .exe here)
-    ├── focusrite/    (Place Installer .exe here)
-    └── apps/
-        └── chrome/   (Place Chrome Installer .exe here)
-```
-
-### 🌍 Internet Download
-
-*   **Chrome**: Automatically downloads if not found locally.
-*   **Nvidia**: Automatically queries Nvidia servers and downloads the latest driver if not found locally.
-*   **Other Drivers**: Can be configured to download via URL in the `.ps1` scripts.
-
-## 📝 Usage
-
-1.  **Prepare USB**: Place `autounattend.xml` in the root of your Windows Installation Media.
-2.  **Add Drivers/Apps**: Create the `drivers` folder structure and copy your installers (optional, but recommended for speed).
-3.  **Boot**: Boot from the USB.
-4.  **Relax**: The system will install Windows, drivers, and apps, and clean itself up automatically. When you see the desktop, it's ready.
-
----
 ---
 ---
 
@@ -98,15 +70,15 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, etc.) et les fonctionnalités Windows inutiles.
 *   **🔧 Installation Intelligente des Pilotes**:
     *   **Auto-Détection**: Scanne tous les lecteurs pour trouver le dossier `drivers`.
+    *   **En Ligne en Priorité**: Privilégie le téléchargement des derniers pilotes officiels (Nvidia) depuis Internet. Bascule sur la clé USB uniquement si hors ligne.
     *   **Recherche Intelligente**: Trouve automatiquement les exécutables (`*.exe`)—pas besoin de renommer en `setup.exe`.
-    *   **Derniers Pilotes Nvidia**: Vérifie automatiquement les serveurs Nvidia et télécharge le dernier pilote Game Ready (DCH) si aucun installateur local n'est trouvé.
-    *   **Secours Réseau**: Peut tenter de télécharger des fichiers depuis Internet si configuré.
-    *   **Support Inclus**: Scripts pour Réseau, GPU Nvidia, Chipset AMD et Audio Focusrite.
+    *   **Support Inclus**: Scripts pour Réseau, GPU Nvidia (Auto-Téléchargement), Chipset AMD et Audio Focusrite.
 *   **🌐 Installation d'Applications Robuste**:
-    *   **Hors-Ligne en Priorité**: Privilégie les installateurs locaux sur votre clé USB (ex: `drivers/apps/chrome`).
-    *   **Téléchargement Internet**: Attend automatiquement la connexion réseau.
-        *   **Chrome**: Télécharge automatiquement si non trouvé.
-        *   **Runtimes Visual C++**: Télécharge et installe automatiquement les derniers Runtimes VC++ 2015-2022 (x64).
+    *   **En Ligne en Priorité**: Privilégie le téléchargement du dernier installateur Chrome depuis Internet. Bascule sur l'USB si hors ligne.
+    *   **Runtimes Visual C++**: Télécharge et installe automatiquement les derniers Runtimes VC++ 2015-2022 (x64).
+*   **🔄 Mises à Jour Automatiques Transparentes**:
+    *   **Quotidien**: Enregistre une tâche planifiée masquée pour exécuter `winget upgrade --all` chaque jour.
+    *   **Silencieux**: Les mises à jour se font en arrière-plan sans intervention de l'utilisateur.
 
 ## 📂 Structure des Dossiers
 

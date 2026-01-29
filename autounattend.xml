@@ -216,41 +216,40 @@ Write-Log &quot;Starting Nvidia Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
 $setupPath = $null
 
-# 1. Try Local
-if ($mediaRoot) {
-    $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\nvidia&quot;
-    $setupPath = Get-InstallerFile -Path $driverDir
+# 1. Try Download Latest (Online First Strategy)
+Write-Log &quot;Checking for latest Nvidia driver online...&quot;
+try {
+    $url = &quot;https://gfwsl.geforce.com/services_WNS/TIPS.php?ver=1.4&amp;type=1&quot;
+    $nvidiaXml = (Invoke-WebRequest -Uri $url -UseBasicParsing).Content
+    if ($nvidiaXml -is [string]) { $nvidiaXml = [xml]$nvidiaXml }
+
+    $update = $nvidiaXml.updates.update | Where-Object {
+        $_.name -eq &quot;DisplayDriver&quot; -and
+        $_.downloadURL -match &quot;Win10_64&quot; -and
+        $_.downloadURL -match &quot;DCH&quot;
+    } | Select-Object -First 1
+
+    if ($update) {
+        $dlUrl = $update.downloadURL
+        $version = $update.version
+        Write-Log &quot;Found latest Nvidia Driver: $version&quot;
+
+        $dest = &quot;$env:TEMP\nvidia_driver.exe&quot;
+        if (Download-File -Url $dlUrl -Destination $dest -Name &quot;Nvidia Driver $version&quot;) {
+            $setupPath = $dest
+        }
+    } else {
+        Write-Log &quot;Could not find a matching DCH driver in Nvidia XML.&quot;
+    }
+} catch {
+    Write-Log &quot;Failed to check/download latest Nvidia driver (Offline?): $_&quot;
 }
 
-# 2. Try Download Latest (if Local missing)
-if (-not $setupPath) {
-    Write-Log &quot;Local driver not found. Checking for latest version online...&quot;
-    try {
-        $url = &quot;https://gfwsl.geforce.com/services_WNS/TIPS.php?ver=1.4&amp;type=1&quot;
-        $nvidiaXml = (Invoke-WebRequest -Uri $url -UseBasicParsing).Content
-        if ($nvidiaXml -is [string]) { $nvidiaXml = [xml]$nvidiaXml }
-
-        $update = $nvidiaXml.updates.update | Where-Object {
-            $_.name -eq &quot;DisplayDriver&quot; -and
-            $_.downloadURL -match &quot;Win10_64&quot; -and
-            $_.downloadURL -match &quot;DCH&quot;
-        } | Select-Object -First 1
-
-        if ($update) {
-            $dlUrl = $update.downloadURL
-            $version = $update.version
-            Write-Log &quot;Found latest Nvidia Driver: $version&quot;
-
-            $dest = &quot;$env:TEMP\nvidia_driver.exe&quot;
-            if (Download-File -Url $dlUrl -Destination $dest -Name &quot;Nvidia Driver $version&quot;) {
-                $setupPath = $dest
-            }
-        } else {
-            Write-Log &quot;Could not find a matching DCH driver in Nvidia XML.&quot;
-        }
-    } catch {
-        Write-Log &quot;Failed to check/download latest Nvidia driver: $_&quot;
-    }
+# 2. Try Local (Fallback)
+if (-not $setupPath -and $mediaRoot) {
+    Write-Log &quot;Online download failed or skipped. Checking local storage...&quot;
+    $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\nvidia&quot;
+    $setupPath = Get-InstallerFile -Path $driverDir
 }
 
 if ($setupPath) {
@@ -374,10 +373,18 @@ $ErrorActionPreference = 'Stop'
 
 Write-Log &quot;Starting Chrome Installation...&quot;
 $mediaRoot = Get-InstallMedia
-$localInstaller = $null
+$setupPath = $null
 
-# 1. Try Local
-if ($mediaRoot) {
+# 1. Try Download (Online First)
+$url = 'https://dl.google.com/chrome/install/chrome_installer.exe'
+$dest = &quot;$env:TEMP\chrome.exe&quot;
+if (Download-File -Url $url -Destination $dest -Name &quot;Chrome&quot;) {
+    $setupPath = $dest
+}
+
+# 2. Try Local (Fallback)
+if (-not $setupPath -and $mediaRoot) {
+    Write-Log &quot;Download failed. Checking local storage...&quot;
     $possiblePaths = @(
         (Join-Path $mediaRoot &quot;apps\chrome&quot;),
         (Join-Path $mediaRoot &quot;drivers\apps\chrome&quot;),
@@ -387,19 +394,11 @@ if ($mediaRoot) {
     foreach ($path in $possiblePaths) {
          if (Test-Path $path) {
              $localInstaller = Get-InstallerFile -Path $path
-             if ($localInstaller) { break }
+             if ($localInstaller) {
+                $setupPath = $localInstaller
+                break
+             }
          }
-    }
-}
-
-$setupPath = $localInstaller
-
-# 2. Try Download
-if (-not $setupPath) {
-    $url = 'https://dl.google.com/chrome/install/chrome_installer.exe'
-    $dest = &quot;$env:TEMP\chrome.exe&quot;
-    if (Download-File -Url $url -Destination $dest -Name &quot;Chrome&quot;) {
-        $setupPath = $dest
     }
 }
 
@@ -669,6 +668,14 @@ Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\Current
 
 # Restart Explorer to apply changes
 Get-Process -Name 'explorer' -ErrorAction 'SilentlyContinue' | Stop-Process -Force
+
+# Register Daily Winget Auto-Update Task (Transparent)
+$taskName = "DailySoftwareUpdate"
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-WindowStyle Hidden -Command `&quot;winget upgrade --all --include-unknown --silent --accept-source-agreements --accept-package-agreements`&quot;"
+$trigger = New-ScheduledTaskTrigger -Daily -At 13:00
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
+Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description "Automatically updates all software via Winget silently." -RunLevel Highest -Force | Out-Null
+Write-Log "Registered Daily Winget Auto-Update Task."
 
 Write-Log &quot;User Configuration Completed.&quot;
 
