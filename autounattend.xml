@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
-	<!-- Refactored by Jules - Senior Windows Deployment Architect -->
+	<!-- Optimized by Jules - Senior Windows Deployment Architect -->
 	<settings pass="offlineServicing"></settings>
 	<settings pass="windowsPE">
 		<component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
@@ -133,9 +133,52 @@ function Write-Log {
     $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss&quot;
     $logEntry = &quot;[$timestamp] $Message&quot;
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
-    Write-Host $logEntry
+    # Write-Host is useful for debugging but we want total silence in production
+    # Write-Host $logEntry
 }
 
+function Download-File {
+    param(
+        [string]$Url,
+        [string]$Destination,
+        [string]$Name = &quot;File&quot;
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Url)) { return $false }
+
+    Write-Log &quot;Attempting to download $Name from $Url...&quot;
+
+    $maxRetries = 30
+    $retry = 0
+    $connected = $false
+
+    # Wait for network
+    while (-not $connected -and $retry -lt $maxRetries) {
+        try {
+            $null = [System.Net.Dns]::GetHostEntry(&quot;8.8.8.8&quot;)
+            $connected = $true
+        } catch {
+            $retry++
+            Start-Sleep -Seconds 2
+        }
+    }
+
+    if ($connected) {
+        try {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -ErrorAction Stop
+            if (Test-Path -Path $Destination -And (Get-Item $Destination).Length -gt 0) {
+                Write-Log &quot;Download of $Name successful.&quot;
+                return $true
+            }
+        } catch {
+            Write-Log &quot;Failed to download $Name: $_&quot;
+        }
+    } else {
+        Write-Log &quot;No network connectivity to download $Name.&quot;
+    }
+    return $false
+}
 		</File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Network.ps1">
 $ErrorActionPreference = 'Stop'
@@ -150,7 +193,8 @@ if ($mediaRoot) {
         Write-Log &quot;Found network drivers at $driverPath&quot;
         try {
             $pnputilArgs = &quot;/add-driver `&quot;$driverPath\*.inf`&quot; /subdirs /install&quot;
-            Start-Process -FilePath &quot;pnputil.exe&quot; -ArgumentList $pnputilArgs -Wait -NoNewWindow
+            # Redirect standard output/error to null for total silence
+            Start-Process -FilePath &quot;pnputil.exe&quot; -ArgumentList $pnputilArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\pnputil_network.log&quot;
             Write-Log &quot;Network driver installation completed.&quot;
         }
         catch {
@@ -162,106 +206,123 @@ if ($mediaRoot) {
 } else {
     Write-Log &quot;Install media not found.&quot;
 }
-
 		</File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Nvidia.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
+# OPTIONAL: Set a direct download URL for the Nvidia Driver here if you have one.
+# Note: Nvidia URLs expire and change frequently. Local installation is recommended.
+$DownloadUrl = &quot;&quot;
+
 Write-Log &quot;Starting Nvidia Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
+$setupPath = $null
 
+# 1. Try Local
 if ($mediaRoot) {
     $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\nvidia&quot;
     $setupPath = Get-InstallerFile -Path $driverDir
-
-    if ($setupPath) {
-        Write-Log &quot;Found Nvidia setup at $setupPath&quot;
-        Write-Progress -Activity &quot;Installing Drivers&quot; -Status &quot;Installing Nvidia GPU Driver...&quot; -PercentComplete 0
-        try {
-            Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
-            Start-Process -FilePath $setupPath -ArgumentList '-s -n -f -noreboot' -Wait
-            Write-Log &quot;Nvidia driver installation completed.&quot;
-        }
-        catch {
-            Write-Log &quot;Error installing Nvidia drivers: $_&quot;
-        }
-        finally {
-            Write-Progress -Activity &quot;Installing Drivers&quot; -Completed
-        }
-    } else {
-        Write-Log &quot;Nvidia installer not found in $driverDir&quot;
-    }
-} else {
-    Write-Log &quot;Install media not found.&quot;
 }
 
+# 2. Try Download if Local missing
+if (-not $setupPath -and $DownloadUrl) {
+    $dest = &quot;$env:TEMP\nvidia_driver.exe&quot;
+    if (Download-File -Url $DownloadUrl -Destination $dest -Name &quot;Nvidia Driver&quot;) {
+        $setupPath = $dest
+    }
+}
+
+if ($setupPath) {
+    Write-Log &quot;Installing Nvidia driver from $setupPath...&quot;
+    try {
+        Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
+        # -s: Silent, -n: No splash, -f: Force, -noreboot: No reboot
+        Start-Process -FilePath $setupPath -ArgumentList '-s -n -f -noreboot' -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\nvidia_install.log&quot;
+        Write-Log &quot;Nvidia driver installation completed.&quot;
+    }
+    catch {
+        Write-Log &quot;Error installing Nvidia drivers: $_&quot;
+    }
+} else {
+    Write-Log &quot;Nvidia installer not found locally and no download URL provided.&quot;
+}
 		</File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-AMD.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
+# OPTIONAL: Set a direct download URL for the AMD Chipset Driver here.
+$DownloadUrl = &quot;&quot;
+
 Write-Log &quot;Starting AMD Chipset Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
+$setupPath = $null
 
 if ($mediaRoot) {
     $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\amd&quot;
     $setupPath = Get-InstallerFile -Path $driverDir
-
-    if ($setupPath) {
-        Write-Log &quot;Found AMD setup at $setupPath&quot;
-        Write-Progress -Activity &quot;Installing Drivers&quot; -Status &quot;Installing AMD Chipset Driver...&quot; -PercentComplete 0
-        try {
-            Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
-            Start-Process -FilePath $setupPath -ArgumentList &quot;/S&quot;, &quot;-noreboot&quot; -Wait
-            Write-Log &quot;AMD Chipset driver installation completed.&quot;
-        }
-        catch {
-            Write-Log &quot;Error installing AMD Chipset drivers: $_&quot;
-        }
-        finally {
-            Write-Progress -Activity &quot;Installing Drivers&quot; -Completed
-        }
-    } else {
-        Write-Log &quot;AMD installer not found in $driverDir&quot;
-    }
-} else {
-    Write-Log &quot;Install media not found.&quot;
 }
 
+if (-not $setupPath -and $DownloadUrl) {
+    $dest = &quot;$env:TEMP\amd_chipset.exe&quot;
+    if (Download-File -Url $DownloadUrl -Destination $dest -Name &quot;AMD Chipset&quot;) {
+        $setupPath = $dest
+    }
+}
+
+if ($setupPath) {
+    Write-Log &quot;Installing AMD driver from $setupPath...&quot;
+    try {
+        Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
+        # /S: Silent
+        Start-Process -FilePath $setupPath -ArgumentList &quot;/S&quot;, &quot;-noreboot&quot; -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\amd_install.log&quot;
+        Write-Log &quot;AMD Chipset driver installation completed.&quot;
+    }
+    catch {
+        Write-Log &quot;Error installing AMD Chipset drivers: $_&quot;
+    }
+} else {
+    Write-Log &quot;AMD installer not found locally and no download URL provided.&quot;
+}
 		</File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Focusrite.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
+# OPTIONAL: Set a direct download URL for the Focusrite Driver here.
+$DownloadUrl = &quot;&quot;
+
 Write-Log &quot;Starting Focusrite Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
+$setupPath = $null
 
 if ($mediaRoot) {
     $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\focusrite&quot;
     $setupPath = Get-InstallerFile -Path $driverDir
-
-    if ($setupPath) {
-        Write-Log &quot;Found Focusrite setup at $setupPath&quot;
-        Write-Progress -Activity &quot;Installing Drivers&quot; -Status &quot;Installing Focusrite Audio Driver...&quot; -PercentComplete 0
-        try {
-            Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
-            Start-Process -FilePath $setupPath -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-' -Wait
-            Write-Log &quot;Focusrite driver installation completed.&quot;
-        }
-        catch {
-            Write-Log &quot;Error installing Focusrite drivers: $_&quot;
-        }
-        finally {
-            Write-Progress -Activity &quot;Installing Drivers&quot; -Completed
-        }
-    } else {
-        Write-Log &quot;Focusrite installer not found in $driverDir&quot;
-    }
-} else {
-    Write-Log &quot;Install media not found.&quot;
 }
 
+if (-not $setupPath -and $DownloadUrl) {
+    $dest = &quot;$env:TEMP\focusrite_driver.exe&quot;
+    if (Download-File -Url $DownloadUrl -Destination $dest -Name &quot;Focusrite Driver&quot;) {
+        $setupPath = $dest
+    }
+}
+
+if ($setupPath) {
+    Write-Log &quot;Installing Focusrite driver from $setupPath...&quot;
+    try {
+        Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
+        # /VERYSILENT: No UI, /SUPPRESSMSGBOXES: No popups
+        Start-Process -FilePath $setupPath -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-' -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\focusrite_install.log&quot;
+        Write-Log &quot;Focusrite driver installation completed.&quot;
+    }
+    catch {
+        Write-Log &quot;Error installing Focusrite drivers: $_&quot;
+    }
+} else {
+    Write-Log &quot;Focusrite installer not found locally and no download URL provided.&quot;
+}
 		</File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Chrome.ps1">
 $ErrorActionPreference = 'Stop'
@@ -271,15 +332,14 @@ Write-Log &quot;Starting Chrome Installation...&quot;
 $mediaRoot = Get-InstallMedia
 $localInstaller = $null
 
+# 1. Try Local
 if ($mediaRoot) {
-    # Check for local installer in common locations
     $possiblePaths = @(
         (Join-Path $mediaRoot &quot;apps\chrome&quot;),
         (Join-Path $mediaRoot &quot;drivers\apps\chrome&quot;),
         (Join-Path $mediaRoot &quot;Apps&quot;),
         (Join-Path $mediaRoot &quot;Drivers\Apps&quot;)
     )
-
     foreach ($path in $possiblePaths) {
          if (Test-Path $path) {
              $localInstaller = Get-InstallerFile -Path $path
@@ -288,66 +348,32 @@ if ($mediaRoot) {
     }
 }
 
-if ($localInstaller) {
-    Write-Log &quot;Found local Chrome installer at $localInstaller&quot;
-    Write-Progress -Activity &quot;Installing Apps&quot; -Status &quot;Installing Chrome from local media...&quot;
+$setupPath = $localInstaller
+
+# 2. Try Download
+if (-not $setupPath) {
+    $url = 'https://dl.google.com/chrome/install/chrome_installer.exe'
+    $dest = &quot;$env:TEMP\chrome.exe&quot;
+    if (Download-File -Url $url -Destination $dest -Name &quot;Chrome&quot;) {
+        $setupPath = $dest
+    }
+}
+
+if ($setupPath) {
+    Write-Log &quot;Installing Chrome from $setupPath...&quot;
     try {
-        Unblock-File -Path $localInstaller -ErrorAction SilentlyContinue
-        Start-Process -FilePath $localInstaller -ArgumentList '/silent /install' -Wait
-        Write-Log &quot;Chrome installation (local) completed.&quot;
+        Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
+        Start-Process -FilePath $setupPath -ArgumentList '/silent /install' -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
+        if ($setupPath -eq &quot;$env:TEMP\chrome.exe&quot;) {
+            Remove-Item -Path $setupPath -Force -ErrorAction SilentlyContinue
+        }
+        Write-Log &quot;Chrome installation completed.&quot;
     } catch {
-        Write-Log &quot;Error installing Chrome locally: $_&quot;
+        Write-Log &quot;Error installing Chrome: $_&quot;
     }
 } else {
-    Write-Log &quot;Local installer not found. Attempting download...&quot;
-    # Network wait loop
-    $maxRetries = 30 # 30 * 2s = 60 seconds wait
-    $retry = 0
-    $connected = $false
-
-    while (-not $connected -and $retry -lt $maxRetries) {
-        try {
-            # Simple connectivity check
-            $null = [System.Net.Dns]::GetHostEntry(&quot;dl.google.com&quot;)
-            $connected = $true
-        } catch {
-            $retry++
-            Write-Log &quot;Waiting for network connectivity... ($retry/$maxRetries)&quot;
-            Start-Sleep -Seconds 2
-        }
-    }
-
-    if ($connected) {
-        try {
-            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            $url = 'https://dl.google.com/chrome/install/chrome_installer.exe'
-            $dest = &quot;$env:TEMP\chrome.exe&quot;
-
-            Write-Log &quot;Downloading Chrome from $url...&quot;
-            Write-Progress -Activity &quot;Installing Apps&quot; -Status &quot;Downloading Chrome...&quot;
-            Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
-
-            if (Test-Path -Path $dest -And (Get-Item $dest).Length -gt 0) {
-                Write-Log &quot;Installing Chrome...&quot;
-                Write-Progress -Activity &quot;Installing Apps&quot; -Status &quot;Installing Chrome...&quot;
-                Unblock-File -Path $dest -ErrorAction SilentlyContinue
-                Start-Process -FilePath $dest -ArgumentList '/silent /install' -Wait
-                Remove-Item -Path $dest -Force -ErrorAction SilentlyContinue
-                Write-Log &quot;Chrome installation completed.&quot;
-            } else {
-                Write-Log &quot;Failed to download Chrome installer.&quot;
-            }
-        } catch {
-            Write-Log &quot;Error downloading/installing Chrome: $_&quot;
-        }
-    } else {
-        Write-Log &quot;No network connectivity. Skipping Chrome installation.&quot;
-    }
+    Write-Log &quot;Chrome installer not found locally and download failed.&quot;
 }
-finally {
-    Write-Progress -Activity &quot;Installing Apps&quot; -Completed
-}
-
 		</File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Remove-Bloatware.ps1">
 $ErrorActionPreference = 'Stop'
@@ -412,13 +438,8 @@ $featuresToRemove = @(
 Write-Log &quot;Starting Debloating Process...&quot;
 
 # Remove Appx Provisioned Packages
-Write-Log &quot;Removing Appx Provisioned Packages...&quot;
 $provisioned = Get-AppxProvisionedPackage -Online
-$total = $packagesToRemove.Count
-$i = 0
 foreach ($package in $packagesToRemove) {
-    $i++
-    Write-Progress -Activity &quot;Debloating Windows&quot; -Status &quot;Removing Appx: $package&quot; -PercentComplete (($i / $total) * 100)
     $found = $provisioned | Where-Object { $_.DisplayName -eq $package }
     if ($found) {
         Write-Log &quot;Removing $package...&quot;
@@ -431,13 +452,8 @@ foreach ($package in $packagesToRemove) {
 }
 
 # Remove Capabilities
-Write-Log &quot;Removing Windows Capabilities...&quot;
 $capabilities = Get-WindowsCapability -Online
-$totalCaps = $capabilitiesToRemove.Count
-$j = 0
 foreach ($capName in $capabilitiesToRemove) {
-    $j++
-    Write-Progress -Activity &quot;Debloating Windows&quot; -Status &quot;Removing Capability: $capName&quot; -PercentComplete (($j / $totalCaps) * 100)
     $cap = $capabilities | Where-Object { ($_.Name -split '~')[0] -eq $capName -and $_.State -ne 'NotPresent' }
     if ($cap) {
         Write-Log &quot;Removing capability $capName...&quot;
@@ -450,7 +466,6 @@ foreach ($capName in $capabilitiesToRemove) {
 }
 
 # Remove Optional Features
-Write-Log &quot;Removing Optional Features...&quot;
 foreach ($feature in $featuresToRemove) {
     if ((Get-WindowsOptionalFeature -Online -FeatureName $feature -ErrorAction SilentlyContinue).State -eq 'Enabled') {
         Write-Log &quot;Disabling feature $feature...&quot;
@@ -463,8 +478,6 @@ foreach ($feature in $featuresToRemove) {
 }
 
 Write-Log &quot;Debloating Process Completed.&quot;
-Write-Progress -Activity &quot;Debloating Windows&quot; -Completed
-
 		</File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Configure-Privacy.ps1">
 $ErrorActionPreference = 'Stop'
