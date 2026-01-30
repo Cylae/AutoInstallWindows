@@ -10,6 +10,10 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
 *   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
 *   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, etc.) and unnecessary Windows capabilities.
+*   **🚀 System Optimization**:
+    *   **High Performance**: Automatically sets the "High Performance" power plan.
+    *   **Space Saving**: Disables Hibernation to save disk space (`hiberfil.sys`).
+    *   **Gaming**: Disables Game DVR/Bar for better gaming performance.
 *   **🔧 Intelligent Driver Installation**:
     *   **Auto-Detection**: Automatically scans all drives for a `drivers` folder.
     *   **Smart Matching**: Finds installer executables (`*.exe`) automatically—no need to rename files to `setup.exe`.
@@ -65,6 +69,10 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **🤫 Totalement Silencieux**: Tous les scripts sont optimisés pour masquer les sorties et fenêtres. Vous ne verrez rien avant l'écran "Bienvenue".
 *   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, Copilot, la recherche Bing, Cortana. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
 *   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, etc.) et les fonctionnalités Windows inutiles.
+*   **🚀 Optimisation Système**:
+    *   **Haute Performance**: Active automatiquement le plan d'alimentation "Haute Performance".
+    *   **Gain d'Espace**: Désactive l'hibernation pour économiser de l'espace disque (`hiberfil.sys`).
+    *   **Jeu**: Désactive Game DVR/Bar pour de meilleures performances en jeu.
 *   **🔧 Installation Intelligente des Pilotes**:
     *   **Auto-Détection**: Scanne tous les lecteurs pour trouver le dossier `drivers`.
     *   **Recherche Intelligente**: Trouve automatiquement les exécutables (`*.exe`)—pas besoin de renommer en `setup.exe`.

@@ -553,6 +553,20 @@ reg.exe add &quot;HKLM\System\CurrentControlSet\Control\DeviceGuard\Scenarios\Hy
 # Classic Context Menu (Windows 11) - Requires HKCU, handled in UserOnce or DefaultUser
 # Here we can try setting it for default user via reg load or just rely on UserOnce
 
+# Disable Telemetry and Maps Services
+$services = @('DiagTrack', 'dmwappushservice', 'MapsBroker', 'lfsvc')
+foreach ($service in $services) {
+    if (Get-Service -Name $service -ErrorAction SilentlyContinue) {
+        Write-Log "Disabling service $service..."
+        try {
+            Stop-Service -Name $service -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "Registry::HKLM\SYSTEM\CurrentControlSet\Services\$service" -Name "Start" -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
+        } catch {
+            Write-Log "Failed to disable service $service: $_"
+        }
+    }
+}
+
 Write-Log &quot;Privacy Tweaks Applied.&quot;
 
 		</File>
@@ -566,6 +580,33 @@ New-Item -Path $key -ItemType 'Directory' -ErrorAction 'SilentlyContinue';
 Set-ItemProperty -LiteralPath $key -Name 'ConfigureStartPins' -Value $json -Type 'String';
 
 		</File>
+		<File path="C:\Windows\Setup\Scripts\Tweaks\Optimize-System.ps1">
+$ErrorActionPreference = 'Stop'
+. "$PSScriptRoot\Lib\Helper.ps1"
+
+Write-Log "Applying System Optimizations..."
+
+# 1. Disable Hibernation (Saves disk space)
+try {
+    powercfg -h off
+    Write-Log "Hibernation disabled."
+} catch {
+    Write-Log "Failed to disable hibernation: $_"
+}
+
+# 2. Set High Performance Power Plan
+try {
+    powercfg -setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c
+    Write-Log "Power plan set to High Performance."
+} catch {
+    Write-Log "Failed to set power plan: $_"
+}
+
+# 3. Disable Game DVR (Background recording)
+reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR" /v AllowGameDVR /t REG_DWORD /d 0 /f
+
+Write-Log "System Optimizations Applied."
+		</File>
 		<File path="C:\Windows\Setup\Scripts\Specialize.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -574,6 +615,7 @@ $scripts = @(
     &quot;$PSScriptRoot\Drivers\Install-Network.ps1&quot;,
     &quot;$PSScriptRoot\Tweaks\Remove-Bloatware.ps1&quot;,
     &quot;$PSScriptRoot\Tweaks\Configure-Privacy.ps1&quot;,
+    "$PSScriptRoot\Tweaks\Optimize-System.ps1",
     &quot;$PSScriptRoot\Drivers\Install-Nvidia.ps1&quot;,
     &quot;$PSScriptRoot\Drivers\Install-AMD.ps1&quot;,
     &quot;$PSScriptRoot\Drivers\Install-Focusrite.ps1&quot;,
