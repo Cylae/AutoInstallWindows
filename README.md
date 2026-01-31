@@ -8,12 +8,16 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 
 *   **⚡ Zero-Interruption Setup**: All software (Chrome, Drivers, etc.) is installed during the `Specialize` pass, *before* the user logs in. No popups, no waiting at the desktop.
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
-*   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
+*   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana, Search Highlights, and Online Tips. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
 *   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, etc.) and unnecessary Windows capabilities.
+*   **🎨 UI Enhancements**:
+    *   **Dark Mode**: Automatically enables Dark Mode for both Apps and System.
+    *   **Clean Desktop**: Disables Lock Screen "fun facts" and tips.
 *   **🚀 System Optimization**:
     *   **High Performance**: Automatically sets the "High Performance" power plan.
     *   **Space Saving**: Disables Hibernation to save disk space (`hiberfil.sys`).
     *   **Gaming**: Disables Game DVR/Bar for better gaming performance.
+    *   **Clean Finish**: Automatically removes all setup scripts (`C:\Windows\Setup\Scripts`) after installation.
 *   **🔧 Intelligent Driver Installation**:
     *   **Auto-Detection**: Automatically scans all drives for a `drivers` folder.
     *   **Smart Matching**: Finds installer executables (`*.exe`) automatically—no need to rename files to `setup.exe`.
@@ -67,12 +71,16 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 
 *   **⚡ Installation Zéro-Interruption**: Tous les logiciels (Chrome, Pilotes, etc.) sont installés durant la phase `Specialize`, **avant** la connexion de l'utilisateur. Aucun popup, aucune attente sur le bureau.
 *   **🤫 Totalement Silencieux**: Tous les scripts sont optimisés pour masquer les sorties et fenêtres. Vous ne verrez rien avant l'écran "Bienvenue".
-*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, Copilot, la recherche Bing, Cortana. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
+*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, Copilot, la recherche Bing, Cortana, les "Search Highlights" et les astuces en ligne. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
 *   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, etc.) et les fonctionnalités Windows inutiles.
+*   **🎨 Améliorations UI**:
+    *   **Mode Sombre**: Active automatiquement le mode sombre pour les applications et le système.
+    *   **Bureau Épuré**: Désactive les "faits amusants" et astuces de l'écran de verrouillage.
 *   **🚀 Optimisation Système**:
     *   **Haute Performance**: Active automatiquement le plan d'alimentation "Haute Performance".
     *   **Gain d'Espace**: Désactive l'hibernation pour économiser de l'espace disque (`hiberfil.sys`).
     *   **Jeu**: Désactive Game DVR/Bar pour de meilleures performances en jeu.
+    *   **Nettoyage Final**: Supprime automatiquement tous les scripts d'installation (`C:\Windows\Setup\Scripts`) après l'installation.
 *   **🔧 Installation Intelligente des Pilotes**:
     *   **Auto-Détection**: Scanne tous les lecteurs pour trouver le dossier `drivers`.
     *   **Recherche Intelligente**: Trouve automatiquement les exécutables (`*.exe`)—pas besoin de renommer en `setup.exe`.
