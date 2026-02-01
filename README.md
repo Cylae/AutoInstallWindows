@@ -8,7 +8,8 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 
 *   **⚡ Zero-Interruption Setup**: All software (Chrome, Drivers, etc.) is installed during the `Specialize` pass, *before* the user logs in. No popups, no waiting at the desktop.
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
-*   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
+*   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana, Search Highlights. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
+*   **🌙 Dark Mode**: Automatically enables Dark Mode for Apps and System.
 *   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, etc.) and unnecessary Windows capabilities.
 *   **🚀 System Optimization**:
     *   **High Performance**: Automatically sets the "High Performance" power plan.
