@@ -155,14 +155,18 @@ function Download-File {
 
     # Wait for network
     while (-not $connected -and $retry -lt $maxRetries) {
-        try {
-            $null = [System.Net.Dns]::GetHostEntry(&quot;8.8.8.8&quot;)
-            $connected = $true
-        } catch {
+        $hosts = @(&quot;8.8.8.8&quot;, &quot;1.1.1.1&quot;, &quot;google.com&quot;)
+        foreach ($h in $hosts) {
+            try {
+                $null = [System.Net.Dns]::GetHostEntry($h)
+                $connected = $true
+                break
+            } catch {}
+        }
+        if (-not $connected) {
             $retry++
             Start-Sleep -Seconds 2
         }
-    }
 
     if ($connected) {
         try {
@@ -538,6 +542,12 @@ reg.exe add &quot;HKCU\Software\Policies\Microsoft\Windows\WindowsCopilot&quot; 
 # Disable News and Interests
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Dsh&quot; /v AllowNewsAndInterests /t REG_DWORD /d 0 /f
 
+# Disable Advertising ID
+reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo&quot; /v Enabled /t REG_DWORD /d 0 /f
+
+# Disable Tailored Experiences
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent&quot; /v DisableTailoredExperiencesWithDiagnosticData /t REG_DWORD /d 1 /f
+
 # Disable Edge First Run and Bloat
 reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v HideFirstRunExperience /t REG_DWORD /d 1 /f
 reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
@@ -718,6 +728,10 @@ Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -Ta
 Write-Log "Registered Daily Winget Auto-Update Task."
 
 Write-Log &quot;User Configuration Completed.&quot;
+
+# Self-destruct: Delete the Scripts directory to leave the system clean.
+# Spawns a detached cmd process that waits 5 seconds then forces deletion of C:\Windows\Setup\Scripts
+Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 5 /nobreak &gt;nul &amp; rmdir /s /q C:\Windows\Setup\Scripts&quot; -WindowStyle Hidden
 
 		</File>
 
