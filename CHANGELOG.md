@@ -1,5 +1,15 @@
 # Change Log
 
+## [Fixes & Enhancements] - 2024-05-24
+
+### 🚀 Enhancements
+*   **Log Persistence**: Changed log file location to `C:\Windows\Panther\Autounattend_Log.txt` so it is preserved after cleanup.
+*   **System Optimization**: Added `fsutil behavior set disablelastaccess 1` to improve file system performance.
+*   **Winget**: Added `--disable-interactivity` to the daily auto-update task to prevent potential hangs.
+
+### 🧹 Debloating
+*   **Your Phone**: Added `Microsoft.YourPhone` to the removal list.
+
 ## [Refactoring] - 2024-05-23
 
 ### 🚀 Performance & Robustness
