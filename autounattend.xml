@@ -525,11 +525,12 @@ reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; 
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; /v DoNotShowFeedbackNotifications /t REG_DWORD /d 1 /f
 reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection&quot; /v AllowTelemetry /t REG_DWORD /d 0 /f
 
-# Disable Bing Search and Cortana
+# Disable Bing Search, Cortana, and Search Highlights
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v AllowCortana /t REG_DWORD /d 0 /f
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v DisableWebSearch /t REG_DWORD /d 1 /f
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v ConnectedSearchUseWeb /t REG_DWORD /d 0 /f
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v AllowCloudSearch /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v EnableDynamicContentInWS /t REG_DWORD /d 0 /f
 
 # Disable Copilot
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot&quot; /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f
@@ -537,6 +538,10 @@ reg.exe add &quot;HKCU\Software\Policies\Microsoft\Windows\WindowsCopilot&quot; 
 
 # Disable News and Interests
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Dsh&quot; /v AllowNewsAndInterests /t REG_DWORD /d 0 /f
+
+# Disable Online Tips and Advertising ID
+reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; /v AllowOnlineTips /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot; /v DisabledByGroupPolicy /t REG_DWORD /d 1 /f
 
 # Disable Edge First Run and Bloat
 reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v HideFirstRunExperience /t REG_DWORD /d 1 /f
@@ -550,26 +555,22 @@ reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\BitLocker&quot; /v &quot
 reg.exe add &quot;HKLM\System\CurrentControlSet\Control\DeviceGuard&quot; /v &quot;EnableVirtualizationBasedSecurity&quot; /t REG_DWORD /d 0 /f
 reg.exe add &quot;HKLM\System\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity&quot; /v &quot;Enabled&quot; /t REG_DWORD /d 0 /f
 
-# Classic Context Menu (Windows 11) - Requires HKCU, handled in UserOnce or DefaultUser
-# Here we can try setting it for default user via reg load or just rely on UserOnce
-
 # Disable Telemetry and Maps Services
 $services = @('DiagTrack', 'dmwappushservice', 'MapsBroker', 'lfsvc')
 foreach ($service in $services) {
     if (Get-Service -Name $service -ErrorAction SilentlyContinue) {
-        Write-Log "Disabling service $service..."
+        Write-Log &quot;Disabling service $service...&quot;
         try {
             Stop-Service -Name $service -Force -ErrorAction SilentlyContinue
-            Set-ItemProperty -Path "Registry::HKLM\SYSTEM\CurrentControlSet\Services\$service" -Name "Start" -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path &quot;Registry::HKLM\SYSTEM\CurrentControlSet\Services\$service&quot; -Name &quot;Start&quot; -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
         } catch {
-            Write-Log "Failed to disable service $service: $_"
+            Write-Log &quot;Failed to disable service $service: $_&quot;
         }
     }
 }
 
 Write-Log &quot;Privacy Tweaks Applied.&quot;
-
-		</File>
+</File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\SetStartPins.ps1">
 $json = '{&quot;pinnedList&quot;:[]}';
 if( [System.Environment]::OSVersion.Version.Build -lt 20000 ) {
@@ -676,8 +677,19 @@ try {
     # Show File Extensions
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v HideFileExt /t REG_DWORD /d 0 /f
 
+    # Show &quot;This PC&quot; Icon on Desktop
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel&quot; /v &quot;{20D04FE0-3AEA-1069-A2D8-08002B30309D}&quot; /t REG_DWORD /d 0 /f
+
+    # Enable Dark Mode (System and Apps)
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize&quot; /v AppsUseLightTheme /t REG_DWORD /d 0 /f
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize&quot; /v SystemUsesLightTheme /t REG_DWORD /d 0 /f
+
     # Classic Context Menu (Windows 11)
     reg.exe add &quot;$defaultUserHive\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32&quot; /ve /t REG_SZ /d &quot;&quot; /f
+
+    # Disable Lock Screen Tips
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; /v RotatingLockScreenEnabled /t REG_DWORD /d 0 /f
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; /v SubscribedContent-338387Enabled /t REG_DWORD /d 0 /f
 
     # Disable Copilot for Default User
     reg.exe add &quot;$defaultUserHive\Software\Policies\Microsoft\Windows\WindowsCopilot&quot; /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f
@@ -691,8 +703,7 @@ finally {
 }
 
 Write-Log &quot;Default User Configuration Completed.&quot;
-
-		</File>
+</File>
 		<File path="C:\Windows\Setup\Scripts\UserOnce.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -710,16 +721,18 @@ Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\Current
 Get-Process -Name 'explorer' -ErrorAction 'SilentlyContinue' | Stop-Process -Force
 
 # Register Daily Winget Auto-Update Task (Transparent)
-$taskName = "DailySoftwareUpdate"
-$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-WindowStyle Hidden -Command `&quot;winget source update; winget upgrade --all --include-unknown --silent --accept-source-agreements --accept-package-agreements`&quot;"
+$taskName = &quot;DailySoftwareUpdate&quot;
+$action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `&quot;winget source update; winget upgrade --all --include-unknown --silent --accept-source-agreements --accept-package-agreements`&quot;&quot;
 $trigger = New-ScheduledTaskTrigger -Daily -At 13:00
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
-Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description "Automatically updates all software via Winget silently." -RunLevel Highest -Force | Out-Null
-Write-Log "Registered Daily Winget Auto-Update Task."
+Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Highest -Force | Out-Null
+Write-Log &quot;Registered Daily Winget Auto-Update Task.&quot;
 
 Write-Log &quot;User Configuration Completed.&quot;
 
-		</File>
+# Self-Destruct: Cleanup Scripts
+Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 5 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden
+</File>
 
 	</Extensions>
 </unattend>
