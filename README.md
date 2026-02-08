@@ -10,11 +10,12 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
 *   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana, Advertising ID, Search Highlights. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
 *   **🌑 Dark Mode**: Enables Dark Mode for System and Apps by default.
-*   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, etc.) and unnecessary Windows capabilities.
+*   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Xbox/Gaming Overlays**, **YourPhone**, etc.) and unnecessary Windows capabilities.
 *   **💥 Self-Destruct**: Installation scripts automatically delete themselves after the first login to ensure a clean slate.
 *   **🚀 System Optimization**:
     *   **High Performance**: Automatically sets the "High Performance" power plan.
     *   **Space Saving**: Disables Hibernation to save disk space (`hiberfil.sys`).
+    *   **Disk I/O**: Disables Last Access Timestamp updates to improve disk performance.
     *   **Gaming**: Disables Game DVR/Bar for better gaming performance.
 *   **🔧 Intelligent Driver Installation**:
     *   **Auto-Detection**: Automatically scans all drives for a `drivers` folder.
@@ -25,7 +26,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Visual C++ Runtimes**: Automatically downloads and installs the latest VC++ 2015-2022 Redistributable (**x64 and x86**).
 *   **🔄 Transparent Auto-Updates**:
     *   **Daily Updates**: Registers a hidden scheduled task to run `winget upgrade --all` daily (includes `source update`).
-    *   **Silent**: Updates happen in the background without user intervention.
+    *   **Silent**: Updates happen in the background without user intervention (configured with `--disable-interactivity`).
 
 ## 📂 Folder Structure
 
@@ -56,6 +57,21 @@ USB_ROOT/
 3.  **Boot**: Boot from the USB.
 4.  **Relax**: The system will install Windows, drivers, and apps, and clean itself up automatically. When you see the desktop, it's ready.
 
+## ❓ Troubleshooting
+
+If you encounter issues, check the log file created during setup:
+**`C:\Windows\Panther\Autounattend_Log.txt`**
+
+*   **Drivers not installing?**
+    *   Ensure network drivers are **`.inf`** files (extract them if necessary) placed in `drivers/network`.
+    *   Ensure other drivers (Nvidia, AMD, etc.) are **`.exe`** installers.
+    *   Verify the folder structure on your USB drive matches the example above.
+*   **Apps not downloading?**
+    *   Check your internet connection. The script attempts to connect to `8.8.8.8` to verify connectivity.
+    *   If offline, place the installers in the corresponding `apps` folder on the USB.
+*   **Script errors?**
+    *   Review the log file mentioned above for specific error messages.
+
 ---
 ---
 
@@ -71,11 +87,12 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **🤫 Totalement Silencieux**: Tous les scripts sont optimisés pour masquer les sorties et fenêtres. Vous ne verrez rien avant l'écran "Bienvenue".
 *   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, Copilot, la recherche Bing, Cortana, l'ID publicitaire. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
 *   **🌑 Mode Sombre**: Active le mode sombre pour le système et les applications par défaut.
-*   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, etc.) et les fonctionnalités Windows inutiles.
+*   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, **Xbox/Jeux**, **YourPhone**, etc.) et les fonctionnalités Windows inutiles.
 *   **💥 Auto-destruction**: Les scripts d'installation se suppriment automatiquement après la première connexion pour garantir un état propre.
 *   **🚀 Optimisation Système**:
     *   **Haute Performance**: Active automatiquement le plan d'alimentation "Haute Performance".
     *   **Gain d'Espace**: Désactive l'hibernation pour économiser de l'espace disque (`hiberfil.sys`).
+    *   **E/S Disque**: Désactive la mise à jour de la date de dernier accès pour améliorer les performances disque.
     *   **Jeu**: Désactive Game DVR/Bar pour de meilleures performances en jeu.
 *   **🔧 Installation Intelligente des Pilotes**:
     *   **Auto-Détection**: Scanne tous les lecteurs pour trouver le dossier `drivers`.
@@ -86,7 +103,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
     *   **Runtimes Visual C++**: Télécharge et installe automatiquement les derniers Runtimes VC++ 2015-2022 (**x64 et x86**).
 *   **🔄 Mises à Jour Automatiques Transparentes**:
     *   **Quotidien**: Enregistre une tâche planifiée masquée pour exécuter `winget upgrade --all` chaque jour.
-    *   **Silencieux**: Les mises à jour se font en arrière-plan sans intervention de l'utilisateur.
+    *   **Silencieux**: Les mises à jour se font en arrière-plan sans intervention de l'utilisateur (configuré avec `--disable-interactivity`).
 
 ## 📂 Structure des Dossiers
 
@@ -116,3 +133,18 @@ RACINE_USB/
 2.  **Ajouter Pilotes/Apps**: Créez la structure de dossiers `drivers` et copiez vos installateurs (optionnel, mais recommandé pour la vitesse).
 3.  **Démarrer**: Démarrez sur la clé USB.
 4.  **Détendez-vous**: Le système installera Windows, les pilotes et les applications, et se nettoiera automatiquement. Quand vous voyez le bureau, c'est prêt.
+
+## ❓ Dépannage
+
+Si vous rencontrez des problèmes, consultez le fichier journal créé lors de l'installation :
+**`C:\Windows\Panther\Autounattend_Log.txt`**
+
+*   **Les pilotes ne s'installent pas ?**
+    *   Assurez-vous que les pilotes réseau sont des fichiers **`.inf`** (extrayez-les si nécessaire) placés dans `drivers/network`.
+    *   Assurez-vous que les autres pilotes (Nvidia, AMD, etc.) sont des installateurs **`.exe`**.
+    *   Vérifiez que la structure des dossiers sur votre clé USB correspond à l'exemple ci-dessus.
+*   **Les applications ne se téléchargent pas ?**
+    *   Vérifiez votre connexion Internet. Le script tente de se connecter à `8.8.8.8` pour vérifier la connectivité.
+    *   Si vous êtes hors ligne, placez les installateurs dans le dossier `apps` correspondant sur la clé USB.
+*   **Erreurs de script ?**
+    *   Consultez le fichier journal mentionné ci-dessus pour les messages d'erreur spécifiques.
