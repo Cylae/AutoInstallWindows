@@ -31,15 +31,7 @@
 				</RunSynchronousCommand>
 				<RunSynchronousCommand wcm:action="add">
 					<Order>3</Order>
-					<Path>reg.exe load "HKU\DefaultUser" "C:\Users\Default\NTUSER.DAT"</Path>
-				</RunSynchronousCommand>
-				<RunSynchronousCommand wcm:action="add">
-					<Order>4</Order>
 					<Path>powershell.exe -WindowStyle "Hidden" -ExecutionPolicy "Unrestricted" -NoProfile -File "C:\Windows\Setup\Scripts\DefaultUser.ps1"</Path>
-				</RunSynchronousCommand>
-				<RunSynchronousCommand wcm:action="add">
-					<Order>5</Order>
-					<Path>reg.exe unload "HKU\DefaultUser"</Path>
 				</RunSynchronousCommand>
 			</RunSynchronous>
 		</component>
@@ -104,7 +96,8 @@ foreach( $file in $Document.unattend.Extensions.File ) {
 }
 
 		</ExtractScript>
-		<File path="C:\Windows\Setup\Scripts\Lib\Helper.ps1">function Get-InstallMedia {
+		<File path="C:\Windows\Setup\Scripts\Lib\Helper.ps1">
+function Get-InstallMedia {
     $drives = Get-PSDrive -PSProvider FileSystem
     foreach ($drive in $drives) {
         $path = Join-Path -Path $drive.Root -ChildPath &quot;drivers&quot;
@@ -174,9 +167,12 @@ function Download-File {
         try {
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -ErrorAction Stop
-            if (Test-Path -Path $Destination -And (Get-Item $Destination).Length -gt 0) {
+            # Verify file size &gt; 1KB (1024 bytes) to ensure valid download
+            if (Test-Path -Path $Destination -And (Get-Item $Destination).Length -gt 1024) {
                 Write-Log &quot;Download of $Name successful.&quot;
                 return $true
+            } else {
+                Write-Log &quot;Download of $Name failed (file too small or empty).&quot;
             }
         } catch {
             Write-Log &quot;Failed to download $Name: $_&quot;
@@ -252,7 +248,7 @@ if ($setupPath) {
 } else {
     Write-Log &quot;Nvidia installer not found locally.&quot;
 }
-		</File>
+</File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-AMD.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -290,7 +286,7 @@ if ($setupPath) {
 } else {
     Write-Log &quot;AMD installer not found locally and no download URL provided.&quot;
 }
-		</File>
+</File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Focusrite.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -328,48 +324,72 @@ if ($setupPath) {
 } else {
     Write-Log &quot;Focusrite installer not found locally and no download URL provided.&quot;
 }
-		</File>
+</File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Runtimes.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Visual C++ Runtimes Installation...&quot;
 
+$mediaRoot = Get-InstallMedia
+
+function Install-Runtime {
+    param(
+        [string]$Url,
+        [string]$DestName,
+        [string]$LogName,
+        [string]$LocalFolder
+    )
+
+    $setupPath = $null
+    $dest = &quot;$env:TEMP\$DestName&quot;
+
+    # 1. Try Download (Online First)
+    if (Download-File -Url $Url -Destination $dest -Name $LogName) {
+        $setupPath = $dest
+    }
+
+    # 2. Try Local (Fallback)
+    if (-not $setupPath -and $mediaRoot) {
+        Write-Log &quot;Download of $LogName failed. Checking local storage...&quot;
+        $possiblePaths = @(
+            (Join-Path $mediaRoot &quot;apps\$LocalFolder&quot;),
+            (Join-Path $mediaRoot &quot;drivers\apps\$LocalFolder&quot;),
+            (Join-Path $mediaRoot &quot;Apps\$LocalFolder&quot;),
+            (Join-Path $mediaRoot &quot;Drivers\Apps\$LocalFolder&quot;)
+        )
+        foreach ($path in $possiblePaths) {
+             if (Test-Path $path) {
+                 $localInstaller = Get-InstallerFile -Path $path
+                 if ($localInstaller) {
+                    $setupPath = $localInstaller
+                    break
+                 }
+             }
+        }
+    }
+
+    if ($setupPath) {
+        Write-Log &quot;Installing $LogName from $setupPath...&quot;
+        try {
+            Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
+            Start-Process -FilePath $setupPath -ArgumentList &quot;/install /quiet /norestart&quot; -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\${DestName}_install.log&quot;
+            Write-Log &quot;$LogName installation completed.&quot;
+        } catch {
+            Write-Log &quot;Error installing $LogName: $_&quot;
+        }
+    } else {
+        Write-Log &quot;$LogName installer not found locally and download failed.&quot;
+    }
+}
+
 # Official Microsoft Link for Latest Supported VC++ 2015-2022
 $url64 = &quot;https://aka.ms/vc14/vc_redist.x64.exe&quot;
 $url86 = &quot;https://aka.ms/vc14/vc_redist.x86.exe&quot;
 
-$dest64 = &quot;$env:TEMP\vc_redist.x64.exe&quot;
-$dest86 = &quot;$env:TEMP\vc_redist.x86.exe&quot;
-
-# Install x64
-if (Download-File -Url $url64 -Destination $dest64 -Name &quot;Visual C++ Runtimes (x64)&quot;) {
-    Write-Log &quot;Installing Visual C++ Runtimes (x64)...&quot;
-    try {
-        Unblock-File -Path $dest64 -ErrorAction SilentlyContinue
-        Start-Process -FilePath $dest64 -ArgumentList &quot;/install /quiet /norestart&quot; -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\vcredist_x64_install.log&quot;
-        Write-Log &quot;Visual C++ Runtimes (x64) installation completed.&quot;
-    } catch {
-        Write-Log &quot;Error installing Visual C++ Runtimes (x64): $_&quot;
-    }
-} else {
-    Write-Log &quot;Failed to download Visual C++ Runtimes (x64).&quot;
-}
-
-# Install x86
-if (Download-File -Url $url86 -Destination $dest86 -Name &quot;Visual C++ Runtimes (x86)&quot;) {
-    Write-Log &quot;Installing Visual C++ Runtimes (x86)...&quot;
-    try {
-        Unblock-File -Path $dest86 -ErrorAction SilentlyContinue
-        Start-Process -FilePath $dest86 -ArgumentList &quot;/install /quiet /norestart&quot; -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\vcredist_x86_install.log&quot;
-        Write-Log &quot;Visual C++ Runtimes (x86) installation completed.&quot;
-    } catch {
-        Write-Log &quot;Error installing Visual C++ Runtimes (x86): $_&quot;
-    }
-} else {
-    Write-Log &quot;Failed to download Visual C++ Runtimes (x86).&quot;
-}
-		</File>
+Install-Runtime -Url $url64 -DestName &quot;vc_redist.x64.exe&quot; -LogName &quot;Visual C++ Runtimes (x64)&quot; -LocalFolder &quot;vcredist_x64&quot;
+Install-Runtime -Url $url86 -DestName &quot;vc_redist.x86.exe&quot; -LogName &quot;Visual C++ Runtimes (x86)&quot; -LocalFolder &quot;vcredist_x86&quot;
+</File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Chrome.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -420,8 +440,9 @@ if ($setupPath) {
 } else {
     Write-Log &quot;Chrome installer not found locally and download failed.&quot;
 }
-		</File>
-		<File path="C:\Windows\Setup\Scripts\Tweaks\Remove-Bloatware.ps1">$ErrorActionPreference = &apos;Stop&apos;
+</File>
+		<File path="C:\Windows\Setup\Scripts\Tweaks\Remove-Bloatware.ps1">
+$ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 $packagesToRemove = @(
@@ -459,6 +480,7 @@ $packagesToRemove = @(
     'Microsoft.Wallet',
     'Microsoft.BingWeather',
     'Microsoft.ZuneVideo',
+    'MicrosoftWindows.Client.WebExperience',
     'Microsoft.Windows.Ai.Copilot.Provider',
     'Microsoft.YourPhone',
     'Microsoft.GamingApp',
@@ -469,21 +491,21 @@ $packagesToRemove = @(
 )
 
 $capabilitiesToRemove = @(
-    &apos;Print.Fax.Scan&apos;,
-    &apos;Browser.InternetExplorer&apos;,
-    &apos;MathRecognizer&apos;,
-    &apos;OneCoreUAP.OneSync&apos;,
-    &apos;App.Support.QuickAssist&apos;,
-    &apos;App.StepsRecorder&apos;,
-    &apos;Hello.Face&apos;,
-    &apos;Media.WindowsMediaPlayer&apos;,
-    &apos;Microsoft.Windows.WordPad&apos;
+    'Print.Fax.Scan',
+    'Browser.InternetExplorer',
+    'MathRecognizer',
+    'OneCoreUAP.OneSync',
+    'App.Support.QuickAssist',
+    'App.StepsRecorder',
+    'Hello.Face',
+    'Media.WindowsMediaPlayer',
+    'Microsoft.Windows.WordPad'
 )
 
 $featuresToRemove = @(
-    &apos;MediaPlayback&apos;,
-    &apos;Microsoft-RemoteDesktopConnection&apos;,
-    &apos;Recall&apos;
+    'MediaPlayback',
+    'Microsoft-RemoteDesktopConnection',
+    'Recall'
 )
 
 Write-Log &quot;Starting Debloating Process...&quot;
@@ -505,7 +527,7 @@ foreach ($package in $packagesToRemove) {
 # Remove Capabilities
 $capabilities = Get-WindowsCapability -Online
 foreach ($capName in $capabilitiesToRemove) {
-    $cap = $capabilities | Where-Object { ($_.Name -split &apos;~&apos;)[0] -eq $capName -and $_.State -ne &apos;NotPresent&apos; }
+    $cap = $capabilities | Where-Object { ($_.Name -split '~')[0] -eq $capName -and $_.State -ne 'NotPresent' }
     if ($cap) {
         Write-Log &quot;Removing capability $capName...&quot;
         try {
@@ -518,7 +540,7 @@ foreach ($capName in $capabilitiesToRemove) {
 
 # Remove Optional Features
 foreach ($feature in $featuresToRemove) {
-    if ((Get-WindowsOptionalFeature -Online -FeatureName $feature -ErrorAction SilentlyContinue).State -eq &apos;Enabled&apos;) {
+    if ((Get-WindowsOptionalFeature -Online -FeatureName $feature -ErrorAction SilentlyContinue).State -eq 'Enabled') {
         Write-Log &quot;Disabling feature $feature...&quot;
         try {
             Disable-WindowsOptionalFeature -Online -FeatureName $feature -Remove -NoRestart -ErrorAction Continue | Out-Null
@@ -595,8 +617,7 @@ if( [System.Environment]::OSVersion.Version.Build -lt 20000 ) {
 $key = 'Registry::HKLM\SOFTWARE\Microsoft\PolicyManager\current\device\Start';
 New-Item -Path $key -ItemType 'Directory' -ErrorAction 'SilentlyContinue';
 Set-ItemProperty -LiteralPath $key -Name 'ConfigureStartPins' -Value $json -Type 'String';
-
-		</File>
+</File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Optimize-System.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -640,11 +661,11 @@ $scripts = @(
     &quot;$PSScriptRoot\Drivers\Install-Network.ps1&quot;,
     &quot;$PSScriptRoot\Tweaks\Remove-Bloatware.ps1&quot;,
     &quot;$PSScriptRoot\Tweaks\Configure-Privacy.ps1&quot;,
-    "$PSScriptRoot\Tweaks\Optimize-System.ps1",
+    &quot;$PSScriptRoot\Tweaks\Optimize-System.ps1&quot;,
     &quot;$PSScriptRoot\Drivers\Install-Nvidia.ps1&quot;,
     &quot;$PSScriptRoot\Drivers\Install-AMD.ps1&quot;,
     &quot;$PSScriptRoot\Drivers\Install-Focusrite.ps1&quot;,
-    "$PSScriptRoot\Apps\Install-Runtimes.ps1",
+    &quot;$PSScriptRoot\Apps\Install-Runtimes.ps1&quot;,
     &quot;$PSScriptRoot\Apps\Install-Chrome.ps1&quot;,
     &quot;$PSScriptRoot\Tweaks\SetStartPins.ps1&quot;
 )
@@ -680,8 +701,7 @@ try {
 }
 
 Write-Log &quot;Specialize Pass Completed.&quot;
-
-		</File>
+</File>
 		<File path="C:\Windows\Setup\Scripts\DefaultUser.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -690,7 +710,14 @@ Write-Log &quot;Configuring Default User...&quot;
 
 # Load Default User Hive
 $defaultUserHive = &quot;HKU\DefaultUser&quot;
-reg.exe load $defaultUserHive &quot;C:\Users\Default\NTUSER.DAT&quot;
+
+# Robustly load hive: Check if already loaded first
+if (-not (Test-Path &quot;Registry::$defaultUserHive&quot;)) {
+    Write-Log &quot;Loading Default User hive...&quot;
+    reg.exe load $defaultUserHive &quot;C:\Users\Default\NTUSER.DAT&quot;
+} else {
+    Write-Log &quot;Default User hive already loaded.&quot;
+}
 
 try {
     # Taskbar and Explorer settings
@@ -725,26 +752,30 @@ try {
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce&quot; /v &quot;UnattendedSetup&quot; /t REG_SZ /d &quot;powershell.exe -WindowStyle `&quot;Normal`&quot; -ExecutionPolicy `&quot;Unrestricted`&quot; -NoProfile -File `&quot;C:\Windows\Setup\Scripts\UserOnce.ps1`&quot;&quot; /f
 }
 finally {
+    # Only unload if we are sure we are done.
+    # But since we are the only ones touching it in this scope, we should unload.
+    Write-Log &quot;Unloading Default User hive...&quot;
     reg.exe unload $defaultUserHive
     [GC]::Collect()
 }
 
 Write-Log &quot;Default User Configuration Completed.&quot;
 </File>
-		<File path="C:\Windows\Setup\Scripts\UserOnce.ps1">$ErrorActionPreference = &apos;Stop&apos;
+		<File path="C:\Windows\Setup\Scripts\UserOnce.ps1">
+$ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Configuring User Account...&quot;
 
 # Disable Copilot
-Get-AppxPackage -Name &apos;Microsoft.Windows.Ai.Copilot.Provider&apos; | Remove-AppxPackage -ErrorAction SilentlyContinue
+Get-AppxPackage -Name 'Microsoft.Windows.Ai.Copilot.Provider' | Remove-AppxPackage -ErrorAction SilentlyContinue
 
 # Explorer Settings
-Set-ItemProperty -LiteralPath &apos;Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&apos; -Name &apos;LaunchTo&apos; -Type &apos;DWord&apos; -Value 1 -Force
-Set-ItemProperty -LiteralPath &apos;Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Search&apos; -Name &apos;SearchboxTaskbarMode&apos; -Type &apos;DWord&apos; -Value 3 -Force # Icon only
+Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Name 'LaunchTo' -Type 'DWord' -Value 1 -Force
+Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Search' -Name 'SearchboxTaskbarMode' -Type 'DWord' -Value 3 -Force # Icon only
 
 # Restart Explorer to apply changes
-Get-Process -Name &apos;explorer&apos; -ErrorAction &apos;SilentlyContinue&apos; | Stop-Process -Force
+Get-Process -Name 'explorer' -ErrorAction 'SilentlyContinue' | Stop-Process -Force
 
 # Register Daily Winget Auto-Update Task (Transparent)
 $taskName = &quot;DailySoftwareUpdate&quot;
