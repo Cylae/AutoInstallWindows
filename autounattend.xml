@@ -155,8 +155,15 @@ function Download-File {
     # Wait for network
     while (-not $connected -and $retry -lt $maxRetries) {
         try {
-            $null = [System.Net.Dns]::GetHostEntry(&quot;8.8.8.8&quot;)
-            $connected = $true
+            $testHosts = @(&quot;8.8.8.8&quot;, &quot;1.1.1.1&quot;, &quot;google.com&quot;, &quot;microsoft.com&quot;)
+            foreach ($hostName in $testHosts) {
+                try {
+                    $null = [System.Net.Dns]::GetHostEntry($hostName)
+                    $connected = $true
+                    break
+                } catch {}
+            }
+            if (-not $connected) { throw &quot;No connection&quot; }
         } catch {
             $retry++
             Start-Sleep -Seconds 2
@@ -178,7 +185,8 @@ function Download-File {
         Write-Log &quot;No network connectivity to download $Name.&quot;
     }
     return $false
-}</File>
+}
+</File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Network.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -412,42 +420,42 @@ if ($setupPath) {
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 $packagesToRemove = @(
-    &apos;Microsoft.Microsoft3DViewer&apos;,
-    &apos;Microsoft.BingSearch&apos;,
-    &apos;Microsoft.WindowsCamera&apos;,
-    &apos;Clipchamp.Clipchamp&apos;,
-    &apos;Microsoft.WindowsAlarms&apos;,
-    &apos;Microsoft.Copilot&apos;,
-    &apos;Microsoft.Windows.DevHome&apos;,
-    &apos;MicrosoftCorporationII.MicrosoftFamily&apos;,
-    &apos;Microsoft.WindowsFeedbackHub&apos;,
-    &apos;Microsoft.GetHelp&apos;,
-    &apos;Microsoft.Getstarted&apos;,
-    &apos;microsoft.windowscommunicationsapps&apos;,
-    &apos;Microsoft.WindowsMaps&apos;,
-    &apos;Microsoft.MixedReality.Portal&apos;,
-    &apos;Microsoft.BingNews&apos;,
-    &apos;Microsoft.WindowsNotepad&apos;,
-    &apos;Microsoft.MicrosoftOfficeHub&apos;,
-    &apos;Microsoft.Office.OneNote&apos;,
-    &apos;Microsoft.OutlookForWindows&apos;,
-    &apos;Microsoft.MSPaint&apos;,
-    &apos;Microsoft.People&apos;,
-    &apos;Microsoft.Windows.Photos&apos;,
-    &apos;Microsoft.PowerAutomateDesktop&apos;,
-    &apos;MicrosoftCorporationII.QuickAssist&apos;,
-    &apos;Microsoft.SkypeApp&apos;,
-    &apos;Microsoft.MicrosoftSolitaireCollection&apos;,
-    &apos;Microsoft.MicrosoftStickyNotes&apos;,
-    &apos;MicrosoftTeams&apos;,
-    &apos;MSTeams&apos;,
-    &apos;Microsoft.Todos&apos;,
-    &apos;Microsoft.WindowsSoundRecorder&apos;,
-    &apos;Microsoft.Wallet&apos;,
-    &apos;Microsoft.BingWeather&apos;,
-    &apos;Microsoft.ZuneVideo&apos;,
-    &apos;Microsoft.Windows.Ai.Copilot.Provider&apos;,
-    &apos;Microsoft.YourPhone&apos;
+    'Microsoft.Microsoft3DViewer',
+    'Microsoft.BingSearch',
+    'Microsoft.WindowsCamera',
+    'Clipchamp.Clipchamp',
+    'Microsoft.WindowsAlarms',
+    'Microsoft.Copilot',
+    'Microsoft.Windows.DevHome',
+    'MicrosoftCorporationII.MicrosoftFamily',
+    'Microsoft.WindowsFeedbackHub',
+    'Microsoft.GetHelp',
+    'Microsoft.Getstarted',
+    'microsoft.windowscommunicationsapps',
+    'Microsoft.WindowsMaps',
+    'Microsoft.MixedReality.Portal',
+    'Microsoft.BingNews',
+    'Microsoft.WindowsNotepad',
+    'Microsoft.MicrosoftOfficeHub',
+    'Microsoft.Office.OneNote',
+    'Microsoft.OutlookForWindows',
+    'Microsoft.MSPaint',
+    'Microsoft.People',
+    'Microsoft.Windows.Photos',
+    'Microsoft.PowerAutomateDesktop',
+    'MicrosoftCorporationII.QuickAssist',
+    'Microsoft.SkypeApp',
+    'Microsoft.MicrosoftSolitaireCollection',
+    'Microsoft.MicrosoftStickyNotes',
+    'MicrosoftTeams',
+    'MSTeams',
+    'Microsoft.Todos',
+    'Microsoft.WindowsSoundRecorder',
+    'Microsoft.Wallet',
+    'Microsoft.BingWeather',
+    'Microsoft.ZuneVideo',
+    'Microsoft.Windows.Ai.Copilot.Provider',
+    'Microsoft.YourPhone'
 )
 
 $capabilitiesToRemove = @(
@@ -510,7 +518,8 @@ foreach ($feature in $featuresToRemove) {
     }
 }
 
-Write-Log &quot;Debloating Process Completed.&quot;</File>
+Write-Log &quot;Debloating Process Completed.&quot;
+</File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Configure-Privacy.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -696,6 +705,9 @@ try {
 
     # Disable Copilot for Default User
     reg.exe add &quot;$defaultUserHive\Software\Policies\Microsoft\Windows\WindowsCopilot&quot; /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f
+
+    # Enable End Task in Taskbar (Developer/Power User feature)
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v TaskbarEndTask /t REG_DWORD /d 1 /f
 
     # Run UserOnce on first login
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce&quot; /v &quot;UnattendedSetup&quot; /t REG_SZ /d &quot;powershell.exe -WindowStyle `&quot;Normal`&quot; -ExecutionPolicy `&quot;Unrestricted`&quot; -NoProfile -File `&quot;C:\Windows\Setup\Scripts\UserOnce.ps1`&quot;&quot; /f
