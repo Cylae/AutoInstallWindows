@@ -104,8 +104,7 @@ foreach( $file in $Document.unattend.Extensions.File ) {
 }
 
 		</ExtractScript>
-		<File path="C:\Windows\Setup\Scripts\Lib\Helper.ps1">
-function Get-InstallMedia {
+		<File path="C:\Windows\Setup\Scripts\Lib\Helper.ps1">function Get-InstallMedia {
     $drives = Get-PSDrive -PSProvider FileSystem
     foreach ($drive in $drives) {
         $path = Join-Path -Path $drive.Root -ChildPath &quot;drivers&quot;
@@ -417,8 +416,7 @@ if ($setupPath) {
     Write-Log &quot;Chrome installer not found locally and download failed.&quot;
 }
 		</File>
-		<File path="C:\Windows\Setup\Scripts\Tweaks\Remove-Bloatware.ps1">
-$ErrorActionPreference = 'Stop'
+		<File path="C:\Windows\Setup\Scripts\Tweaks\Remove-Bloatware.ps1">$ErrorActionPreference = &apos;Stop&apos;
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 $packagesToRemove = @(
@@ -461,21 +459,21 @@ $packagesToRemove = @(
 )
 
 $capabilitiesToRemove = @(
-    'Print.Fax.Scan',
-    'Browser.InternetExplorer',
-    'MathRecognizer',
-    'OneCoreUAP.OneSync',
-    'App.Support.QuickAssist',
-    'App.StepsRecorder',
-    'Hello.Face',
-    'Media.WindowsMediaPlayer',
-    'Microsoft.Windows.WordPad'
+    &apos;Print.Fax.Scan&apos;,
+    &apos;Browser.InternetExplorer&apos;,
+    &apos;MathRecognizer&apos;,
+    &apos;OneCoreUAP.OneSync&apos;,
+    &apos;App.Support.QuickAssist&apos;,
+    &apos;App.StepsRecorder&apos;,
+    &apos;Hello.Face&apos;,
+    &apos;Media.WindowsMediaPlayer&apos;,
+    &apos;Microsoft.Windows.WordPad&apos;
 )
 
 $featuresToRemove = @(
-    'MediaPlayback',
-    'Microsoft-RemoteDesktopConnection',
-    'Recall'
+    &apos;MediaPlayback&apos;,
+    &apos;Microsoft-RemoteDesktopConnection&apos;,
+    &apos;Recall&apos;
 )
 
 Write-Log &quot;Starting Debloating Process...&quot;
@@ -497,7 +495,7 @@ foreach ($package in $packagesToRemove) {
 # Remove Capabilities
 $capabilities = Get-WindowsCapability -Online
 foreach ($capName in $capabilitiesToRemove) {
-    $cap = $capabilities | Where-Object { ($_.Name -split '~')[0] -eq $capName -and $_.State -ne 'NotPresent' }
+    $cap = $capabilities | Where-Object { ($_.Name -split &apos;~&apos;)[0] -eq $capName -and $_.State -ne &apos;NotPresent&apos; }
     if ($cap) {
         Write-Log &quot;Removing capability $capName...&quot;
         try {
@@ -510,7 +508,7 @@ foreach ($capName in $capabilitiesToRemove) {
 
 # Remove Optional Features
 foreach ($feature in $featuresToRemove) {
-    if ((Get-WindowsOptionalFeature -Online -FeatureName $feature -ErrorAction SilentlyContinue).State -eq 'Enabled') {
+    if ((Get-WindowsOptionalFeature -Online -FeatureName $feature -ErrorAction SilentlyContinue).State -eq &apos;Enabled&apos;) {
         Write-Log &quot;Disabling feature $feature...&quot;
         try {
             Disable-WindowsOptionalFeature -Online -FeatureName $feature -Remove -NoRestart -ErrorAction Continue | Out-Null
@@ -589,33 +587,39 @@ New-Item -Path $key -ItemType 'Directory' -ErrorAction 'SilentlyContinue';
 Set-ItemProperty -LiteralPath $key -Name 'ConfigureStartPins' -Value $json -Type 'String';
 
 		</File>
-		<File path="C:\Windows\Setup\Scripts\Tweaks\Optimize-System.ps1">
-$ErrorActionPreference = 'Stop'
-. "$PSScriptRoot\Lib\Helper.ps1"
+		<File path="C:\Windows\Setup\Scripts\Tweaks\Optimize-System.ps1">$ErrorActionPreference = &apos;Stop&apos;
+. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
-Write-Log "Applying System Optimizations..."
+Write-Log &quot;Applying System Optimizations...&quot;
 
 # 1. Disable Hibernation (Saves disk space)
 try {
     powercfg -h off
-    Write-Log "Hibernation disabled."
+    Write-Log &quot;Hibernation disabled.&quot;
 } catch {
-    Write-Log "Failed to disable hibernation: $_"
+    Write-Log &quot;Failed to disable hibernation: $_&quot;
 }
 
 # 2. Set High Performance Power Plan
 try {
     powercfg -setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c
-    Write-Log "Power plan set to High Performance."
+    Write-Log &quot;Power plan set to High Performance.&quot;
 } catch {
-    Write-Log "Failed to set power plan: $_"
+    Write-Log &quot;Failed to set power plan: $_&quot;
 }
 
 # 3. Disable Game DVR (Background recording)
-reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR" /v AllowGameDVR /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR&quot; /v AllowGameDVR /t REG_DWORD /d 0 /f
 
-Write-Log "System Optimizations Applied."
-		</File>
+# 4. Disable Last Access Timestamp (File System Performance)
+try {
+    fsutil behavior set disablelastaccess 1
+    Write-Log &quot;Disabled Last Access timestamp updates.&quot;
+} catch {
+    Write-Log &quot;Failed to disable Last Access updates: $_&quot;
+}
+
+Write-Log &quot;System Optimizations Applied.&quot;</File>
 		<File path="C:\Windows\Setup\Scripts\Specialize.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -715,25 +719,24 @@ finally {
 
 Write-Log &quot;Default User Configuration Completed.&quot;
 </File>
-		<File path="C:\Windows\Setup\Scripts\UserOnce.ps1">
-$ErrorActionPreference = 'Stop'
+		<File path="C:\Windows\Setup\Scripts\UserOnce.ps1">$ErrorActionPreference = &apos;Stop&apos;
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Configuring User Account...&quot;
 
 # Disable Copilot
-Get-AppxPackage -Name 'Microsoft.Windows.Ai.Copilot.Provider' | Remove-AppxPackage -ErrorAction SilentlyContinue
+Get-AppxPackage -Name &apos;Microsoft.Windows.Ai.Copilot.Provider&apos; | Remove-AppxPackage -ErrorAction SilentlyContinue
 
 # Explorer Settings
-Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Name 'LaunchTo' -Type 'DWord' -Value 1 -Force
-Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Search' -Name 'SearchboxTaskbarMode' -Type 'DWord' -Value 3 -Force # Icon only
+Set-ItemProperty -LiteralPath &apos;Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&apos; -Name &apos;LaunchTo&apos; -Type &apos;DWord&apos; -Value 1 -Force
+Set-ItemProperty -LiteralPath &apos;Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Search&apos; -Name &apos;SearchboxTaskbarMode&apos; -Type &apos;DWord&apos; -Value 3 -Force # Icon only
 
 # Restart Explorer to apply changes
-Get-Process -Name 'explorer' -ErrorAction 'SilentlyContinue' | Stop-Process -Force
+Get-Process -Name &apos;explorer&apos; -ErrorAction &apos;SilentlyContinue&apos; | Stop-Process -Force
 
 # Register Daily Winget Auto-Update Task (Transparent)
 $taskName = &quot;DailySoftwareUpdate&quot;
-$action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `&quot;winget source update; winget upgrade --all --include-unknown --silent --accept-source-agreements --accept-package-agreements`&quot;&quot;
+$action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `&quot;winget source update; winget upgrade --all --include-unknown --silent --accept-source-agreements --accept-package-agreements --disable-interactivity`&quot;&quot;
 $trigger = New-ScheduledTaskTrigger -Daily -At 13:00
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
 Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Highest -Force | Out-Null
@@ -742,8 +745,7 @@ Write-Log &quot;Registered Daily Winget Auto-Update Task.&quot;
 Write-Log &quot;User Configuration Completed.&quot;
 
 # Self-Destruct: Cleanup Scripts
-Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 5 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden
-</File>
+Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 5 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden</File>
 
 	</Extensions>
 </unattend>
