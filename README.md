@@ -32,6 +32,16 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Daily Updates**: Registers a hidden scheduled task to run `winget upgrade --all` daily (includes `source update`).
     *   **Silent**: Updates happen in the background without user intervention (configured with `--disable-interactivity`).
 
+## 🛠️ Customization
+
+The PowerShell logic is maintained in the `scripts/` directory.
+
+*   To modify the installation logic, edit the `.ps1` files in `scripts/`.
+*   To apply your changes to `autounattend.xml`, run:
+    ```bash
+    python update_autounattend.py
+    ```
+
 ## 📂 Folder Structure
 
 To utilize the offline installation features, organize your USB drive as follows:
@@ -112,6 +122,16 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **🔄 Mises à Jour Automatiques Transparentes**:
     *   **Quotidien**: Enregistre une tâche planifiée masquée pour exécuter `winget upgrade --all` chaque jour.
     *   **Silencieux**: Les mises à jour se font en arrière-plan sans intervention de l'utilisateur (configuré avec `--disable-interactivity`).
+
+## 🛠️ Personnalisation
+
+La logique PowerShell est maintenue dans le répertoire `scripts/`.
+
+*   Pour modifier la logique d'installation, éditez les fichiers `.ps1` dans `scripts/`.
+*   Pour appliquer vos modifications à `autounattend.xml`, exécutez :
+    ```bash
+    python update_autounattend.py
+    ```
 
 ## 📂 Structure des Dossiers
 
