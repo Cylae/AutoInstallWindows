@@ -1,3 +1,4 @@
+
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\Lib\Helper.ps1"
 
@@ -5,7 +6,14 @@ Write-Log "Configuring Default User..."
 
 # Load Default User Hive
 $defaultUserHive = "HKU\DefaultUser"
-reg.exe load $defaultUserHive "C:\Users\Default\NTUSER.DAT"
+
+# Robustly load hive: Check if already loaded first
+if (-not (Test-Path "Registry::$defaultUserHive")) {
+    Write-Log "Loading Default User hive..."
+    reg.exe load $defaultUserHive "C:\Users\Default\NTUSER.DAT"
+} else {
+    Write-Log "Default User hive already loaded."
+}
 
 try {
     # Taskbar and Explorer settings
@@ -40,6 +48,9 @@ try {
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce" /v "UnattendedSetup" /t REG_SZ /d "powershell.exe -WindowStyle `"Normal`" -ExecutionPolicy `"Unrestricted`" -NoProfile -File `"C:\Windows\Setup\Scripts\UserOnce.ps1`"" /f
 }
 finally {
+    # Only unload if we are sure we are done.
+    # But since we are the only ones touching it in this scope, we should unload.
+    Write-Log "Unloading Default User hive..."
     reg.exe unload $defaultUserHive
     [GC]::Collect()
 }

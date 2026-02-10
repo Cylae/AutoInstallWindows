@@ -69,9 +69,12 @@ function Download-File {
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             $userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
             Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -UserAgent $userAgent -ErrorAction Stop
-            if (Test-Path -Path $Destination -And (Get-Item $Destination).Length -gt 0) {
+            # Verify file size > 1KB (1024 bytes) to ensure valid download
+            if (Test-Path -Path $Destination -And (Get-Item $Destination).Length -gt 1024) {
                 Write-Log "Download of $Name successful."
                 return $true
+            } else {
+                Write-Log "Download of $Name failed (file too small or empty)."
             }
         } catch {
             Write-Log "Failed to download $Name: $_"

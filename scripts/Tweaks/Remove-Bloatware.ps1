@@ -36,6 +36,7 @@ $packagesToRemove = @(
     'Microsoft.Wallet',
     'Microsoft.BingWeather',
     'Microsoft.ZuneVideo',
+    'MicrosoftWindows.Client.WebExperience',
     'Microsoft.Windows.Ai.Copilot.Provider',
     'Microsoft.YourPhone',
     'Microsoft.GamingApp',
