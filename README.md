@@ -10,22 +10,22 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
 *   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana, Advertising ID, Search Highlights, **Widgets**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
 *   **🌑 Dark Mode**: Enables Dark Mode for System and Apps by default.
-*   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Xbox/Gaming Overlays**, **YourPhone**, etc.) and unnecessary Windows capabilities.
+*   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, etc.) and unnecessary Windows capabilities.
 *   **💥 Self-Destruct**: Installation scripts automatically delete themselves after the first login to ensure a clean slate.
 *   **📜 Log Persistence**: Setup logs are preserved in `C:\Windows\Panther\Autounattend_Log.txt` for troubleshooting.
 *   **🚀 System Optimization**:
     *   **High Performance**: Automatically sets the "High Performance" power plan.
     *   **Power User**: Enables "End Task" in Taskbar context menu.
+    *   **User Experience**: Disables "Finish setting up your device" and "Lock Screen Tips".
     *   **Space Saving**: Disables Hibernation to save disk space (`hiberfil.sys`).
     *   **Disk I/O**: Disables Last Access Timestamp updates to improve disk performance.
     *   **Gaming**: Disables Game DVR/Bar for better gaming performance.
-    *   **IO**: Disables "Last Access" timestamp updates for better file system performance.
 *   **🔧 Intelligent Driver Installation**:
     *   **Auto-Detection**: Automatically scans all drives for a `drivers` folder.
     *   **Smart Matching**: Finds installer executables (`*.exe`) automatically—no need to rename files to `setup.exe`.
     *   **Included Support**: Scripts for Network, Nvidia GPU, AMD Chipset, and Focusrite Audio drivers.
 *   **🌐 Robust App Installation**:
-    *   **Smart Connectivity**: Verified internet checks against multiple reliable hosts (Google, Cloudflare, Microsoft).
+    *   **Smart Connectivity**: Verified internet checks against multiple reliable hosts (Google, Cloudflare, Microsoft) with robust retry logic.
     *   **Online First**: Prioritizes downloading the latest Chrome and Visual C++ Runtimes from the internet.
     *   **Offline Fallback**: Automatically checks for local installers if internet is unavailable.
     *   **Visual C++ Runtimes**: Automatically downloads and installs the latest VC++ 2015-2022 Redistributable (**x64 and x86**).
@@ -53,7 +53,7 @@ USB_ROOT/
 
 ### 🌍 Internet Download
 
-*   **Chrome**: Automatically downloads if not found locally.
+*   **Chrome**: Automatically downloads if not found locally. Checks for existing installation to avoid redundancy.
 *   **Visual C++**: Automatically downloads from Microsoft, falls back to local `vcredist_x64`/`vcredist_x86` folders if offline.
 *   **Nvidia**: Requires local installer in `drivers/nvidia` or manual URL configuration in script (Auto-download API is deprecated).
 
@@ -102,16 +102,16 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **🤫 Totalement Silencieux**: Tous les scripts sont optimisés pour masquer les sorties et fenêtres. Vous ne verrez rien avant l'écran "Bienvenue".
 *   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, Copilot, la recherche Bing, Cortana, l'ID publicitaire, **Widgets**. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
 *   **🌑 Mode Sombre**: Active le mode sombre pour le système et les applications par défaut.
-*   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, **Widgets**, **Xbox/Jeux**, **YourPhone**, etc.) et les fonctionnalités Windows inutiles.
+*   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Jeux**, **YourPhone**, etc.) et les fonctionnalités Windows inutiles.
 *   **💥 Auto-destruction**: Les scripts d'installation se suppriment automatiquement après la première connexion pour garantir un état propre.
 *   **📜 Journaux**: Les journaux d'installation sont conservés dans `C:\Windows\Panther\Autounattend_Log.txt` pour le dépannage.
 *   **🚀 Optimisation Système**:
     *   **Haute Performance**: Active automatiquement le plan d'alimentation "Haute Performance".
     *   **Utilisateur Avancé**: Active "Fin de tâche" dans le menu contextuel de la barre des tâches.
+    *   **Expérience Utilisateur**: Désactive "Terminer la configuration de votre appareil" et les astuces de l'écran de verrouillage.
     *   **Gain d'Espace**: Désactive l'hibernation pour économiser de l'espace disque (`hiberfil.sys`).
     *   **E/S Disque**: Désactive la mise à jour de la date de dernier accès pour améliorer les performances disque.
     *   **Jeu**: Désactive Game DVR/Bar pour de meilleures performances en jeu.
-    *   **IO**: Désactive la mise à jour de l'horodatage "Dernier accès" pour de meilleures performances du système de fichiers.
 *   **🔧 Installation Intelligente des Pilotes**:
     *   **Auto-Détection**: Scanne tous les lecteurs pour trouver le dossier `drivers`.
     *   **Recherche Intelligente**: Trouve automatiquement les exécutables (`*.exe`)—pas besoin de renommer en `setup.exe`.
@@ -145,7 +145,7 @@ RACINE_USB/
 
 ### 🌍 Téléchargement Internet
 
-*   **Chrome**: Télécharge automatiquement si non trouvé localement.
+*   **Chrome**: Télécharge automatiquement si non trouvé localement. Vérifie si Chrome est déjà installé pour éviter la redondance.
 *   **Visual C++**: Télécharge automatiquement depuis Microsoft, bascule sur les dossiers `vcredist_x64`/`vcredist_x86` si hors-ligne.
 *   **Nvidia**: Nécessite un installateur local ou une configuration manuelle de l'URL (L'API d'auto-téléchargement est obsolète).
 

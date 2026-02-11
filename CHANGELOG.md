@@ -1,5 +1,15 @@
 # Change Log
 
+## [Fixes & Enhancements] - 2024-05-25
+
+### 🚀 Enhancements
+*   **Robust Networking**: Completely rewrote `Download-File` helper with robust retry logic for both connectivity checks and file downloads.
+*   **User Experience**: Disabled "Finish setting up your device" and "Lock Screen Tips" prompts.
+*   **Chrome Install**: Added idempotency check to skip installation if Chrome is already present.
+
+### 🧹 Debloating
+*   **Expanded Removal**: Added Cortana (`Microsoft.549981C3F5F10`), PeopleExperienceHost, and ParentalControls to the bloatware removal list.
+
 ## [Fixes & Enhancements] - 2024-05-24
 
 ### 🚀 Enhancements

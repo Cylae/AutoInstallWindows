@@ -7,6 +7,7 @@ $packagesToRemove = @(
     'Microsoft.WindowsCamera',
     'Clipchamp.Clipchamp',
     'Microsoft.WindowsAlarms',
+    'Microsoft.549981C3F5F10', # Cortana
     'Microsoft.Copilot',
     'Microsoft.Windows.DevHome',
     'MicrosoftCorporationII.MicrosoftFamily',
@@ -23,6 +24,7 @@ $packagesToRemove = @(
     'Microsoft.OutlookForWindows',
     'Microsoft.MSPaint',
     'Microsoft.People',
+    'Microsoft.Windows.PeopleExperienceHost',
     'Microsoft.Windows.Photos',
     'Microsoft.PowerAutomateDesktop',
     'MicrosoftCorporationII.QuickAssist',
@@ -43,7 +45,8 @@ $packagesToRemove = @(
     'Microsoft.XboxGameOverlay',
     'Microsoft.XboxGamingOverlay',
     'Microsoft.XboxIdentityProvider',
-    'Microsoft.XboxSpeechToTextOverlay'
+    'Microsoft.XboxSpeechToTextOverlay',
+    'Microsoft.Windows.ParentalControls'
 )
 
 $capabilitiesToRemove = @(

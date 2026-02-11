@@ -64,22 +64,34 @@ function Download-File {
         }
     }
 
-    if ($connected) {
+    if (-not $connected) {
+        Write-Log "No network connectivity to download $Name."
+        return $false
+    }
+
+    $downloadRetries = 3
+    $dRetry = 0
+    $downloaded = $false
+
+    while (-not $downloaded -and $dRetry -lt $downloadRetries) {
         try {
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -ErrorAction Stop
+
             # Verify file size > 1KB (1024 bytes) to ensure valid download
             if (Test-Path -Path $Destination -And (Get-Item $Destination).Length -gt 1024) {
                 Write-Log "Download of $Name successful."
-                return $true
+                $downloaded = $true
             } else {
                 Write-Log "Download of $Name failed (file too small or empty)."
+                throw "File too small"
             }
         } catch {
-            Write-Log "Failed to download $Name: $_"
+            $dRetry++
+            Write-Log "Failed to download $Name (Attempt $dRetry/$downloadRetries): $_"
+            Start-Sleep -Seconds 2
         }
-    } else {
-        Write-Log "No network connectivity to download $Name."
     }
-    return $false
+
+    return $downloaded
 }
