@@ -3,6 +3,13 @@ $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\Lib\Helper.ps1"
 
 Write-Log "Starting Chrome Installation..."
+
+# Check if Chrome is already installed
+if ((Test-Path "$env:ProgramFiles\Google\Chrome\Application\chrome.exe") -or (Test-Path "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe")) {
+    Write-Log "Chrome is already installed. Skipping."
+    return
+}
+
 $mediaRoot = Get-InstallMedia
 $setupPath = $null
 

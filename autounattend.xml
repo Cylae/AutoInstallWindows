@@ -163,24 +163,36 @@ function Download-File {
         }
     }
 
-    if ($connected) {
+    if (-not $connected) {
+        Write-Log &quot;No network connectivity to download $Name.&quot;
+        return $false
+    }
+
+    $downloadRetries = 3
+    $dRetry = 0
+    $downloaded = $false
+
+    while (-not $downloaded -and $dRetry -lt $downloadRetries) {
         try {
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -ErrorAction Stop
+
             # Verify file size &gt; 1KB (1024 bytes) to ensure valid download
             if (Test-Path -Path $Destination -And (Get-Item $Destination).Length -gt 1024) {
                 Write-Log &quot;Download of $Name successful.&quot;
-                return $true
+                $downloaded = $true
             } else {
                 Write-Log &quot;Download of $Name failed (file too small or empty).&quot;
+                throw &quot;File too small&quot;
             }
         } catch {
-            Write-Log &quot;Failed to download $Name: $_&quot;
+            $dRetry++
+            Write-Log &quot;Failed to download $Name (Attempt $dRetry/$downloadRetries): $_&quot;
+            Start-Sleep -Seconds 2
         }
-    } else {
-        Write-Log &quot;No network connectivity to download $Name.&quot;
     }
-    return $false
+
+    return $downloaded
 }
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Network.ps1">
@@ -395,6 +407,13 @@ $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Chrome Installation...&quot;
+
+# Check if Chrome is already installed
+if ((Test-Path &quot;$env:ProgramFiles\Google\Chrome\Application\chrome.exe&quot;) -or (Test-Path &quot;${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe&quot;)) {
+    Write-Log &quot;Chrome is already installed. Skipping.&quot;
+    return
+}
+
 $mediaRoot = Get-InstallMedia
 $setupPath = $null
 
@@ -451,6 +470,7 @@ $packagesToRemove = @(
     'Microsoft.WindowsCamera',
     'Clipchamp.Clipchamp',
     'Microsoft.WindowsAlarms',
+    'Microsoft.549981C3F5F10', # Cortana
     'Microsoft.Copilot',
     'Microsoft.Windows.DevHome',
     'MicrosoftCorporationII.MicrosoftFamily',
@@ -467,6 +487,7 @@ $packagesToRemove = @(
     'Microsoft.OutlookForWindows',
     'Microsoft.MSPaint',
     'Microsoft.People',
+    'Microsoft.Windows.PeopleExperienceHost',
     'Microsoft.Windows.Photos',
     'Microsoft.PowerAutomateDesktop',
     'MicrosoftCorporationII.QuickAssist',
@@ -487,7 +508,8 @@ $packagesToRemove = @(
     'Microsoft.XboxGameOverlay',
     'Microsoft.XboxGamingOverlay',
     'Microsoft.XboxIdentityProvider',
-    'Microsoft.XboxSpeechToTextOverlay'
+    'Microsoft.XboxSpeechToTextOverlay',
+    'Microsoft.Windows.ParentalControls'
 )
 
 $capabilitiesToRemove = @(
@@ -773,6 +795,12 @@ Get-AppxPackage -Name 'Microsoft.Windows.Ai.Copilot.Provider' | Remove-AppxPacka
 # Explorer Settings
 Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Name 'LaunchTo' -Type 'DWord' -Value 1 -Force
 Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Search' -Name 'SearchboxTaskbarMode' -Type 'DWord' -Value 3 -Force # Icon only
+
+# Disable &quot;Finish setting up your device&quot;
+Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement' -Name 'ScoobeSystemSettingEnabled' -Type 'DWord' -Value 0 -Force -ErrorAction SilentlyContinue
+
+# Disable Lock Screen Tips
+Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' -Name 'SubscribedContent-338387Enabled' -Type 'DWord' -Value 0 -Force -ErrorAction SilentlyContinue
 
 # Restart Explorer to apply changes
 Get-Process -Name 'explorer' -ErrorAction 'SilentlyContinue' | Stop-Process -Force
