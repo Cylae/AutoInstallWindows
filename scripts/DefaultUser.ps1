@@ -1,4 +1,3 @@
-
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\Lib\Helper.ps1"
 
@@ -44,8 +43,30 @@ try {
     # Enable End Task in Taskbar (Developer/Power User feature)
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarEndTask /t REG_DWORD /d 1 /f
 
-    # Run UserOnce on first login
-    reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce" /v "UnattendedSetup" /t REG_SZ /d "powershell.exe -WindowStyle `"Normal`" -ExecutionPolicy `"Unrestricted`" -NoProfile -File `"C:\Windows\Setup\Scripts\UserOnce.ps1`"" /f
+    # --- Tweaks Migrated from UserOnce.ps1 ---
+    # Explorer Settings
+    reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v LaunchTo /t REG_DWORD /d 1 /f
+    reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Search" /v SearchboxTaskbarMode /t REG_DWORD /d 3 /f # Icon only
+
+    # Disable "Finish setting up your device"
+    reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement" /v ScoobeSystemSettingEnabled /t REG_DWORD /d 0 /f
+
+    # --- RunOnce: Register Scheduled Task Inline ---
+    # We construct a PowerShell command to run on first login for each user.
+    # This command registers the Daily Winget Update task.
+    # We escape double quotes with backslash+doublequote (\") for the inner command string.
+
+    # Task Name: "DailySoftwareUpdate-UserName" to avoid conflicts
+    # Inner Command: "winget source update; winget upgrade ..."
+    $innerCmd = "winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements"
+
+    # Outer Command (passed to RunOnce):
+    # powershell.exe -WindowStyle Hidden -Command "Register-ScheduledTask ... "
+    # We use ` to escape $env:USERNAME so it expands at runtime (login time).
+    $psCmd = "powershell.exe -WindowStyle Hidden -Command `"Register-ScheduledTask -TaskName ('DailySoftwareUpdate-' + `$env:USERNAME) -Action (New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-WindowStyle Hidden -Command \\`"$innerCmd\\`"') -Trigger (New-ScheduledTaskTrigger -Daily -At 13:00) -Settings (New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable) -RunLevel Highest -Force`""
+
+    # Use Set-ItemProperty to avoid quoting issues with reg.exe for this complex string
+    Set-ItemProperty -LiteralPath "Registry::${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\RunOnce" -Name "DailySoftwareUpdate" -Value $psCmd -Type String -Force
 }
 finally {
     # Only unload if we are sure we are done.

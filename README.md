@@ -10,8 +10,8 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
 *   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana, Advertising ID, Search Highlights, **Widgets**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
 *   **🌑 Dark Mode**: Enables Dark Mode for System and Apps by default.
-*   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, etc.) and unnecessary Windows capabilities.
-*   **💥 Self-Destruct**: Installation scripts automatically delete themselves after the first login to ensure a clean slate.
+*   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, **Copilot**, etc.) and unnecessary Windows capabilities.
+*   **💥 Self-Destruct**: Installation scripts automatically delete themselves *before* the first login to ensure a pristine and secure environment.
 *   **📜 Log Persistence**: Setup logs are preserved in `C:\Windows\Panther\Autounattend_Log.txt` for troubleshooting.
 *   **🚀 System Optimization**:
     *   **High Performance**: Automatically sets the "High Performance" power plan.
@@ -30,7 +30,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Offline Fallback**: Automatically checks for local installers if internet is unavailable.
     *   **Visual C++ Runtimes**: Automatically downloads and installs the latest VC++ 2015-2022 Redistributable (**x64 and x86**).
 *   **🔄 Transparent Auto-Updates**:
-    *   **Daily Updates**: Registers a hidden scheduled task to run `winget upgrade --all` daily (includes `source update`).
+    *   **Daily Updates**: Registers a hidden scheduled task for each user to run `winget upgrade --all` daily (includes `source update`).
     *   **Silent**: Updates happen in the background without user intervention (configured with `--disable-interactivity`).
 
 ## 📂 Folder Structure
@@ -102,8 +102,8 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **🤫 Totalement Silencieux**: Tous les scripts sont optimisés pour masquer les sorties et fenêtres. Vous ne verrez rien avant l'écran "Bienvenue".
 *   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, Copilot, la recherche Bing, Cortana, l'ID publicitaire, **Widgets**. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
 *   **🌑 Mode Sombre**: Active le mode sombre pour le système et les applications par défaut.
-*   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Jeux**, **YourPhone**, etc.) et les fonctionnalités Windows inutiles.
-*   **💥 Auto-destruction**: Les scripts d'installation se suppriment automatiquement après la première connexion pour garantir un état propre.
+*   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Jeux**, **YourPhone**, **Copilot**, etc.) et les fonctionnalités Windows inutiles.
+*   **💥 Auto-destruction**: Les scripts d'installation se suppriment automatiquement *avant* la première connexion pour garantir un environnement vierge et sécurisé.
 *   **📜 Journaux**: Les journaux d'installation sont conservés dans `C:\Windows\Panther\Autounattend_Log.txt` pour le dépannage.
 *   **🚀 Optimisation Système**:
     *   **Haute Performance**: Active automatiquement le plan d'alimentation "Haute Performance".
@@ -122,7 +122,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
     *   **Repli Hors-ligne**: Vérifie automatiquement les installateurs locaux si Internet n'est pas disponible.
     *   **Runtimes Visual C++**: Télécharge et installe automatiquement les derniers Runtimes VC++ 2015-2022 (**x64 et x86**).
 *   **🔄 Mises à Jour Automatiques Transparentes**:
-    *   **Quotidien**: Enregistre une tâche planifiée masquée pour exécuter `winget upgrade --all` chaque jour.
+    *   **Quotidien**: Enregistre une tâche planifiée masquée pour chaque utilisateur pour exécuter `winget upgrade --all` chaque jour.
     *   **Silencieux**: Les mises à jour se font en arrière-plan sans intervention de l'utilisateur (configuré avec `--disable-interactivity`).
 
 ## 📂 Structure des Dossiers

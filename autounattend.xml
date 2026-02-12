@@ -712,6 +712,7 @@ foreach ($script in $scripts) {
 $setupCompleteContent = @&quot;
 del /q /f &quot;%WINDIR%\Panther\unattend.xml&quot;
 del /q /f &quot;%WINDIR%\Panther\unattend-original.xml&quot;
+rmdir /s /q &quot;%WINDIR%\Setup\Scripts&quot;
 &quot;@
 
 $setupCompletePath = &quot;$env:SystemRoot\Setup\Scripts\SetupComplete.cmd&quot;
@@ -770,8 +771,30 @@ try {
     # Enable End Task in Taskbar (Developer/Power User feature)
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v TaskbarEndTask /t REG_DWORD /d 1 /f
 
-    # Run UserOnce on first login
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce&quot; /v &quot;UnattendedSetup&quot; /t REG_SZ /d &quot;powershell.exe -WindowStyle `&quot;Normal`&quot; -ExecutionPolicy `&quot;Unrestricted`&quot; -NoProfile -File `&quot;C:\Windows\Setup\Scripts\UserOnce.ps1`&quot;&quot; /f
+    # --- Tweaks Migrated from UserOnce.ps1 ---
+    # Explorer Settings
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v LaunchTo /t REG_DWORD /d 1 /f
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Search&quot; /v SearchboxTaskbarMode /t REG_DWORD /d 3 /f # Icon only
+
+    # Disable &quot;Finish setting up your device&quot;
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement&quot; /v ScoobeSystemSettingEnabled /t REG_DWORD /d 0 /f
+
+    # --- RunOnce: Register Scheduled Task Inline ---
+    # We construct a PowerShell command to run on first login for each user.
+    # This command registers the Daily Winget Update task.
+    # We escape double quotes with backslash+doublequote (\&quot;) for the inner command string.
+
+    # Task Name: &quot;DailySoftwareUpdate-UserName&quot; to avoid conflicts
+    # Inner Command: &quot;winget source update; winget upgrade ...&quot;
+    $innerCmd = &quot;winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements&quot;
+
+    # Outer Command (passed to RunOnce):
+    # powershell.exe -WindowStyle Hidden -Command &quot;Register-ScheduledTask ... &quot;
+    # We use ` to escape $env:USERNAME so it expands at runtime (login time).
+    $psCmd = &quot;powershell.exe -WindowStyle Hidden -Command `&quot;Register-ScheduledTask -TaskName ('DailySoftwareUpdate-' + `$env:USERNAME) -Action (New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-WindowStyle Hidden -Command \\`&quot;$innerCmd\\`&quot;') -Trigger (New-ScheduledTaskTrigger -Daily -At 13:00) -Settings (New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable) -RunLevel Highest -Force`&quot;&quot;
+
+    # Use Set-ItemProperty to avoid quoting issues with reg.exe for this complex string
+    Set-ItemProperty -LiteralPath &quot;Registry::${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\RunOnce&quot; -Name &quot;DailySoftwareUpdate&quot; -Value $psCmd -Type String -Force
 }
 finally {
     # Only unload if we are sure we are done.
@@ -782,43 +805,6 @@ finally {
 }
 
 Write-Log &quot;Default User Configuration Completed.&quot;
-</File>
-		<File path="C:\Windows\Setup\Scripts\UserOnce.ps1">
-$ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
-
-Write-Log &quot;Configuring User Account...&quot;
-
-# Disable Copilot
-Get-AppxPackage -Name 'Microsoft.Windows.Ai.Copilot.Provider' | Remove-AppxPackage -ErrorAction SilentlyContinue
-
-# Explorer Settings
-Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Name 'LaunchTo' -Type 'DWord' -Value 1 -Force
-Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Search' -Name 'SearchboxTaskbarMode' -Type 'DWord' -Value 3 -Force # Icon only
-
-# Disable &quot;Finish setting up your device&quot;
-Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement' -Name 'ScoobeSystemSettingEnabled' -Type 'DWord' -Value 0 -Force -ErrorAction SilentlyContinue
-
-# Disable Lock Screen Tips
-Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' -Name 'SubscribedContent-338387Enabled' -Type 'DWord' -Value 0 -Force -ErrorAction SilentlyContinue
-
-# Restart Explorer to apply changes
-Get-Process -Name 'explorer' -ErrorAction 'SilentlyContinue' | Stop-Process -Force
-
-# Register Daily Winget Auto-Update Task (Transparent)
-$taskName = &quot;DailySoftwareUpdate&quot;
-# Added --disable-interactivity and ensuring silent operation
-$action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `\&quot;winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements`\&quot;&quot;
-$trigger = New-ScheduledTaskTrigger -Daily -At 13:00
-$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
-Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Highest -Force | Out-Null
-Write-Log &quot;Registered Daily Winget Auto-Update Task.&quot;
-
-Write-Log &quot;User Configuration Completed.&quot;
-
-# Self-Destruct: Cleanup Scripts
-# Wait 5 seconds then delete the script folder
-Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 5 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden
 </File>
 
 	</Extensions>

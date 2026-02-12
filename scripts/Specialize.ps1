@@ -35,6 +35,7 @@ foreach ($script in $scripts) {
 $setupCompleteContent = @"
 del /q /f "%WINDIR%\Panther\unattend.xml"
 del /q /f "%WINDIR%\Panther\unattend-original.xml"
+rmdir /s /q "%WINDIR%\Setup\Scripts"
 "@
 
 $setupCompletePath = "$env:SystemRoot\Setup\Scripts\SetupComplete.cmd"
