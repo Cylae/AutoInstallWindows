@@ -145,15 +145,21 @@ function Download-File {
     $retry = 0
     $connected = $false
 
+    # Suppress progress bar for speed
+    $ProgressPreference = 'SilentlyContinue'
+
     # Wait for network
     while (-not $connected -and $retry -lt $maxRetries) {
         try {
-            $testHosts = @(&quot;8.8.8.8&quot;, &quot;1.1.1.1&quot;, &quot;google.com&quot;, &quot;microsoft.com&quot;)
-            foreach ($hostName in $testHosts) {
+            # Try to reach reliable hosts via HTTP to verify actual internet access
+            $testHosts = @(&quot;http://www.google.com&quot;, &quot;http://www.microsoft.com&quot;, &quot;http://1.1.1.1&quot;)
+            foreach ($host in $testHosts) {
                 try {
-                    $null = [System.Net.Dns]::GetHostEntry($hostName)
-                    $connected = $true
-                    break
+                    $response = Invoke-WebRequest -Uri $host -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
+                    if ($response.StatusCode -eq 200) {
+                        $connected = $true
+                        break
+                    }
                 } catch {}
             }
             if (-not $connected) { throw &quot;No connection&quot; }
@@ -175,7 +181,8 @@ function Download-File {
     while (-not $downloaded -and $dRetry -lt $downloadRetries) {
         try {
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -ErrorAction Stop
+            # 10 minute timeout for large files
+            Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -TimeoutSec 600 -ErrorAction Stop
 
             # Verify file size &gt; 1KB (1024 bytes) to ensure valid download
             if (Test-Path -Path $Destination -And (Get-Item $Destination).Length -gt 1024) {
@@ -197,7 +204,7 @@ function Download-File {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Network.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Network Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
@@ -229,7 +236,7 @@ if ($mediaRoot) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Nvidia.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Nvidia Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
@@ -263,7 +270,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-AMD.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 # OPTIONAL: Set a direct download URL for the AMD Chipset Driver here.
 $DownloadUrl = &quot;&quot;
@@ -295,13 +302,18 @@ if ($setupPath) {
     catch {
         Write-Log &quot;Error installing AMD Chipset drivers: $_&quot;
     }
+    finally {
+        if ($setupPath -eq &quot;$env:TEMP\amd_chipset.exe&quot;) {
+             Remove-Item -Path $setupPath -Force -ErrorAction SilentlyContinue
+        }
+    }
 } else {
     Write-Log &quot;AMD installer not found locally and no download URL provided.&quot;
 }
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Focusrite.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 # OPTIONAL: Set a direct download URL for the Focusrite Driver here.
 $DownloadUrl = &quot;&quot;
@@ -333,13 +345,18 @@ if ($setupPath) {
     catch {
         Write-Log &quot;Error installing Focusrite drivers: $_&quot;
     }
+    finally {
+        if ($setupPath -eq &quot;$env:TEMP\focusrite_driver.exe&quot;) {
+             Remove-Item -Path $setupPath -Force -ErrorAction SilentlyContinue
+        }
+    }
 } else {
     Write-Log &quot;Focusrite installer not found locally and no download URL provided.&quot;
 }
 </File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Runtimes.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Visual C++ Runtimes Installation...&quot;
 
@@ -389,6 +406,10 @@ function Install-Runtime {
             Write-Log &quot;$LogName installation completed.&quot;
         } catch {
             Write-Log &quot;Error installing $LogName: $_&quot;
+        } finally {
+            if ($setupPath -eq $dest) {
+                Remove-Item -Path $setupPath -Force -ErrorAction SilentlyContinue
+            }
         }
     } else {
         Write-Log &quot;$LogName installer not found locally and download failed.&quot;
@@ -404,7 +425,7 @@ Install-Runtime -Url $url86 -DestName &quot;vc_redist.x86.exe&quot; -LogName &qu
 </File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Chrome.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Chrome Installation...&quot;
 
@@ -420,13 +441,14 @@ $setupPath = $null
 # 1. Try Download (Online First)
 $url = 'https://dl.google.com/chrome/install/chrome_installer.exe'
 $dest = &quot;$env:TEMP\chrome.exe&quot;
+# Download-File handles connectivity checks and retries
 if (Download-File -Url $url -Destination $dest -Name &quot;Chrome&quot;) {
     $setupPath = $dest
 }
 
 # 2. Try Local (Fallback)
 if (-not $setupPath -and $mediaRoot) {
-    Write-Log &quot;Download failed. Checking local storage...&quot;
+    Write-Log &quot;Download failed or skipped. Checking local storage...&quot;
     $possiblePaths = @(
         (Join-Path $mediaRoot &quot;apps\chrome&quot;),
         (Join-Path $mediaRoot &quot;drivers\apps\chrome&quot;),
@@ -449,12 +471,14 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         Start-Process -FilePath $setupPath -ArgumentList '/silent /install' -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
-        if ($setupPath -eq &quot;$env:TEMP\chrome.exe&quot;) {
-            Remove-Item -Path $setupPath -Force -ErrorAction SilentlyContinue
-        }
         Write-Log &quot;Chrome installation completed.&quot;
     } catch {
         Write-Log &quot;Error installing Chrome: $_&quot;
+    } finally {
+        # Cleanup downloaded file
+        if ($setupPath -eq &quot;$env:TEMP\chrome.exe&quot;) {
+            Remove-Item -Path $setupPath -Force -ErrorAction SilentlyContinue
+        }
     }
 } else {
     Write-Log &quot;Chrome installer not found locally and download failed.&quot;
@@ -462,7 +486,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Remove-Bloatware.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 $packagesToRemove = @(
     'Microsoft.Microsoft3DViewer',
@@ -576,7 +600,7 @@ Write-Log &quot;Debloating Process Completed.&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Configure-Privacy.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Applying Privacy and Registry Tweaks...&quot;
 
@@ -642,7 +666,7 @@ Set-ItemProperty -LiteralPath $key -Name 'ConfigureStartPins' -Value $json -Type
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Optimize-System.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Applying System Optimizations...&quot;
 
@@ -747,6 +771,12 @@ try {
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v TaskbarAl /t REG_DWORD /d 0 /f # Left align taskbar
     reg.exe add &quot;$defaultUserHive\Software\Policies\Microsoft\Windows\Explorer&quot; /v DisableSearchBoxSuggestions /t REG_DWORD /d 1 /f
 
+    # NEW: Launch Explorer to &quot;This PC&quot; (1)
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v LaunchTo /t REG_DWORD /d 1 /f
+
+    # NEW: Search Icon only on Taskbar (3)
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Search&quot; /v SearchboxTaskbarMode /t REG_DWORD /d 3 /f
+
     # Show File Extensions
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v HideFileExt /t REG_DWORD /d 0 /f
 
@@ -764,6 +794,9 @@ try {
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; /v RotatingLockScreenEnabled /t REG_DWORD /d 0 /f
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; /v SubscribedContent-338387Enabled /t REG_DWORD /d 0 /f
 
+    # NEW: Disable &quot;Finish setting up your device&quot;
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement&quot; /v ScoobeSystemSettingEnabled /t REG_DWORD /d 0 /f
+
     # Disable Copilot for Default User
     reg.exe add &quot;$defaultUserHive\Software\Policies\Microsoft\Windows\WindowsCopilot&quot; /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f
 
@@ -771,7 +804,9 @@ try {
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v TaskbarEndTask /t REG_DWORD /d 1 /f
 
     # Run UserOnce on first login
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce&quot; /v &quot;UnattendedSetup&quot; /t REG_SZ /d &quot;powershell.exe -WindowStyle `&quot;Normal`&quot; -ExecutionPolicy `&quot;Unrestricted`&quot; -NoProfile -File `&quot;C:\Windows\Setup\Scripts\UserOnce.ps1`&quot;&quot; /f
+    # Use cmd /c if exist to avoid errors if scripts are deleted by previous user
+    $cmd = &quot;cmd.exe /c if exist `&quot;C:\Windows\Setup\Scripts\UserOnce.ps1`&quot; powershell.exe -WindowStyle Hidden -ExecutionPolicy Unrestricted -NoProfile -File `&quot;C:\Windows\Setup\Scripts\UserOnce.ps1`&quot;&quot;
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce&quot; /v &quot;UnattendedSetup&quot; /t REG_SZ /d $cmd /f
 }
 finally {
     # Only unload if we are sure we are done.
@@ -789,30 +824,17 @@ $ErrorActionPreference = 'Stop'
 
 Write-Log &quot;Configuring User Account...&quot;
 
-# Disable Copilot
+# Disable Copilot (Ensure it's removed for the user)
 Get-AppxPackage -Name 'Microsoft.Windows.Ai.Copilot.Provider' | Remove-AppxPackage -ErrorAction SilentlyContinue
 
-# Explorer Settings
-Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Name 'LaunchTo' -Type 'DWord' -Value 1 -Force
-Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Search' -Name 'SearchboxTaskbarMode' -Type 'DWord' -Value 3 -Force # Icon only
-
-# Disable &quot;Finish setting up your device&quot;
-Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement' -Name 'ScoobeSystemSettingEnabled' -Type 'DWord' -Value 0 -Force -ErrorAction SilentlyContinue
-
-# Disable Lock Screen Tips
-Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' -Name 'SubscribedContent-338387Enabled' -Type 'DWord' -Value 0 -Force -ErrorAction SilentlyContinue
-
-# Restart Explorer to apply changes
-Get-Process -Name 'explorer' -ErrorAction 'SilentlyContinue' | Stop-Process -Force
-
 # Register Daily Winget Auto-Update Task (Transparent)
-$taskName = &quot;DailySoftwareUpdate&quot;
-# Added --disable-interactivity and ensuring silent operation
+# Registers a per-user task to update software
+$taskName = &quot;DailySoftwareUpdate-$env:USERNAME&quot;
 $action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `\&quot;winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements`\&quot;&quot;
 $trigger = New-ScheduledTaskTrigger -Daily -At 13:00
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
 Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Highest -Force | Out-Null
-Write-Log &quot;Registered Daily Winget Auto-Update Task.&quot;
+Write-Log &quot;Registered Daily Winget Auto-Update Task: $taskName&quot;
 
 Write-Log &quot;User Configuration Completed.&quot;
 

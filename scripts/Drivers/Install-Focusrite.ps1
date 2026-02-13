@@ -1,6 +1,6 @@
 
 $ErrorActionPreference = 'Stop'
-. "$PSScriptRoot\Lib\Helper.ps1"
+. "$PSScriptRoot\..\Lib\Helper.ps1"
 
 # OPTIONAL: Set a direct download URL for the Focusrite Driver here.
 $DownloadUrl = ""
@@ -31,6 +31,11 @@ if ($setupPath) {
     }
     catch {
         Write-Log "Error installing Focusrite drivers: $_"
+    }
+    finally {
+        if ($setupPath -eq "$env:TEMP\focusrite_driver.exe") {
+             Remove-Item -Path $setupPath -Force -ErrorAction SilentlyContinue
+        }
     }
 } else {
     Write-Log "Focusrite installer not found locally and no download URL provided."

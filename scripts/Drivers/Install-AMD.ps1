@@ -1,6 +1,6 @@
 
 $ErrorActionPreference = 'Stop'
-. "$PSScriptRoot\Lib\Helper.ps1"
+. "$PSScriptRoot\..\Lib\Helper.ps1"
 
 # OPTIONAL: Set a direct download URL for the AMD Chipset Driver here.
 $DownloadUrl = ""
@@ -31,6 +31,11 @@ if ($setupPath) {
     }
     catch {
         Write-Log "Error installing AMD Chipset drivers: $_"
+    }
+    finally {
+        if ($setupPath -eq "$env:TEMP\amd_chipset.exe") {
+             Remove-Item -Path $setupPath -Force -ErrorAction SilentlyContinue
+        }
     }
 } else {
     Write-Log "AMD installer not found locally and no download URL provided."

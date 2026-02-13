@@ -1,6 +1,6 @@
 
 $ErrorActionPreference = 'Stop'
-. "$PSScriptRoot\Lib\Helper.ps1"
+. "$PSScriptRoot\..\Lib\Helper.ps1"
 
 Write-Log "Starting Visual C++ Runtimes Installation..."
 
@@ -50,6 +50,10 @@ function Install-Runtime {
             Write-Log "$LogName installation completed."
         } catch {
             Write-Log "Error installing $LogName: $_"
+        } finally {
+            if ($setupPath -eq $dest) {
+                Remove-Item -Path $setupPath -Force -ErrorAction SilentlyContinue
+            }
         }
     } else {
         Write-Log "$LogName installer not found locally and download failed."

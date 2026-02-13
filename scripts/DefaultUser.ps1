@@ -21,6 +21,12 @@ try {
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarAl /t REG_DWORD /d 0 /f # Left align taskbar
     reg.exe add "$defaultUserHive\Software\Policies\Microsoft\Windows\Explorer" /v DisableSearchBoxSuggestions /t REG_DWORD /d 1 /f
 
+    # NEW: Launch Explorer to "This PC" (1)
+    reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v LaunchTo /t REG_DWORD /d 1 /f
+
+    # NEW: Search Icon only on Taskbar (3)
+    reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Search" /v SearchboxTaskbarMode /t REG_DWORD /d 3 /f
+
     # Show File Extensions
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v HideFileExt /t REG_DWORD /d 0 /f
 
@@ -38,6 +44,9 @@ try {
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v RotatingLockScreenEnabled /t REG_DWORD /d 0 /f
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338387Enabled /t REG_DWORD /d 0 /f
 
+    # NEW: Disable "Finish setting up your device"
+    reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement" /v ScoobeSystemSettingEnabled /t REG_DWORD /d 0 /f
+
     # Disable Copilot for Default User
     reg.exe add "$defaultUserHive\Software\Policies\Microsoft\Windows\WindowsCopilot" /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f
 
@@ -45,7 +54,9 @@ try {
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarEndTask /t REG_DWORD /d 1 /f
 
     # Run UserOnce on first login
-    reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce" /v "UnattendedSetup" /t REG_SZ /d "powershell.exe -WindowStyle `"Normal`" -ExecutionPolicy `"Unrestricted`" -NoProfile -File `"C:\Windows\Setup\Scripts\UserOnce.ps1`"" /f
+    # Use cmd /c if exist to avoid errors if scripts are deleted by previous user
+    $cmd = "cmd.exe /c if exist `"C:\Windows\Setup\Scripts\UserOnce.ps1`" powershell.exe -WindowStyle Hidden -ExecutionPolicy Unrestricted -NoProfile -File `"C:\Windows\Setup\Scripts\UserOnce.ps1`""
+    reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce" /v "UnattendedSetup" /t REG_SZ /d $cmd /f
 }
 finally {
     # Only unload if we are sure we are done.

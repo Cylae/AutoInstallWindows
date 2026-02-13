@@ -46,15 +46,21 @@ function Download-File {
     $retry = 0
     $connected = $false
 
+    # Suppress progress bar for speed
+    $ProgressPreference = 'SilentlyContinue'
+
     # Wait for network
     while (-not $connected -and $retry -lt $maxRetries) {
         try {
-            $testHosts = @("8.8.8.8", "1.1.1.1", "google.com", "microsoft.com")
-            foreach ($hostName in $testHosts) {
+            # Try to reach reliable hosts via HTTP to verify actual internet access
+            $testHosts = @("http://www.google.com", "http://www.microsoft.com", "http://1.1.1.1")
+            foreach ($host in $testHosts) {
                 try {
-                    $null = [System.Net.Dns]::GetHostEntry($hostName)
-                    $connected = $true
-                    break
+                    $response = Invoke-WebRequest -Uri $host -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
+                    if ($response.StatusCode -eq 200) {
+                        $connected = $true
+                        break
+                    }
                 } catch {}
             }
             if (-not $connected) { throw "No connection" }
@@ -76,7 +82,8 @@ function Download-File {
     while (-not $downloaded -and $dRetry -lt $downloadRetries) {
         try {
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -ErrorAction Stop
+            # 10 minute timeout for large files
+            Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -TimeoutSec 600 -ErrorAction Stop
 
             # Verify file size > 1KB (1024 bytes) to ensure valid download
             if (Test-Path -Path $Destination -And (Get-Item $Destination).Length -gt 1024) {
