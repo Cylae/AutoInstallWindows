@@ -32,6 +32,10 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 *   **🔄 Transparent Auto-Updates**:
     *   **Daily Updates**: Registers a hidden scheduled task to run `winget upgrade --all` daily (includes `source update`).
     *   **Silent**: Updates happen in the background without user intervention (configured with `--disable-interactivity`).
+*   **🛡️ Enhanced Robustness**:
+    *   **Secure Downloads**: Supports **TLS 1.2 and 1.3** for secure file downloads.
+    *   **Smart Media Detection**: Filters for Fixed and Removable drives to prevent hangs on network/floppy drives.
+    *   **Advanced Error Handling**: Improved logging and registry handling for fail-safe execution.
 
 ## 📂 Folder Structure
 
@@ -86,6 +90,7 @@ If you encounter issues, check the log file created during setup:
     *   If offline, place the installers in the corresponding `apps` folder on the USB.
 *   **Script errors?**
     *   Review the log file mentioned above for specific error messages.
+    *   Additional debug logs for drivers (e.g., `pnputil`) are saved in `%TEMP%` during setup.
 
 ---
 ---
@@ -124,6 +129,10 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **🔄 Mises à Jour Automatiques Transparentes**:
     *   **Quotidien**: Enregistre une tâche planifiée masquée pour exécuter `winget upgrade --all` chaque jour.
     *   **Silencieux**: Les mises à jour se font en arrière-plan sans intervention de l'utilisateur (configuré avec `--disable-interactivity`).
+*   **🛡️ Robustesse Améliorée**:
+    *   **Téléchargements Sécurisés**: Supporte **TLS 1.2 et 1.3** pour des téléchargements sécurisés.
+    *   **Détection Intelligente**: Filtre les lecteurs Fixes et Amovibles pour éviter les blocages.
+    *   **Gestion d'Erreurs Avancée**: Journaux améliorés et gestion robuste du registre pour une exécution sans faille.
 
 ## 📂 Structure des Dossiers
 
@@ -178,3 +187,4 @@ Si vous rencontrez des problèmes, consultez le fichier journal créé lors de l
     *   Si vous êtes hors ligne, placez les installateurs dans le dossier `apps` correspondant sur la clé USB.
 *   **Erreurs de script ?**
     *   Consultez le fichier journal mentionné ci-dessus pour les messages d'erreur spécifiques.
+    *   Des journaux de débogage supplémentaires pour les pilotes (ex: `pnputil`) sont enregistrés dans `%TEMP%` pendant l'installation.

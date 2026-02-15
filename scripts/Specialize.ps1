@@ -1,4 +1,3 @@
-
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\Lib\Helper.ps1"
 
@@ -31,7 +30,8 @@ foreach ($script in $scripts) {
 }
 
 # Generate SetupComplete.cmd for post-OOBE cleanup
-# This ensures unattend.xml remains available for OOBE but is removed before login
+# This ensures unattend.xml is removed to prevent sensitive data leak (if any)
+# We do NOT remove the Scripts folder here because UserOnce.ps1 (RunOnce) needs it.
 $setupCompleteContent = @"
 del /q /f "%WINDIR%\Panther\unattend.xml"
 del /q /f "%WINDIR%\Panther\unattend-original.xml"
@@ -39,6 +39,10 @@ del /q /f "%WINDIR%\Panther\unattend-original.xml"
 
 $setupCompletePath = "$env:SystemRoot\Setup\Scripts\SetupComplete.cmd"
 try {
+    $setupDir = Split-Path -Path $setupCompletePath -Parent
+    if (-not (Test-Path $setupDir)) {
+        New-Item -Path $setupDir -ItemType Directory -Force | Out-Null
+    }
     Set-Content -Path $setupCompletePath -Value $setupCompleteContent -Force
     Write-Log "Generated SetupComplete.cmd for cleanup."
 } catch {
@@ -46,4 +50,3 @@ try {
 }
 
 Write-Log "Specialize Pass Completed."
-
