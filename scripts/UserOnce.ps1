@@ -3,40 +3,6 @@ $ErrorActionPreference = 'Stop'
 
 Write-Log "Configuring User Account..."
 
-# Disable Copilot (Appx)
-try {
-    $copilot = Get-AppxPackage -Name 'Microsoft.Windows.Ai.Copilot.Provider' -ErrorAction SilentlyContinue
-    if ($copilot) {
-        $copilot | Remove-AppxPackage -ErrorAction SilentlyContinue
-        Write-Log "Copilot Appx removed."
-    }
-} catch {
-    Write-Log "Failed to remove Copilot Appx: $_"
-}
-
-# Explorer Settings
-$explorerKey = 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
-if (-not (Test-Path $explorerKey)) { New-Item -Path $explorerKey -Force | Out-Null }
-Set-ItemProperty -LiteralPath $explorerKey -Name 'LaunchTo' -Type 'DWord' -Value 1 -Force
-Set-ItemProperty -LiteralPath $explorerKey -Name 'TaskbarAl' -Type 'DWord' -Value 0 -Force # Align Left
-
-$searchKey = 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Search'
-if (-not (Test-Path $searchKey)) { New-Item -Path $searchKey -Force | Out-Null }
-Set-ItemProperty -LiteralPath $searchKey -Name 'SearchboxTaskbarMode' -Type 'DWord' -Value 3 -Force # Icon only
-
-# Disable "Finish setting up your device"
-$scoobeKey = 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement'
-if (-not (Test-Path $scoobeKey)) { New-Item -Path $scoobeKey -Force | Out-Null }
-Set-ItemProperty -LiteralPath $scoobeKey -Name 'ScoobeSystemSettingEnabled' -Type 'DWord' -Value 0 -Force -ErrorAction SilentlyContinue
-
-# Disable Lock Screen Tips
-$contentKey = 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager'
-if (-not (Test-Path $contentKey)) { New-Item -Path $contentKey -Force | Out-Null }
-Set-ItemProperty -LiteralPath $contentKey -Name 'SubscribedContent-338387Enabled' -Type 'DWord' -Value 0 -Force -ErrorAction SilentlyContinue
-
-# Restart Explorer to apply changes
-Get-Process -Name 'explorer' -ErrorAction 'SilentlyContinue' | Stop-Process -Force
-
 # Register Daily Winget Auto-Update Task (Transparent)
 $taskName = "DailySoftwareUpdate"
 $wingetCmd = "winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements"

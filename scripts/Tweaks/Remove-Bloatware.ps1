@@ -74,11 +74,13 @@ $provisioned = Get-AppxProvisionedPackage -Online
 foreach ($package in $packagesToRemove) {
     $found = $provisioned | Where-Object { $_.DisplayName -eq $package }
     if ($found) {
-        Write-Log "Removing $package..."
-        try {
-            Remove-AppxProvisionedPackage -Online -PackageName $found.PackageName -ErrorAction Continue | Out-Null
-        } catch {
-            Write-Log "Failed to remove $package: $_"
+        foreach ($item in $found) {
+            Write-Log "Removing $($item.DisplayName) ($($item.PackageName))..."
+            try {
+                Remove-AppxProvisionedPackage -Online -PackageName $item.PackageName -ErrorAction Continue | Out-Null
+            } catch {
+                Write-Log "Failed to remove $($item.PackageName): $_"
+            }
         }
     }
 }

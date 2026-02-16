@@ -31,7 +31,9 @@ try {
     # Taskbar and Explorer settings
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v ShowTaskViewButton /t REG_DWORD /d 0 /f
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarAl /t REG_DWORD /d 0 /f # Left align taskbar
+    reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v LaunchTo /t REG_DWORD /d 1 /f # Open This PC
     reg.exe add "$defaultUserHive\Software\Policies\Microsoft\Windows\Explorer" /v DisableSearchBoxSuggestions /t REG_DWORD /d 1 /f
+    reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Search" /v SearchboxTaskbarMode /t REG_DWORD /d 3 /f # Icon only
 
     # Show File Extensions
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v HideFileExt /t REG_DWORD /d 0 /f
@@ -56,8 +58,14 @@ try {
     # Enable End Task in Taskbar (Developer/Power User feature)
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarEndTask /t REG_DWORD /d 1 /f
 
-    # Run UserOnce on first login
-    reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce" /v "UnattendedSetup" /t REG_SZ /d "powershell.exe -WindowStyle `"Normal`" -ExecutionPolicy `"Unrestricted`" -NoProfile -File `"C:\Windows\Setup\Scripts\UserOnce.ps1`"" /f
+    # Disable "Finish setting up your device"
+    reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement" /v ScoobeSystemSettingEnabled /t REG_DWORD /d 0 /f
+
+    # Run UserOnce on first login (if script exists)
+    # We wrap in cmd /c "if exist ..." to prevent errors for subsequent users after self-destruct
+    $uScript = "C:\Windows\Setup\Scripts\UserOnce.ps1"
+    $runOnceCmd = "cmd /c `"if exist \`"$uScript\`" powershell.exe -WindowStyle Normal -ExecutionPolicy Unrestricted -NoProfile -File \`"$uScript\`"`""
+    reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce" /v "UnattendedSetup" /t REG_SZ /d $runOnceCmd /f
 }
 catch {
     Write-Log "Error applying Default User tweaks: $_"

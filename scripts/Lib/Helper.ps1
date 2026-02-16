@@ -11,10 +11,12 @@ function Get-InstallMedia {
 }
 
 function Get-InstallerFile {
-    param([string]$Path)
+    param([string]$Path, [string[]]$Extensions = @("*.exe"))
     if (Test-Path -Path $Path) {
-        $file = Get-ChildItem -Path $Path -Filter "*.exe" | Select-Object -First 1
-        if ($file) { return $file.FullName }
+        foreach ($ext in $Extensions) {
+            $file = Get-ChildItem -Path $Path -Filter $ext | Select-Object -First 1
+            if ($file) { return $file.FullName }
+        }
     }
     return $null
 }
@@ -53,7 +55,7 @@ function Download-File {
 
     # Wait for network
     while (-not $connected -and $retry -lt $maxRetries) {
-        $testHosts = @("8.8.8.8", "1.1.1.1", "google.com", "microsoft.com")
+        $testHosts = @("google.com", "microsoft.com", "cloudflare.com")
         foreach ($hostName in $testHosts) {
             try {
                 $null = [System.Net.Dns]::GetHostEntry($hostName)
