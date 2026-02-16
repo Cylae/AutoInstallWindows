@@ -53,11 +53,18 @@ try {
     # Disable Copilot for Default User
     reg.exe add "$defaultUserHive\Software\Policies\Microsoft\Windows\WindowsCopilot" /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f
 
+    # Disable Typing Insights
+    reg.exe add "$defaultUserHive\Software\Microsoft\Input\Settings" /v InsightsEnabled /t REG_DWORD /d 0 /f
+
+    # Disable Tailored Experiences
+    reg.exe add "$defaultUserHive\Software\Policies\Microsoft\Windows\CloudContent" /v DisableTailoredExperiencesWithDiagnosticData /t REG_DWORD /d 1 /f
+
     # Enable End Task in Taskbar (Developer/Power User feature)
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarEndTask /t REG_DWORD /d 1 /f
 
     # Run UserOnce on first login
-    reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce" /v "UnattendedSetup" /t REG_SZ /d "powershell.exe -WindowStyle `"Normal`" -ExecutionPolicy `"Unrestricted`" -NoProfile -File `"C:\Windows\Setup\Scripts\UserOnce.ps1`"" /f
+    # Use single quotes for the command string to avoid nesting issues with double quotes required by powershell.exe arguments
+    reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce" /v "UnattendedSetup" /t REG_SZ /d 'powershell.exe -WindowStyle "Normal" -ExecutionPolicy "Unrestricted" -NoProfile -File "C:\Windows\Setup\Scripts\UserOnce.ps1"' /f
 }
 catch {
     Write-Log "Error applying Default User tweaks: $_"
