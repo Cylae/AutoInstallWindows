@@ -13,8 +13,8 @@ if ($mediaRoot) {
         if (Get-ChildItem -Path $driverPath -Filter "*.inf" -Recurse) {
             try {
                 $pnputilArgs = "/add-driver `"$driverPath\*.inf`" /subdirs /install"
-                # Redirect standard output/error to null for total silence
-                Start-Process -FilePath "pnputil.exe" -ArgumentList $pnputilArgs -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\pnputil_network.log"
+                # Redirect standard output and error to logs for debugging
+                Start-Process -FilePath "pnputil.exe" -ArgumentList $pnputilArgs -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\pnputil_network.log" -RedirectStandardError "$env:TEMP\pnputil_network_err.log"
                 Write-Log "Network driver installation completed."
             }
             catch {

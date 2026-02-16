@@ -6,11 +6,23 @@ Write-Log "Configuring Default User..."
 
 # Load Default User Hive
 $defaultUserHive = "HKU\DefaultUser"
+$weLoadedIt = $false
 
 # Robustly load hive: Check if already loaded first
 if (-not (Test-Path "Registry::$defaultUserHive")) {
     Write-Log "Loading Default User hive..."
-    reg.exe load $defaultUserHive "C:\Users\Default\NTUSER.DAT"
+    try {
+        $result = reg.exe load $defaultUserHive "C:\Users\Default\NTUSER.DAT" 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $weLoadedIt = $true
+        } else {
+            Write-Log "Failed to load Default User hive: $result"
+            return
+        }
+    } catch {
+        Write-Log "Exception loading Default User hive: $_"
+        return
+    }
 } else {
     Write-Log "Default User hive already loaded."
 }
@@ -54,12 +66,16 @@ try {
     # Use single quotes for the command string to avoid nesting issues with double quotes required by powershell.exe arguments
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce" /v "UnattendedSetup" /t REG_SZ /d 'powershell.exe -WindowStyle "Normal" -ExecutionPolicy "Unrestricted" -NoProfile -File "C:\Windows\Setup\Scripts\UserOnce.ps1"' /f
 }
+catch {
+    Write-Log "Error applying Default User tweaks: $_"
+}
 finally {
-    # Only unload if we are sure we are done.
-    # But since we are the only ones touching it in this scope, we should unload.
-    Write-Log "Unloading Default User hive..."
-    reg.exe unload $defaultUserHive
-    [GC]::Collect()
+    # Only unload if we loaded it to avoid disrupting other processes
+    if ($weLoadedIt) {
+        Write-Log "Unloading Default User hive..."
+        [GC]::Collect() # Force GC to release handles
+        reg.exe unload $defaultUserHive
+    }
 }
 
 Write-Log "Default User Configuration Completed."

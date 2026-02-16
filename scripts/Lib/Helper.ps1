@@ -1,9 +1,10 @@
 function Get-InstallMedia {
-    $drives = Get-PSDrive -PSProvider FileSystem
+    # Use .NET DriveInfo to correctly identify Fixed/Removable drives and avoid network/floppy hangs
+    $drives = [System.IO.DriveInfo]::GetDrives() | Where-Object { $_.DriveType -in 'Fixed', 'Removable' -and $_.IsReady }
     foreach ($drive in $drives) {
-        $path = Join-Path -Path $drive.Root -ChildPath "drivers"
+        $path = Join-Path -Path $drive.RootDirectory.FullName -ChildPath "drivers"
         if (Test-Path -Path $path -PathType Container) {
-            return $drive.Root
+            return $drive.RootDirectory.FullName
         }
     }
     return $null
@@ -23,11 +24,15 @@ function Write-Log {
         [string]$Message,
         [string]$Path = "$env:SystemRoot\Panther\Autounattend_Log.txt"
     )
+    # Ensure directory exists
+    $dir = Split-Path -Path $Path -Parent
+    if (-not (Test-Path -Path $dir)) {
+        New-Item -Path $dir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
+    }
+
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $logEntry = "[$timestamp] $Message"
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
-    # Write-Host is useful for debugging but we want total silence in production
-    # Write-Host $logEntry
 }
 
 function Download-File {
@@ -48,17 +53,16 @@ function Download-File {
 
     # Wait for network
     while (-not $connected -and $retry -lt $maxRetries) {
-        try {
-            $testHosts = @("8.8.8.8", "1.1.1.1", "google.com", "microsoft.com")
-            foreach ($hostName in $testHosts) {
-                try {
-                    $null = [System.Net.Dns]::GetHostEntry($hostName)
-                    $connected = $true
-                    break
-                } catch {}
-            }
-            if (-not $connected) { throw "No connection" }
-        } catch {
+        $testHosts = @("8.8.8.8", "1.1.1.1", "google.com", "microsoft.com")
+        foreach ($hostName in $testHosts) {
+            try {
+                $null = [System.Net.Dns]::GetHostEntry($hostName)
+                $connected = $true
+                break
+            } catch {}
+        }
+
+        if (-not $connected) {
             $retry++
             Start-Sleep -Seconds 2
         }
@@ -75,7 +79,11 @@ function Download-File {
 
     while (-not $downloaded -and $dRetry -lt $downloadRetries) {
         try {
-            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            # Enable TLS 1.2 and TLS 1.3 (if available)
+            $protocols = [Net.SecurityProtocolType]::Tls12
+            try { $protocols = $protocols -bor [Net.SecurityProtocolType]::Tls13 } catch {}
+            [Net.ServicePointManager]::SecurityProtocol = $protocols
+
             Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -ErrorAction Stop
 
             # Verify file size > 1KB (1024 bytes) to ensure valid download
