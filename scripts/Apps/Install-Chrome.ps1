@@ -13,10 +13,10 @@ if ((Test-Path "$env:ProgramFiles\Google\Chrome\Application\chrome.exe") -or (Te
 $mediaRoot = Get-InstallMedia
 $setupPath = $null
 
-# 1. Try Download (Online First)
-$url = 'https://dl.google.com/chrome/install/chrome_installer.exe'
-$dest = "$env:TEMP\chrome.exe"
-if (Download-File -Url $url -Destination $dest -Name "Chrome") {
+# 1. Try Download (Online First) - Prefer Enterprise MSI
+$url = 'https://dl.google.com/chrome/install/googlechromestandaloneenterprise64.msi'
+$dest = "$env:TEMP\chrome.msi"
+if (Download-File -Url $url -Destination $dest -Name "Chrome Enterprise MSI") {
     $setupPath = $dest
 }
 
@@ -31,7 +31,8 @@ if (-not $setupPath -and $mediaRoot) {
     )
     foreach ($path in $possiblePaths) {
          if (Test-Path $path) {
-             $localInstaller = Get-InstallerFile -Path $path
+             # Prioritize MSI, then EXE
+             $localInstaller = Get-InstallerFile -Path $path -Extensions @("*.msi", "*.exe")
              if ($localInstaller) {
                 $setupPath = $localInstaller
                 break
@@ -44,8 +45,19 @@ if ($setupPath) {
     Write-Log "Installing Chrome from $setupPath..."
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
-        Start-Process -FilePath $setupPath -ArgumentList '/silent /install' -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\chrome_install.log"
-        if ($setupPath -eq "$env:TEMP\chrome.exe") {
+
+        if ($setupPath -match '\.msi$') {
+            # MSI Installation
+            # Note: msiexec requires strict quoting for paths with spaces
+            $msiArgs = "/i `"$setupPath`" /qn /norestart"
+            Start-Process -FilePath "msiexec.exe" -ArgumentList $msiArgs -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\chrome_install.log"
+        } else {
+            # EXE Installation
+            Start-Process -FilePath $setupPath -ArgumentList '/silent /install' -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\chrome_install.log"
+        }
+
+        # Cleanup temp file
+        if ($setupPath -match "$env:TEMP\\chrome\.(msi|exe)") {
             Remove-Item -Path $setupPath -Force -ErrorAction SilentlyContinue
         }
         Write-Log "Chrome installation completed."

@@ -35,6 +35,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 *   **🛡️ Enhanced Robustness**:
     *   **Secure Downloads**: Supports **TLS 1.2 and 1.3** for secure file downloads.
     *   **Smart Media Detection**: Filters for Fixed and Removable drives to prevent hangs on network/floppy drives.
+    *   **Fail-Safe Execution**: Scripts include existence checks (e.g., RunOnce) to prevent errors on subsequent logins.
     *   **Advanced Error Handling**: Improved logging and registry handling for fail-safe execution.
 
 ## 📂 Folder Structure
@@ -57,7 +58,7 @@ USB_ROOT/
 
 ### 🌍 Internet Download
 
-*   **Chrome**: Automatically downloads if not found locally. Checks for existing installation to avoid redundancy.
+*   **Chrome**: Preferentially downloads and installs the **Enterprise MSI** for optimal silent deployment. Supports both `.msi` and `.exe` local installers.
 *   **Visual C++**: Automatically downloads from Microsoft, falls back to local `vcredist_x64`/`vcredist_x86` folders if offline.
 *   **Nvidia**: Requires local installer in `drivers/nvidia` or manual URL configuration in script (Auto-download API is deprecated).
 
@@ -86,7 +87,7 @@ If you encounter issues, check the log file created during setup:
     *   Ensure other drivers (Nvidia, AMD, etc.) are **`.exe`** installers.
     *   Verify the folder structure on your USB drive matches the example above.
 *   **Apps not downloading?**
-    *   Check your internet connection. The script attempts to connect to `8.8.8.8` to verify connectivity.
+    *   Check your internet connection. The script attempts to connect to `google.com` to verify connectivity.
     *   If offline, place the installers in the corresponding `apps` folder on the USB.
 *   **Script errors?**
     *   Review the log file mentioned above for specific error messages.
@@ -154,7 +155,7 @@ RACINE_USB/
 
 ### 🌍 Téléchargement Internet
 
-*   **Chrome**: Télécharge automatiquement si non trouvé localement. Vérifie si Chrome est déjà installé pour éviter la redondance.
+*   **Chrome**: Télécharge et installe de préférence le **MSI Entreprise** pour un déploiement silencieux optimal. Supporte les installateurs locaux `.msi` et `.exe`.
 *   **Visual C++**: Télécharge automatiquement depuis Microsoft, bascule sur les dossiers `vcredist_x64`/`vcredist_x86` si hors-ligne.
 *   **Nvidia**: Nécessite un installateur local ou une configuration manuelle de l'URL (L'API d'auto-téléchargement est obsolète).
 
@@ -183,7 +184,7 @@ Si vous rencontrez des problèmes, consultez le fichier journal créé lors de l
     *   Assurez-vous que les autres pilotes (Nvidia, AMD, etc.) sont des installateurs **`.exe`**.
     *   Vérifiez que la structure des dossiers sur votre clé USB correspond à l'exemple ci-dessus.
 *   **Les applications ne se téléchargent pas ?**
-    *   Vérifiez votre connexion Internet. Le script tente de se connecter à `8.8.8.8` pour vérifier la connectivité.
+    *   Vérifiez votre connexion Internet. Le script tente de se connecter à `google.com` pour vérifier la connectivité.
     *   Si vous êtes hors ligne, placez les installateurs dans le dossier `apps` correspondant sur la clé USB.
 *   **Erreurs de script ?**
     *   Consultez le fichier journal mentionné ci-dessus pour les messages d'erreur spécifiques.
