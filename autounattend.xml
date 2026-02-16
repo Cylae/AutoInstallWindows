@@ -417,10 +417,11 @@ if ((Test-Path &quot;$env:ProgramFiles\Google\Chrome\Application\chrome.exe&quot
 $mediaRoot = Get-InstallMedia
 $setupPath = $null
 
-# 1. Try Download (Online First)
-$url = 'https://dl.google.com/chrome/install/chrome_installer.exe'
-$dest = &quot;$env:TEMP\chrome.exe&quot;
-if (Download-File -Url $url -Destination $dest -Name &quot;Chrome&quot;) {
+# 1. Try Download (Online First) - Prefer Enterprise MSI for silent install
+# Use the stable Enterprise MSI link
+$url = 'https://dl.google.com/tag/s/appguid%3D%7B8A69D345-D564-463C-AFF1-A69D9E530F96%7D%26iid%3D%7BBA652416-577E-2821-8273-030291916362%7D%26lang%3Den%26browser%3D3%26usagestats%3D0%26appname%3DGoogle%2520Chrome%26needsadmin%3Dtrue%26ap%3Dx64-stable-statsdef_1/dl/chrome/install/googlechromestandaloneenterprise64.msi'
+$dest = &quot;$env:TEMP\chrome.msi&quot;
+if (Download-File -Url $url -Destination $dest -Name &quot;Chrome Enterprise MSI&quot;) {
     $setupPath = $dest
 }
 
@@ -435,9 +436,15 @@ if (-not $setupPath -and $mediaRoot) {
     )
     foreach ($path in $possiblePaths) {
          if (Test-Path $path) {
-             $localInstaller = Get-InstallerFile -Path $path
-             if ($localInstaller) {
-                $setupPath = $localInstaller
+             # Check for MSI first, then EXE
+             $localMsi = Get-ChildItem -Path $path -Filter &quot;*.msi&quot; | Select-Object -First 1
+             if ($localMsi) {
+                 $setupPath = $localMsi.FullName
+                 break
+             }
+             $localExe = Get-InstallerFile -Path $path
+             if ($localExe) {
+                $setupPath = $localExe
                 break
              }
          }
@@ -448,8 +455,16 @@ if ($setupPath) {
     Write-Log &quot;Installing Chrome from $setupPath...&quot;
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
-        Start-Process -FilePath $setupPath -ArgumentList '/silent /install' -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
-        if ($setupPath -eq &quot;$env:TEMP\chrome.exe&quot;) {
+
+        if ($setupPath.EndsWith(&quot;.msi&quot;, [System.StringComparison]::OrdinalIgnoreCase)) {
+            # MSI Installation
+            Start-Process -FilePath &quot;msiexec.exe&quot; -ArgumentList &quot;/i `&quot;$setupPath`&quot; /qn /norestart&quot; -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
+        } else {
+            # EXE Installation
+            Start-Process -FilePath $setupPath -ArgumentList '/silent /install' -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
+        }
+
+        if ($setupPath -eq &quot;$env:TEMP\chrome.msi&quot;) {
             Remove-Item -Path $setupPath -Force -ErrorAction SilentlyContinue
         }
         Write-Log &quot;Chrome installation completed.&quot;
@@ -535,13 +550,16 @@ Write-Log &quot;Starting Debloating Process...&quot;
 # Remove Appx Provisioned Packages
 $provisioned = Get-AppxProvisionedPackage -Online
 foreach ($package in $packagesToRemove) {
-    $found = $provisioned | Where-Object { $_.DisplayName -eq $package }
-    if ($found) {
-        Write-Log &quot;Removing $package...&quot;
-        try {
-            Remove-AppxProvisionedPackage -Online -PackageName $found.PackageName -ErrorAction Continue | Out-Null
-        } catch {
-            Write-Log &quot;Failed to remove $package: $_&quot;
+    # Find all packages matching the DisplayName (could be multiple architectures or versions)
+    $foundPackages = $provisioned | Where-Object { $_.DisplayName -eq $package }
+    if ($foundPackages) {
+        foreach ($p in $foundPackages) {
+            Write-Log &quot;Removing $($p.DisplayName) ($($p.Version))...&quot;
+            try {
+                Remove-AppxProvisionedPackage -Online -PackageName $p.PackageName -ErrorAction Continue | Out-Null
+            } catch {
+                Write-Log &quot;Failed to remove $($p.PackageName): $_&quot;
+            }
         }
     }
 }
@@ -592,9 +610,14 @@ reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; 
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v AllowCloudSearch /t REG_DWORD /d 0 /f
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v EnableDynamicContentInWS /t REG_DWORD /d 0 /f
 
-# Disable Copilot
+# Disable Copilot (HKLM only, HKCU handled in DefaultUser.ps1)
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot&quot; /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKCU\Software\Policies\Microsoft\Windows\WindowsCopilot&quot; /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f
+
+# Disable Windows Error Reporting
+reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting&quot; /v Disabled /t REG_DWORD /d 1 /f
+
+# Disable Shared Experiences (Project to this PC, Share across devices)
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v EnableCdp /t REG_DWORD /d 0 /f
 
 # Disable News and Interests
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Dsh&quot; /v AllowNewsAndInterests /t REG_DWORD /d 0 /f
@@ -767,11 +790,18 @@ try {
     # Disable Copilot for Default User
     reg.exe add &quot;$defaultUserHive\Software\Policies\Microsoft\Windows\WindowsCopilot&quot; /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f
 
+    # Disable Typing Insights
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Input\Settings&quot; /v InsightsEnabled /t REG_DWORD /d 0 /f
+
+    # Disable Tailored Experiences
+    reg.exe add &quot;$defaultUserHive\Software\Policies\Microsoft\Windows\CloudContent&quot; /v DisableTailoredExperiencesWithDiagnosticData /t REG_DWORD /d 1 /f
+
     # Enable End Task in Taskbar (Developer/Power User feature)
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v TaskbarEndTask /t REG_DWORD /d 1 /f
 
     # Run UserOnce on first login
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce&quot; /v &quot;UnattendedSetup&quot; /t REG_SZ /d &quot;powershell.exe -WindowStyle `&quot;Normal`&quot; -ExecutionPolicy `&quot;Unrestricted`&quot; -NoProfile -File `&quot;C:\Windows\Setup\Scripts\UserOnce.ps1`&quot;&quot; /f
+    # Use single quotes for the command string to avoid nesting issues with double quotes required by powershell.exe arguments
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce&quot; /v &quot;UnattendedSetup&quot; /t REG_SZ /d 'powershell.exe -WindowStyle &quot;Normal&quot; -ExecutionPolicy &quot;Unrestricted&quot; -NoProfile -File &quot;C:\Windows\Setup\Scripts\UserOnce.ps1&quot;' /f
 }
 finally {
     # Only unload if we are sure we are done.
@@ -808,7 +838,8 @@ Get-Process -Name 'explorer' -ErrorAction 'SilentlyContinue' | Stop-Process -For
 # Register Daily Winget Auto-Update Task (Transparent)
 $taskName = &quot;DailySoftwareUpdate&quot;
 # Added --disable-interactivity and ensuring silent operation
-$action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `\&quot;winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements`\&quot;&quot;
+# Simplified quoting: Use single quotes for the argument string, and double quotes for the inner command string.
+$action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument '-WindowStyle Hidden -Command &quot;winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements&quot;'
 $trigger = New-ScheduledTaskTrigger -Daily -At 13:00
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
 Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Highest -Force | Out-Null

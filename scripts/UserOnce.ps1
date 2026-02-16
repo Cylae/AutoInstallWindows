@@ -1,3 +1,4 @@
+
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\Lib\Helper.ps1"
 
@@ -22,7 +23,8 @@ Get-Process -Name 'explorer' -ErrorAction 'SilentlyContinue' | Stop-Process -For
 # Register Daily Winget Auto-Update Task (Transparent)
 $taskName = "DailySoftwareUpdate"
 # Added --disable-interactivity and ensuring silent operation
-$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-WindowStyle Hidden -Command `\"winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements`\""
+# Simplified quoting: Use single quotes for the argument string, and double quotes for the inner command string.
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument '-WindowStyle Hidden -Command "winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements"'
 $trigger = New-ScheduledTaskTrigger -Daily -At 13:00
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
 Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description "Automatically updates all software via Winget silently." -RunLevel Highest -Force | Out-Null
