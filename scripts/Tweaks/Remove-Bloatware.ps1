@@ -1,4 +1,3 @@
-
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\Lib\Helper.ps1"
 
@@ -73,16 +72,13 @@ Write-Log "Starting Debloating Process..."
 # Remove Appx Provisioned Packages
 $provisioned = Get-AppxProvisionedPackage -Online
 foreach ($package in $packagesToRemove) {
-    # Find all packages matching the DisplayName (could be multiple architectures or versions)
-    $foundPackages = $provisioned | Where-Object { $_.DisplayName -eq $package }
-    if ($foundPackages) {
-        foreach ($p in $foundPackages) {
-            Write-Log "Removing $($p.DisplayName) ($($p.Version))..."
-            try {
-                Remove-AppxProvisionedPackage -Online -PackageName $p.PackageName -ErrorAction Continue | Out-Null
-            } catch {
-                Write-Log "Failed to remove $($p.PackageName): $_"
-            }
+    $found = $provisioned | Where-Object { $_.DisplayName -eq $package }
+    if ($found) {
+        Write-Log "Removing $package..."
+        try {
+            Remove-AppxProvisionedPackage -Online -PackageName $found.PackageName -ErrorAction Continue | Out-Null
+        } catch {
+            Write-Log "Failed to remove $package: $_"
         }
     }
 }
