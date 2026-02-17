@@ -55,6 +55,7 @@ function Download-File {
 
     # Wait for network
     while (-not $connected -and $retry -lt $maxRetries) {
+        # 1. Check DNS (Primary)
         $testHosts = @("google.com", "microsoft.com", "cloudflare.com")
         foreach ($hostName in $testHosts) {
             try {
@@ -64,8 +65,31 @@ function Download-File {
             } catch {}
         }
 
+        # 2. Check TCP Socket (Fallback, if DNS fails)
+        if (-not $connected) {
+            $testIps = @("8.8.8.8", "1.1.1.1")
+            foreach ($ip in $testIps) {
+                try {
+                    $socket = New-Object System.Net.Sockets.TcpClient
+                    $connect = $socket.BeginConnect($ip, 53, $null, $null)
+                    # Wait 1 second for connection
+                    if ($connect.AsyncWaitHandle.WaitOne(1000, $false)) {
+                        try {
+                            $socket.EndConnect($connect)
+                            $connected = $true
+                        } catch {}
+                    }
+                    $socket.Close()
+                    if ($connected) { break }
+                } catch {}
+            }
+        }
+
         if (-not $connected) {
             $retry++
+            if ($retry % 5 -eq 0) {
+                 Write-Log "Waiting for network connectivity... ($retry/$maxRetries)"
+            }
             Start-Sleep -Seconds 2
         }
     }

@@ -25,7 +25,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Smart Matching**: Finds installer executables (`*.exe`) automatically—no need to rename files to `setup.exe`.
     *   **Included Support**: Scripts for Network, Nvidia GPU, AMD Chipset, and Focusrite Audio drivers.
 *   **🌐 Robust App Installation**:
-    *   **Smart Connectivity**: Verified internet checks against multiple reliable hosts (Google, Cloudflare, Microsoft) with robust retry logic.
+    *   **Smart Connectivity**: Verified internet checks against multiple reliable hosts (Google, Cloudflare, Microsoft) and direct IP checks (8.8.8.8, 1.1.1.1) with robust retry logic.
     *   **Online First**: Prioritizes downloading the latest Chrome and Visual C++ Runtimes from the internet.
     *   **Offline Fallback**: Automatically checks for local installers if internet is unavailable.
     *   **Visual C++ Runtimes**: Automatically downloads and installs the latest VC++ 2015-2022 Redistributable (**x64 and x86**).
@@ -87,11 +87,11 @@ If you encounter issues, check the log file created during setup:
     *   Ensure other drivers (Nvidia, AMD, etc.) are **`.exe`** installers.
     *   Verify the folder structure on your USB drive matches the example above.
 *   **Apps not downloading?**
-    *   Check your internet connection. The script attempts to connect to `google.com` to verify connectivity.
+    *   Check your internet connection. The script attempts to connect to `google.com`, `microsoft.com`, and `cloudflare.com` via DNS, and falls back to checking `8.8.8.8` and `1.1.1.1` directly (TCP port 53) to verify connectivity.
     *   If offline, place the installers in the corresponding `apps` folder on the USB.
 *   **Script errors?**
     *   Review the log file mentioned above for specific error messages.
-    *   Additional debug logs for drivers (e.g., `pnputil`) are saved in `%TEMP%` during setup.
+    *   Additional debug logs for drivers (e.g., `pnputil`) are saved in `%TEMP%` during setup. If network driver installation fails, the output from `pnputil` is now appended to the main log for easier debugging.
 
 ---
 ---
@@ -123,7 +123,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
     *   **Recherche Intelligente**: Trouve automatiquement les exécutables (`*.exe`)—pas besoin de renommer en `setup.exe`.
     *   **Support Inclus**: Scripts pour Réseau, GPU Nvidia, Chipset AMD et Audio Focusrite.
 *   **🌐 Installation d'Applications Robuste**:
-    *   **Connectivité Intelligente**: Vérifie la connexion internet via plusieurs hôtes fiables (Google, Cloudflare, Microsoft).
+    *   **Connectivité Intelligente**: Vérifie la connexion internet via plusieurs hôtes fiables (Google, Cloudflare, Microsoft) et vérifications IP directes.
     *   **En Ligne en Priorité**: Privilégie le téléchargement du dernier installateur Chrome et Visual C++ depuis Internet.
     *   **Repli Hors-ligne**: Vérifie automatiquement les installateurs locaux si Internet n'est pas disponible.
     *   **Runtimes Visual C++**: Télécharge et installe automatiquement les derniers Runtimes VC++ 2015-2022 (**x64 et x86**).
@@ -184,8 +184,8 @@ Si vous rencontrez des problèmes, consultez le fichier journal créé lors de l
     *   Assurez-vous que les autres pilotes (Nvidia, AMD, etc.) sont des installateurs **`.exe`**.
     *   Vérifiez que la structure des dossiers sur votre clé USB correspond à l'exemple ci-dessus.
 *   **Les applications ne se téléchargent pas ?**
-    *   Vérifiez votre connexion Internet. Le script tente de se connecter à `google.com` pour vérifier la connectivité.
+    *   Vérifiez votre connexion Internet. Le script tente de se connecter à `google.com`, `microsoft.com`, et `cloudflare.com` (DNS), et bascule sur une vérification directe de `8.8.8.8` et `1.1.1.1` (TCP port 53).
     *   Si vous êtes hors ligne, placez les installateurs dans le dossier `apps` correspondant sur la clé USB.
 *   **Erreurs de script ?**
     *   Consultez le fichier journal mentionné ci-dessus pour les messages d'erreur spécifiques.
-    *   Des journaux de débogage supplémentaires pour les pilotes (ex: `pnputil`) sont enregistrés dans `%TEMP%` pendant l'installation.
+    *   Des journaux de débogage supplémentaires pour les pilotes (ex: `pnputil`) sont enregistrés dans `%TEMP%` pendant l'installation. En cas d'échec de l'installation des pilotes réseau, la sortie de `pnputil` est ajoutée au journal principal.
