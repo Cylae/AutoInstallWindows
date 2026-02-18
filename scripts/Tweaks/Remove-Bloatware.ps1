@@ -72,7 +72,7 @@ Write-Log "Starting Debloating Process..."
 # Remove Appx Provisioned Packages
 $provisioned = Get-AppxProvisionedPackage -Online
 foreach ($package in $packagesToRemove) {
-    $found = $provisioned | Where-Object { $_.DisplayName -eq $package }
+    $found = $provisioned | Where-Object { $_.DisplayName -like "*$package*" -or $_.PackageName -like "*$package*" }
     if ($found) {
         foreach ($item in $found) {
             Write-Log "Removing $($item.DisplayName) ($($item.PackageName))..."

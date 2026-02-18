@@ -463,7 +463,7 @@ if ($setupPath) {
         if ($setupPath -match '\.msi$') {
             # MSI Installation
             # Note: msiexec requires strict quoting for paths with spaces
-            $msiArgs = &quot;/i `&quot;$setupPath`&quot; /qn /norestart&quot;
+            $msiArgs = @(&quot;/i&quot;, $setupPath, &quot;/qn&quot;, &quot;/norestart&quot;)
             Start-Process -FilePath &quot;msiexec.exe&quot; -ArgumentList $msiArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
         } else {
             # EXE Installation
@@ -557,7 +557,7 @@ Write-Log &quot;Starting Debloating Process...&quot;
 # Remove Appx Provisioned Packages
 $provisioned = Get-AppxProvisionedPackage -Online
 foreach ($package in $packagesToRemove) {
-    $found = $provisioned | Where-Object { $_.DisplayName -eq $package }
+    $found = $provisioned | Where-Object { $_.DisplayName -like &quot;*$package*&quot; -or $_.PackageName -like &quot;*$package*&quot; }
     if ($found) {
         foreach ($item in $found) {
             Write-Log &quot;Removing $($item.DisplayName) ($($item.PackageName))...&quot;
@@ -628,8 +628,8 @@ reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot;
 
 # Disable Edge First Run and Bloat
 reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v HideFirstRunExperience /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
 
 # Disable BitLocker Automatic Device Encryption
 reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\BitLocker&quot; /v &quot;PreventDeviceEncryption&quot; /t REG_DWORD /d 1 /f
@@ -868,33 +868,37 @@ $ErrorActionPreference = 'Stop'
 Write-Log &quot;Configuring User Account...&quot;
 
 # Register Daily Winget Auto-Update Task (Transparent)
-$taskName = &quot;DailySoftwareUpdate&quot;
-$wingetCmd = &quot;winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements&quot;
-$action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `\&quot;$wingetCmd`\&quot;&quot;
-$trigger = New-ScheduledTaskTrigger -Daily -At 13:00
-# Attempt 1: Try with Highest RunLevel (Admin)
-$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
+if (Get-Command winget -ErrorAction SilentlyContinue) {
+    $taskName = &quot;DailySoftwareUpdate&quot;
+    $wingetCmd = &quot;winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements&quot;
+    $action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `\&quot;$wingetCmd`\&quot;&quot;
+    $trigger = New-ScheduledTaskTrigger -Daily -At 13:00
+    # Attempt 1: Try with Highest RunLevel (Admin)
+    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
 
-$registered = $false
-try {
-    Write-Log &quot;Attempting to register Winget task with Highest privileges...&quot;
-    Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Highest -Force -ErrorAction Stop | Out-Null
-    $registered = $true
-    Write-Log &quot;Registered Daily Winget Auto-Update Task (Highest).&quot;
-} catch {
-    Write-Log &quot;Failed to register Winget task with Highest privileges: $_&quot;
-}
-
-# Attempt 2: Try with Limited (User) privileges if Admin failed (e.g., UAC issue)
-if (-not $registered) {
+    $registered = $false
     try {
-        Write-Log &quot;Attempting to register Winget task with Limited privileges...&quot;
-        Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Limited -Force -ErrorAction Stop | Out-Null
+        Write-Log &quot;Attempting to register Winget task with Highest privileges...&quot;
+        Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Highest -Force -ErrorAction Stop | Out-Null
         $registered = $true
-        Write-Log &quot;Registered Daily Winget Auto-Update Task (Limited).&quot;
+        Write-Log &quot;Registered Daily Winget Auto-Update Task (Highest).&quot;
     } catch {
-        Write-Log &quot;Failed to register Winget task (Limited): $_&quot;
+        Write-Log &quot;Failed to register Winget task with Highest privileges: $_&quot;
     }
+
+    # Attempt 2: Try with Limited (User) privileges if Admin failed (e.g., UAC issue)
+    if (-not $registered) {
+        try {
+            Write-Log &quot;Attempting to register Winget task with Limited privileges...&quot;
+            Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Limited -Force -ErrorAction Stop | Out-Null
+            $registered = $true
+            Write-Log &quot;Registered Daily Winget Auto-Update Task (Limited).&quot;
+        } catch {
+            Write-Log &quot;Failed to register Winget task (Limited): $_&quot;
+        }
+    }
+} else {
+    Write-Log &quot;Winget command not found. Skipping auto-update task registration.&quot;
 }
 
 Write-Log &quot;User Configuration Completed.&quot;

@@ -8,9 +8,9 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 
 *   **⚡ Zero-Interruption Setup**: All software (Chrome, Drivers, etc.) is installed during the `Specialize` pass, *before* the user logs in. No popups, no waiting at the desktop.
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
-*   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana, Advertising ID, Search Highlights, **Widgets**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
+*   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana, Advertising ID, Search Highlights, **Widgets**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default. **Enforced Edge Policies** to disable first-run experience and background services.
 *   **🌑 Dark Mode**: Enables Dark Mode for System and Apps by default.
-*   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, etc.) and unnecessary Windows capabilities.
+*   **🧹 Deep Debloating**: Aggressively removes bloatware using **intelligent matching** (Display Name & Package Name) to ensure complete removal of Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, etc.
 *   **💥 Self-Destruct**: Installation scripts automatically delete themselves after the first login to ensure a clean slate.
 *   **📜 Log Persistence**: Setup logs are preserved in `C:\Windows\Panther\Autounattend_Log.txt` for troubleshooting.
 *   **🚀 System Optimization**:
@@ -30,7 +30,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Offline Fallback**: Automatically checks for local installers if internet is unavailable.
     *   **Visual C++ Runtimes**: Automatically downloads and installs the latest VC++ 2015-2022 Redistributable (**x64 and x86**).
 *   **🔄 Transparent Auto-Updates**:
-    *   **Daily Updates**: Registers a hidden scheduled task to run `winget upgrade --all` daily (includes `source update`).
+    *   **Daily Updates**: Registers a hidden scheduled task to run `winget upgrade --all` daily (includes `source update`). Includes **smart availability check** to skip registration if Winget is not installed.
     *   **Silent**: Updates happen in the background without user intervention (configured with `--disable-interactivity`).
 *   **🛡️ Enhanced Robustness**:
     *   **Secure Downloads**: Supports **TLS 1.2 and 1.3** for secure file downloads.
@@ -106,9 +106,9 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 
 *   **⚡ Installation Zéro-Interruption**: Tous les logiciels (Chrome, Pilotes, etc.) sont installés durant la phase `Specialize`, **avant** la connexion de l'utilisateur. Aucun popup, aucune attente sur le bureau.
 *   **🤫 Totalement Silencieux**: Tous les scripts sont optimisés pour masquer les sorties et fenêtres. Vous ne verrez rien avant l'écran "Bienvenue".
-*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, Copilot, la recherche Bing, Cortana, l'ID publicitaire, **Widgets**. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
+*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, Copilot, la recherche Bing, Cortana, l'ID publicitaire, **Widgets**. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers. **Politiques Edge appliquées** pour désactiver l'expérience de premier lancement et les services en arrière-plan.
 *   **🌑 Mode Sombre**: Active le mode sombre pour le système et les applications par défaut.
-*   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Jeux**, **YourPhone**, etc.) et les fonctionnalités Windows inutiles.
+*   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares avec une **correspondance intelligente** (Nom d'affichage & Nom de paquet) pour garantir la suppression complète de Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Jeux**, **YourPhone**, etc.
 *   **💥 Auto-destruction**: Les scripts d'installation se suppriment automatiquement après la première connexion pour garantir un état propre.
 *   **📜 Journaux**: Les journaux d'installation sont conservés dans `C:\Windows\Panther\Autounattend_Log.txt` pour le dépannage.
 *   **🚀 Optimisation Système**:
@@ -128,7 +128,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
     *   **Repli Hors-ligne**: Vérifie automatiquement les installateurs locaux si Internet n'est pas disponible.
     *   **Runtimes Visual C++**: Télécharge et installe automatiquement les derniers Runtimes VC++ 2015-2022 (**x64 et x86**).
 *   **🔄 Mises à Jour Automatiques Transparentes**:
-    *   **Quotidien**: Enregistre une tâche planifiée masquée pour exécuter `winget upgrade --all` chaque jour.
+    *   **Quotidien**: Enregistre une tâche planifiée masquée pour exécuter `winget upgrade --all` chaque jour. Inclut une **vérification intelligente** pour ignorer l'enregistrement si Winget n'est pas installé.
     *   **Silencieux**: Les mises à jour se font en arrière-plan sans intervention de l'utilisateur (configuré avec `--disable-interactivity`).
 *   **🛡️ Robustesse Améliorée**:
     *   **Téléchargements Sécurisés**: Supporte **TLS 1.2 et 1.3** pour des téléchargements sécurisés.
