@@ -131,9 +131,20 @@ function Write-Log {
         New-Item -Path $dir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
     }
 
-    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss&quot;
+    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss.fff&quot;
     $logEntry = &quot;[$timestamp] $Message&quot;
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
+}
+
+function Test-InternetConnection {
+    $testHosts = @(&quot;google.com&quot;, &quot;microsoft.com&quot;, &quot;cloudflare.com&quot;)
+    foreach ($hostName in $testHosts) {
+        try {
+            $null = [System.Net.Dns]::GetHostEntry($hostName)
+            return $true
+        } catch {}
+    }
+    return $false
 }
 
 function Download-File {
@@ -154,16 +165,9 @@ function Download-File {
 
     # Wait for network
     while (-not $connected -and $retry -lt $maxRetries) {
-        $testHosts = @(&quot;google.com&quot;, &quot;microsoft.com&quot;, &quot;cloudflare.com&quot;)
-        foreach ($hostName in $testHosts) {
-            try {
-                $null = [System.Net.Dns]::GetHostEntry($hostName)
-                $connected = $true
-                break
-            } catch {}
-        }
-
-        if (-not $connected) {
+        if (Test-InternetConnection) {
+            $connected = $true
+        } else {
             $retry++
             Start-Sleep -Seconds 2
         }
@@ -174,7 +178,7 @@ function Download-File {
         return $false
     }
 
-    $downloadRetries = 3
+    $downloadRetries = 5
     $dRetry = 0
     $downloaded = $false
 
@@ -198,7 +202,7 @@ function Download-File {
         } catch {
             $dRetry++
             Write-Log &quot;Failed to download $Name (Attempt $dRetry/$downloadRetries): $_&quot;
-            Start-Sleep -Seconds 2
+            Start-Sleep -Seconds 5
         }
     }
 
@@ -503,11 +507,9 @@ $packagesToRemove = @(
     'Microsoft.WindowsMaps',
     'Microsoft.MixedReality.Portal',
     'Microsoft.BingNews',
-    'Microsoft.WindowsNotepad',
     'Microsoft.MicrosoftOfficeHub',
     'Microsoft.Office.OneNote',
     'Microsoft.OutlookForWindows',
-    'Microsoft.MSPaint',
     'Microsoft.People',
     'Microsoft.Windows.PeopleExperienceHost',
     'Microsoft.Windows.Photos',
@@ -791,6 +793,12 @@ try {
 
     # Show File Extensions
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v HideFileExt /t REG_DWORD /d 0 /f
+
+    # Show Seconds in System Clock
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v ShowSecondsInSystemClock /t REG_DWORD /d 1 /f
+
+    # Disable Sticky Keys Shortcut (Shift 5 times)
+    reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\StickyKeys&quot; /v Flags /t REG_SZ /d &quot;506&quot; /f
 
     # Show &quot;This PC&quot; Icon on Desktop
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel&quot; /v &quot;{20D04FE0-3AEA-1069-A2D8-08002B30309D}&quot; /t REG_DWORD /d 0 /f
