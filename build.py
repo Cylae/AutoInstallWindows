@@ -21,6 +21,8 @@ def update_autounattend():
     with open(xml_path, 'r', encoding='utf-8') as f:
         content = f.read()
 
+    new_files_content = ""
+
     # Iterate over all files in scripts directory
     for root, dirs, files in os.walk(scripts_dir):
         for file in files:
@@ -58,7 +60,19 @@ def update_autounattend():
 
                 content = re.sub(pattern, replacement, content, flags=re.DOTALL)
             else:
-                print(f"Warning: File path {xml_file_path} not found in XML. Skipping.")
+                print(f"Adding new file {xml_file_path}...")
+                new_files_content += f'\t\t<File path="{xml_file_path}">\n{encoded_content.strip()}\n</File>\n'
+
+    # Insert new files if any
+    if new_files_content:
+        # Find the closing </Extensions> tag
+        split_point = '</Extensions>'
+        if split_point in content:
+            parts = content.split(split_point)
+            # Insert before the last occurrence (should be only one)
+            content = parts[0] + new_files_content + split_point + parts[1]
+        else:
+            print("Warning: </Extensions> tag not found. Cannot add new files.")
 
     with open(xml_path, 'w', encoding='utf-8') as f:
         f.write(content)

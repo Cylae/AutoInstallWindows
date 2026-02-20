@@ -75,6 +75,7 @@ This repository uses a build system to generate `autounattend.xml` from modular 
 
 *   **Scripts Location**: All PowerShell scripts are located in the `scripts/` directory.
 *   **Modify**: Edit the `.ps1` files in `scripts/` to make changes.
+*   **Add New Scripts**: Simply create a new `.ps1` file anywhere in `scripts/`. The build system will automatically discover it and add it to `autounattend.xml`.
 *   **Build**: Run `python build.py` to regenerate `autounattend.xml` with your changes.
 
 ## ❓ Troubleshooting
@@ -172,6 +173,7 @@ Ce dépôt utilise un système de build pour générer `autounattend.xml` à par
 
 *   **Emplacement des Scripts**: Tous les scripts PowerShell se trouvent dans le répertoire `scripts/`.
 *   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications.
+*   **Ajouter des Scripts**: Créez simplement un nouveau fichier `.ps1` dans `scripts/`. Le système de build le découvrira et l'ajoutera automatiquement.
 *   **Construire**: Exécutez `python build.py` pour régénérer `autounattend.xml` avec vos changements.
 
 ## ❓ Dépannage

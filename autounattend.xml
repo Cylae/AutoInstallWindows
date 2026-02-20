@@ -136,6 +136,24 @@ function Write-Log {
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
 }
 
+function Test-InternetConnection {
+    $testHosts = @(&quot;google.com&quot;, &quot;microsoft.com&quot;, &quot;cloudflare.com&quot;)
+    foreach ($targetHost in $testHosts) {
+        try {
+            $client = New-Object System.Net.Sockets.TcpClient
+            $connect = $client.BeginConnect($targetHost, 80, $null, $null)
+            $success = $connect.AsyncWaitHandle.WaitOne(1000, $false)
+            if ($success) {
+                $client.EndConnect($connect)
+                $client.Close()
+                return $true
+            }
+            $client.Close()
+        } catch {}
+    }
+    return $false
+}
+
 function Download-File {
     param(
         [string]$Url,
@@ -154,16 +172,9 @@ function Download-File {
 
     # Wait for network
     while (-not $connected -and $retry -lt $maxRetries) {
-        $testHosts = @(&quot;google.com&quot;, &quot;microsoft.com&quot;, &quot;cloudflare.com&quot;)
-        foreach ($hostName in $testHosts) {
-            try {
-                $null = [System.Net.Dns]::GetHostEntry($hostName)
-                $connected = $true
-                break
-            } catch {}
-        }
-
-        if (-not $connected) {
+        if (Test-InternetConnection) {
+            $connected = $true
+        } else {
             $retry++
             Start-Sleep -Seconds 2
         }
@@ -503,11 +514,9 @@ $packagesToRemove = @(
     'Microsoft.WindowsMaps',
     'Microsoft.MixedReality.Portal',
     'Microsoft.BingNews',
-    'Microsoft.WindowsNotepad',
     'Microsoft.MicrosoftOfficeHub',
     'Microsoft.Office.OneNote',
     'Microsoft.OutlookForWindows',
-    'Microsoft.MSPaint',
     'Microsoft.People',
     'Microsoft.Windows.PeopleExperienceHost',
     'Microsoft.Windows.Photos',
@@ -628,8 +637,8 @@ reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot;
 
 # Disable Edge First Run and Bloat
 reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v HideFirstRunExperience /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
 
 # Disable BitLocker Automatic Device Encryption
 reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\BitLocker&quot; /v &quot;PreventDeviceEncryption&quot; /t REG_DWORD /d 1 /f
@@ -904,5 +913,5 @@ Write-Log &quot;User Configuration Completed.&quot;
 Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 5 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden
 </File>
 
-	</Extensions>
+</Extensions>
 </unattend>

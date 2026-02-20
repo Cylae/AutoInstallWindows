@@ -37,6 +37,24 @@ function Write-Log {
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
 }
 
+function Test-InternetConnection {
+    $testHosts = @("google.com", "microsoft.com", "cloudflare.com")
+    foreach ($targetHost in $testHosts) {
+        try {
+            $client = New-Object System.Net.Sockets.TcpClient
+            $connect = $client.BeginConnect($targetHost, 80, $null, $null)
+            $success = $connect.AsyncWaitHandle.WaitOne(1000, $false)
+            if ($success) {
+                $client.EndConnect($connect)
+                $client.Close()
+                return $true
+            }
+            $client.Close()
+        } catch {}
+    }
+    return $false
+}
+
 function Download-File {
     param(
         [string]$Url,
@@ -55,16 +73,9 @@ function Download-File {
 
     # Wait for network
     while (-not $connected -and $retry -lt $maxRetries) {
-        $testHosts = @("google.com", "microsoft.com", "cloudflare.com")
-        foreach ($hostName in $testHosts) {
-            try {
-                $null = [System.Net.Dns]::GetHostEntry($hostName)
-                $connected = $true
-                break
-            } catch {}
-        }
-
-        if (-not $connected) {
+        if (Test-InternetConnection) {
+            $connected = $true
+        } else {
             $retry++
             Start-Sleep -Seconds 2
         }
