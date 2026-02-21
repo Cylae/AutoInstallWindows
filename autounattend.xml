@@ -157,9 +157,16 @@ function Download-File {
         $testHosts = @(&quot;google.com&quot;, &quot;microsoft.com&quot;, &quot;cloudflare.com&quot;)
         foreach ($hostName in $testHosts) {
             try {
-                $null = [System.Net.Dns]::GetHostEntry($hostName)
-                $connected = $true
-                break
+                $client = New-Object System.Net.Sockets.TcpClient
+                $connect = $client.BeginConnect($hostName, 80, $null, $null)
+                $success = $connect.AsyncWaitHandle.WaitOne(2000, $false)
+                if ($success) {
+                    $client.EndConnect($connect)
+                    $client.Close()
+                    $connected = $true
+                    break
+                }
+                $client.Close()
             } catch {}
         }
 
@@ -622,6 +629,12 @@ reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot&quot; 
 # Disable News and Interests
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Dsh&quot; /v AllowNewsAndInterests /t REG_DWORD /d 0 /f
 
+# Disable Consumer Features (Suggested Apps like Candy Crush)
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent&quot; /v DisableWindowsConsumerFeatures /t REG_DWORD /d 1 /f
+
+# Disable Activity History (Timeline)
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v PublishUserActivities /t REG_DWORD /d 0 /f
+
 # Disable Online Tips and Advertising ID
 reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; /v AllowOnlineTips /t REG_DWORD /d 0 /f
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot; /v DisabledByGroupPolicy /t REG_DWORD /d 1 /f
@@ -695,6 +708,9 @@ try {
 } catch {
     Write-Log &quot;Failed to disable Last Access Timestamp: $_&quot;
 }
+
+# 5. Disable App Launch Tracking (Start Menu / Search usage data)
+reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; /v NoInstrumentation /t REG_DWORD /d 1 /f
 
 Write-Log &quot;System Optimizations Applied.&quot;
 </File>
@@ -818,6 +834,8 @@ try {
     # Run UserOnce on first login (if script exists)
     # We wrap in cmd /c &quot;if exist ...&quot; to prevent errors for subsequent users after self-destruct
     $uScript = &quot;C:\Windows\Setup\Scripts\UserOnce.ps1&quot;
+    # Construct command carefully for reg.exe: cmd /c &quot;if exist &quot;PATH&quot; powershell ... -File &quot;PATH&quot;&quot;
+    # Escape sequence for reg.exe /d: \&quot; for inner quotes
     $runOnceCmd = &quot;cmd /c `&quot;if exist \`&quot;$uScript\`&quot; powershell.exe -WindowStyle Normal -ExecutionPolicy Unrestricted -NoProfile -File \`&quot;$uScript\`&quot;`&quot;&quot;
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce&quot; /v &quot;UnattendedSetup&quot; /t REG_SZ /d $runOnceCmd /f
 }
@@ -900,8 +918,9 @@ if (-not $registered) {
 Write-Log &quot;User Configuration Completed.&quot;
 
 # Self-Destruct: Cleanup Scripts
-# Wait 5 seconds then delete the script folder
-Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 5 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden
+Write-Log &quot;Initiating self-destruct sequence...&quot;
+# Wait 10 seconds then delete the script folder to allow this script to exit cleanly
+Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 10 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden
 </File>
 
 	</Extensions>

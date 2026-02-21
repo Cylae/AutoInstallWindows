@@ -8,7 +8,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 
 *   **⚡ Zero-Interruption Setup**: All software (Chrome, Drivers, etc.) is installed during the `Specialize` pass, *before* the user logs in. No popups, no waiting at the desktop.
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
-*   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana, Advertising ID, Search Highlights, **Widgets**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
+*   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana, Advertising ID, Search Highlights, **Widgets**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default. Blocks **Consumer Features** (Suggested Apps like Candy Crush).
 *   **🌑 Dark Mode**: Enables Dark Mode for System and Apps by default.
 *   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, etc.) and unnecessary Windows capabilities.
 *   **💥 Self-Destruct**: Installation scripts automatically delete themselves after the first login to ensure a clean slate.
@@ -17,6 +17,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **High Performance**: Automatically sets the "High Performance" power plan.
     *   **Power User**: Enables "End Task" in Taskbar context menu.
     *   **User Experience**: Disables "Finish setting up your device" and "Lock Screen Tips".
+    *   **Privacy**: Disables **Activity History** (Timeline) and **App Launch Tracking**.
     *   **Space Saving**: Disables Hibernation to save disk space (`hiberfil.sys`).
     *   **Disk I/O**: Disables Last Access Timestamp updates to improve disk performance.
     *   **Gaming**: Disables Game DVR/Bar for better gaming performance.
@@ -25,7 +26,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Smart Matching**: Finds installer executables (`*.exe`) automatically—no need to rename files to `setup.exe`.
     *   **Included Support**: Scripts for Network, Nvidia GPU, AMD Chipset, and Focusrite Audio drivers.
 *   **🌐 Robust App Installation**:
-    *   **Smart Connectivity**: Verified internet checks against multiple reliable hosts (Google, Cloudflare, Microsoft) with robust retry logic.
+    *   **Smart Connectivity**: Verified internet checks via **TCP Socket connection** to reliable hosts (Google, Cloudflare, Microsoft) with robust retry logic.
     *   **Online First**: Prioritizes downloading the latest Chrome and Visual C++ Runtimes from the internet.
     *   **Offline Fallback**: Automatically checks for local installers if internet is unavailable.
     *   **Visual C++ Runtimes**: Automatically downloads and installs the latest VC++ 2015-2022 Redistributable (**x64 and x86**).
@@ -106,7 +107,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 
 *   **⚡ Installation Zéro-Interruption**: Tous les logiciels (Chrome, Pilotes, etc.) sont installés durant la phase `Specialize`, **avant** la connexion de l'utilisateur. Aucun popup, aucune attente sur le bureau.
 *   **🤫 Totalement Silencieux**: Tous les scripts sont optimisés pour masquer les sorties et fenêtres. Vous ne verrez rien avant l'écran "Bienvenue".
-*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, Copilot, la recherche Bing, Cortana, l'ID publicitaire, **Widgets**. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
+*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, Copilot, la recherche Bing, Cortana, l'ID publicitaire, **Widgets**. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers. Bloque les **fonctionnalités grand public** (Applications suggérées).
 *   **🌑 Mode Sombre**: Active le mode sombre pour le système et les applications par défaut.
 *   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Jeux**, **YourPhone**, etc.) et les fonctionnalités Windows inutiles.
 *   **💥 Auto-destruction**: Les scripts d'installation se suppriment automatiquement après la première connexion pour garantir un état propre.
@@ -115,6 +116,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
     *   **Haute Performance**: Active automatiquement le plan d'alimentation "Haute Performance".
     *   **Utilisateur Avancé**: Active "Fin de tâche" dans le menu contextuel de la barre des tâches.
     *   **Expérience Utilisateur**: Désactive "Terminer la configuration de votre appareil" et les astuces de l'écran de verrouillage.
+    *   **Confidentialité**: Désactive l'**historique d'activité** et le **suivi de lancement d'applications**.
     *   **Gain d'Espace**: Désactive l'hibernation pour économiser de l'espace disque (`hiberfil.sys`).
     *   **E/S Disque**: Désactive la mise à jour de la date de dernier accès pour améliorer les performances disque.
     *   **Jeu**: Désactive Game DVR/Bar pour de meilleures performances en jeu.
