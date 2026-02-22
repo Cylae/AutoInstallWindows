@@ -261,7 +261,7 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # -s: Silent, -n: No splash, -f: Force, -noreboot: No reboot
-        Start-Process -FilePath $setupPath -ArgumentList '-s -n -f -noreboot' -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\nvidia_install.log&quot;
+        Start-Process -FilePath $setupPath -ArgumentList @('-s', '-n', '-f', '-noreboot') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\nvidia_install.log&quot;
         Write-Log &quot;Nvidia driver installation completed.&quot;
     }
     catch {
@@ -337,7 +337,7 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # /VERYSILENT: No UI, /SUPPRESSMSGBOXES: No popups
-        Start-Process -FilePath $setupPath -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-' -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\focusrite_install.log&quot;
+        Start-Process -FilePath $setupPath -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\focusrite_install.log&quot;
         Write-Log &quot;Focusrite driver installation completed.&quot;
     }
     catch {
@@ -395,7 +395,7 @@ function Install-Runtime {
         Write-Log &quot;Installing $LogName from $setupPath...&quot;
         try {
             Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
-            Start-Process -FilePath $setupPath -ArgumentList &quot;/install /quiet /norestart&quot; -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\${DestName}_install.log&quot;
+            Start-Process -FilePath $setupPath -ArgumentList @(&quot;/install&quot;, &quot;/quiet&quot;, &quot;/norestart&quot;) -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\${DestName}_install.log&quot;
             Write-Log &quot;$LogName installation completed.&quot;
         } catch {
             Write-Log &quot;Error installing $LogName: $_&quot;
@@ -463,11 +463,11 @@ if ($setupPath) {
         if ($setupPath -match '\.msi$') {
             # MSI Installation
             # Note: msiexec requires strict quoting for paths with spaces
-            $msiArgs = &quot;/i `&quot;$setupPath`&quot; /qn /norestart&quot;
+            $msiArgs = @(&quot;/i&quot;, &quot;$setupPath&quot;, &quot;/qn&quot;, &quot;/norestart&quot;)
             Start-Process -FilePath &quot;msiexec.exe&quot; -ArgumentList $msiArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
         } else {
             # EXE Installation
-            Start-Process -FilePath $setupPath -ArgumentList '/silent /install' -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
+            Start-Process -FilePath $setupPath -ArgumentList @('/silent', '/install') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
         }
 
         # Cleanup temp file
@@ -503,11 +503,9 @@ $packagesToRemove = @(
     'Microsoft.WindowsMaps',
     'Microsoft.MixedReality.Portal',
     'Microsoft.BingNews',
-    'Microsoft.WindowsNotepad',
     'Microsoft.MicrosoftOfficeHub',
     'Microsoft.Office.OneNote',
     'Microsoft.OutlookForWindows',
-    'Microsoft.MSPaint',
     'Microsoft.People',
     'Microsoft.Windows.PeopleExperienceHost',
     'Microsoft.Windows.Photos',
@@ -795,6 +793,9 @@ try {
     # Show &quot;This PC&quot; Icon on Desktop
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel&quot; /v &quot;{20D04FE0-3AEA-1069-A2D8-08002B30309D}&quot; /t REG_DWORD /d 0 /f
 
+    # Disable Sync Provider Notifications (Ads in File Explorer)
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v ShowSyncProviderNotifications /t REG_DWORD /d 0 /f
+
     # Enable Dark Mode (System and Apps)
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize&quot; /v AppsUseLightTheme /t REG_DWORD /d 0 /f
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize&quot; /v SystemUsesLightTheme /t REG_DWORD /d 0 /f
@@ -802,9 +803,11 @@ try {
     # Classic Context Menu (Windows 11)
     reg.exe add &quot;$defaultUserHive\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32&quot; /ve /t REG_SZ /d &quot;&quot; /f
 
-    # Disable Lock Screen Tips
+    # Disable Lock Screen Tips, Tips and Suggestions, and Welcome Experience
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; /v RotatingLockScreenEnabled /t REG_DWORD /d 0 /f
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; /v SubscribedContent-338387Enabled /t REG_DWORD /d 0 /f
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; /v SoftLandingEnabled /t REG_DWORD /d 0 /f
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; /v SubscribedContent-310093Enabled /t REG_DWORD /d 0 /f
 
     # Disable Copilot for Default User
     reg.exe add &quot;$defaultUserHive\Software\Policies\Microsoft\Windows\WindowsCopilot&quot; /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f
@@ -868,33 +871,37 @@ $ErrorActionPreference = 'Stop'
 Write-Log &quot;Configuring User Account...&quot;
 
 # Register Daily Winget Auto-Update Task (Transparent)
-$taskName = &quot;DailySoftwareUpdate&quot;
-$wingetCmd = &quot;winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements&quot;
-$action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `\&quot;$wingetCmd`\&quot;&quot;
-$trigger = New-ScheduledTaskTrigger -Daily -At 13:00
-# Attempt 1: Try with Highest RunLevel (Admin)
-$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
+if (Get-Command winget -ErrorAction SilentlyContinue) {
+    $taskName = &quot;DailySoftwareUpdate&quot;
+    $wingetCmd = &quot;winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements&quot;
+    $action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `\&quot;$wingetCmd`\&quot;&quot;
+    $trigger = New-ScheduledTaskTrigger -Daily -At 13:00
+    # Attempt 1: Try with Highest RunLevel (Admin)
+    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
 
-$registered = $false
-try {
-    Write-Log &quot;Attempting to register Winget task with Highest privileges...&quot;
-    Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Highest -Force -ErrorAction Stop | Out-Null
-    $registered = $true
-    Write-Log &quot;Registered Daily Winget Auto-Update Task (Highest).&quot;
-} catch {
-    Write-Log &quot;Failed to register Winget task with Highest privileges: $_&quot;
-}
-
-# Attempt 2: Try with Limited (User) privileges if Admin failed (e.g., UAC issue)
-if (-not $registered) {
+    $registered = $false
     try {
-        Write-Log &quot;Attempting to register Winget task with Limited privileges...&quot;
-        Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Limited -Force -ErrorAction Stop | Out-Null
+        Write-Log &quot;Attempting to register Winget task with Highest privileges...&quot;
+        Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Highest -Force -ErrorAction Stop | Out-Null
         $registered = $true
-        Write-Log &quot;Registered Daily Winget Auto-Update Task (Limited).&quot;
+        Write-Log &quot;Registered Daily Winget Auto-Update Task (Highest).&quot;
     } catch {
-        Write-Log &quot;Failed to register Winget task (Limited): $_&quot;
+        Write-Log &quot;Failed to register Winget task with Highest privileges: $_&quot;
     }
+
+    # Attempt 2: Try with Limited (User) privileges if Admin failed (e.g., UAC issue)
+    if (-not $registered) {
+        try {
+            Write-Log &quot;Attempting to register Winget task with Limited privileges...&quot;
+            Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Limited -Force -ErrorAction Stop | Out-Null
+            $registered = $true
+            Write-Log &quot;Registered Daily Winget Auto-Update Task (Limited).&quot;
+        } catch {
+            Write-Log &quot;Failed to register Winget task (Limited): $_&quot;
+        }
+    }
+} else {
+    Write-Log &quot;Winget not found. Skipping auto-update task registration.&quot;
 }
 
 Write-Log &quot;User Configuration Completed.&quot;
