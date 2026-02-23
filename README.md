@@ -10,7 +10,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
 *   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana, Advertising ID, Search Highlights, **Widgets**, **File Explorer Ads**, and **Tips/Suggestions**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
 *   **🌑 Dark Mode**: Enables Dark Mode for System and Apps by default.
-*   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, etc.) and unnecessary Windows capabilities. **Preserves Notepad and Paint.**
+*   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, etc.) and unnecessary Windows capabilities. **Enhanced matching logic** ensures stubborn apps are removed. **Preserves Notepad and Paint.**
 *   **💥 Self-Destruct**: Installation scripts automatically delete themselves after the first login to ensure a clean slate.
 *   **📜 Log Persistence**: Setup logs are preserved in `C:\Windows\Panther\Autounattend_Log.txt` for troubleshooting.
 *   **🚀 System Optimization**:
@@ -25,7 +25,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Smart Matching**: Finds installer executables (`*.exe`) automatically—no need to rename files to `setup.exe`.
     *   **Included Support**: Scripts for Network, Nvidia GPU, AMD Chipset, and Focusrite Audio drivers.
 *   **🌐 Robust App Installation**:
-    *   **Smart Connectivity**: Verified internet checks against multiple reliable hosts (Google, Cloudflare, Microsoft) with robust retry logic.
+    *   **Smart Connectivity**: Verified internet checks using **TCP connections (Port 80)** against multiple reliable hosts (Google, Cloudflare, Microsoft) for accuracy.
     *   **Online First**: Prioritizes downloading the latest Chrome and Visual C++ Runtimes from the internet.
     *   **Offline Fallback**: Automatically checks for local installers if internet is unavailable.
     *   **Visual C++ Runtimes**: Automatically downloads and installs the latest VC++ 2015-2022 Redistributable (**x64 and x86**).
@@ -75,6 +75,7 @@ This repository uses a build system to generate `autounattend.xml` from modular 
 
 *   **Scripts Location**: All PowerShell scripts are located in the `scripts/` directory.
 *   **Modify**: Edit the `.ps1` files in `scripts/` to make changes.
+*   **Extend**: Simply add new `.ps1` files to the `scripts/` directory. The build script will automatically inject them.
 *   **Build**: Run `python build.py` to regenerate `autounattend.xml` with your changes.
 
 ## ❓ Troubleshooting

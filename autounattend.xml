@@ -187,9 +187,15 @@ function Download-File {
         $testHosts = @(&quot;google.com&quot;, &quot;microsoft.com&quot;, &quot;cloudflare.com&quot;)
         foreach ($hostName in $testHosts) {
             try {
-                $null = [System.Net.Dns]::GetHostEntry($hostName)
-                $connected = $true
-                break
+                $tcp = New-Object System.Net.Sockets.TcpClient
+                $connect = $tcp.BeginConnect($hostName, 80, $null, $null)
+                $wait = $connect.AsyncWaitHandle.WaitOne(2000, $false)
+                if ($wait -and $tcp.Connected) {
+                    $connected = $true
+                    $tcp.Close()
+                    break
+                }
+                $tcp.Close()
             } catch {}
         }
 
@@ -237,7 +243,7 @@ function Download-File {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Network.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Network Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
@@ -269,7 +275,7 @@ if ($mediaRoot) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Nvidia.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Nvidia Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
@@ -303,7 +309,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-AMD.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 # OPTIONAL: Set a direct download URL for the AMD Chipset Driver here.
 $DownloadUrl = &quot;&quot;
@@ -341,7 +347,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Focusrite.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 # OPTIONAL: Set a direct download URL for the Focusrite Driver here.
 $DownloadUrl = &quot;&quot;
@@ -379,7 +385,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Runtimes.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Visual C++ Runtimes Installation...&quot;
 
@@ -444,7 +450,7 @@ Install-Runtime -Url $url86 -DestName &quot;vc_redist.x86.exe&quot; -LogName &qu
 </File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Chrome.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Chrome Installation...&quot;
 
@@ -514,7 +520,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Remove-Bloatware.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 $packagesToRemove = @(
     'Microsoft.Microsoft3DViewer',
@@ -585,7 +591,11 @@ Write-Log &quot;Starting Debloating Process...&quot;
 # Remove Appx Provisioned Packages
 $provisioned = Get-AppxProvisionedPackage -Online
 foreach ($package in $packagesToRemove) {
-    $found = $provisioned | Where-Object { $_.DisplayName -eq $package }
+    # Check exact DisplayName OR partial PackageName
+    $found = $provisioned | Where-Object {
+        ($_.DisplayName -eq $package) -or ($_.PackageName -like &quot;*$package*&quot;)
+    }
+
     if ($found) {
         foreach ($item in $found) {
             Write-Log &quot;Removing $($item.DisplayName) ($($item.PackageName))...&quot;
@@ -628,7 +638,7 @@ Write-Log &quot;Debloating Process Completed.&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Configure-Privacy.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Applying Privacy and Registry Tweaks...&quot;
 
@@ -693,7 +703,7 @@ Set-ItemProperty -LiteralPath $key -Name 'ConfigureStartPins' -Value $json -Type
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Optimize-System.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Applying System Optimizations...&quot;
 

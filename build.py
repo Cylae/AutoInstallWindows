@@ -69,7 +69,17 @@ def update_autounattend(ssid=None, password=None):
 
                 content = re.sub(pattern, replacement, content, flags=re.DOTALL)
             else:
-                print(f"Warning: File path {target_path_str} not found in XML. Skipping.")
+                print(f"Adding new file {target_path_str}...")
+                # Construct new File block
+                new_file_block = f'<File path="{target_path_str}">\n{encoded_content.strip()}\n</File>'
+
+                # Append before </Extensions>
+                extensions_end_pattern = r'(</Extensions>)'
+                if re.search(extensions_end_pattern, content):
+                     # Add with indentation
+                     content = re.sub(extensions_end_pattern, lambda m: '\t\t' + new_file_block + '\n\t' + m.group(1), content, count=1)
+                else:
+                     print(f"Error: </Extensions> tag not found. Cannot add {target_path_str}.")
 
     # --- WiFi Injection ---
     if ssid and password:

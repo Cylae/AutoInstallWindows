@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-. "$PSScriptRoot\Lib\Helper.ps1"
+. "$PSScriptRoot\..\Lib\Helper.ps1"
 
 $packagesToRemove = @(
     'Microsoft.Microsoft3DViewer',
@@ -70,7 +70,11 @@ Write-Log "Starting Debloating Process..."
 # Remove Appx Provisioned Packages
 $provisioned = Get-AppxProvisionedPackage -Online
 foreach ($package in $packagesToRemove) {
-    $found = $provisioned | Where-Object { $_.DisplayName -eq $package }
+    # Check exact DisplayName OR partial PackageName
+    $found = $provisioned | Where-Object {
+        ($_.DisplayName -eq $package) -or ($_.PackageName -like "*$package*")
+    }
+
     if ($found) {
         foreach ($item in $found) {
             Write-Log "Removing $($item.DisplayName) ($($item.PackageName))..."

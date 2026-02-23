@@ -58,9 +58,15 @@ function Download-File {
         $testHosts = @("google.com", "microsoft.com", "cloudflare.com")
         foreach ($hostName in $testHosts) {
             try {
-                $null = [System.Net.Dns]::GetHostEntry($hostName)
-                $connected = $true
-                break
+                $tcp = New-Object System.Net.Sockets.TcpClient
+                $connect = $tcp.BeginConnect($hostName, 80, $null, $null)
+                $wait = $connect.AsyncWaitHandle.WaitOne(2000, $false)
+                if ($wait -and $tcp.Connected) {
+                    $connected = $true
+                    $tcp.Close()
+                    break
+                }
+                $tcp.Close()
             } catch {}
         }
 
