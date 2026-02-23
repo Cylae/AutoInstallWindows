@@ -97,7 +97,17 @@ If you encounter issues, check the log file created during setup:
 
 For a **Zero-Interruption** experience, a wired Ethernet connection is strongly recommended.
 
-If you must use WiFi, you need to add your network profile to `autounattend.xml` inside the `<specialize>` pass. Add the following XML block (customized with your details) inside the `<component name="Microsoft-Windows-Wlan-Svc">`:
+### Easy Method (Recommended)
+
+You can automatically inject your WiFi credentials into `autounattend.xml` using the build script:
+
+```bash
+python build.py --wifi-ssid "MyNetwork" --wifi-pass "MyPassword"
+```
+
+### Manual Method
+
+If you prefer to edit the XML manually, add your network profile inside the `<specialize>` pass. Add the following XML block (customized with your details) inside the `<component name="Microsoft-Windows-Wlan-Svc">`:
 
 ```xml
 <WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
@@ -227,7 +237,17 @@ Si vous rencontrez des problèmes, consultez le fichier journal créé lors de l
 
 Pour une expérience **Zéro-Interruption**, une connexion Ethernet filaire est fortement recommandée.
 
-Si vous devez utiliser le WiFi, vous devez ajouter votre profil réseau dans `autounattend.xml` durant la phase `<specialize>`. Ajoutez le bloc XML suivant (personnalisé avec vos détails) à l'intérieur du composant `<component name="Microsoft-Windows-Wlan-Svc">`:
+### Méthode Facile (Recommandée)
+
+Vous pouvez injecter automatiquement vos identifiants WiFi dans `autounattend.xml` en utilisant le script de construction :
+
+```bash
+python build.py --wifi-ssid "MonReseau" --wifi-pass "MonMotDePasse"
+```
+
+### Méthode Manuelle
+
+Si vous préférez éditer le XML manuellement, ajoutez votre profil réseau durant la phase `<specialize>`. Ajoutez le bloc XML suivant (personnalisé avec vos détails) à l'intérieur du composant `<component name="Microsoft-Windows-Wlan-Svc">`:
 
 ```xml
 <WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
