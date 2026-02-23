@@ -93,6 +93,39 @@ If you encounter issues, check the log file created during setup:
     *   Review the log file mentioned above for specific error messages.
     *   Additional debug logs for drivers (e.g., `pnputil`) are saved in `%TEMP%` during setup.
 
+## 📡 WiFi Configuration
+
+For a **Zero-Interruption** experience, a wired Ethernet connection is strongly recommended.
+
+If you must use WiFi, you need to add your network profile to `autounattend.xml` inside the `<specialize>` pass. Add the following XML block (customized with your details) inside the `<component name="Microsoft-Windows-Wlan-Svc">`:
+
+```xml
+<WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
+    <name>YourSSID</name>
+    <SSIDConfig>
+        <SSID>
+            <name>YourSSID</name>
+        </SSID>
+    </SSIDConfig>
+    <connectionType>ESS</connectionType>
+    <connectionMode>auto</connectionMode>
+    <MSM>
+        <security>
+            <authEncryption>
+                <authentication>WPA2PSK</authentication>
+                <encryption>AES</encryption>
+                <useOneX>false</useOneX>
+            </authEncryption>
+            <sharedKey>
+                <keyType>passPhrase</keyType>
+                <protected>false</protected>
+                <keyMaterial>YourPassword</keyMaterial>
+            </sharedKey>
+        </security>
+    </MSM>
+</WLANProfile>
+```
+
 ---
 ---
 
@@ -189,3 +222,36 @@ Si vous rencontrez des problèmes, consultez le fichier journal créé lors de l
 *   **Erreurs de script ?**
     *   Consultez le fichier journal mentionné ci-dessus pour les messages d'erreur spécifiques.
     *   Des journaux de débogage supplémentaires pour les pilotes (ex: `pnputil`) sont enregistrés dans `%TEMP%` pendant l'installation.
+
+## 📡 Configuration WiFi
+
+Pour une expérience **Zéro-Interruption**, une connexion Ethernet filaire est fortement recommandée.
+
+Si vous devez utiliser le WiFi, vous devez ajouter votre profil réseau dans `autounattend.xml` durant la phase `<specialize>`. Ajoutez le bloc XML suivant (personnalisé avec vos détails) à l'intérieur du composant `<component name="Microsoft-Windows-Wlan-Svc">`:
+
+```xml
+<WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
+    <name>VotreSSID</name>
+    <SSIDConfig>
+        <SSID>
+            <name>VotreSSID</name>
+        </SSID>
+    </SSIDConfig>
+    <connectionType>ESS</connectionType>
+    <connectionMode>auto</connectionMode>
+    <MSM>
+        <security>
+            <authEncryption>
+                <authentication>WPA2PSK</authentication>
+                <encryption>AES</encryption>
+                <useOneX>false</useOneX>
+            </authEncryption>
+            <sharedKey>
+                <keyType>passPhrase</keyType>
+                <protected>false</protected>
+                <keyMaterial>VotreMotDePasse</keyMaterial>
+            </sharedKey>
+        </security>
+    </MSM>
+</WLANProfile>
+```
