@@ -8,15 +8,15 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 
 *   **⚡ Zero-Interruption Setup**: All software (Chrome, Drivers, etc.) is installed during the `Specialize` pass, *before* the user logs in. No popups, no waiting at the desktop.
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
-*   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana, Advertising ID, Search Highlights, **Widgets**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
+*   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana, Advertising ID, Search Highlights, **Widgets**, **File Explorer Ads**, and **Tips/Suggestions**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
 *   **🌑 Dark Mode**: Enables Dark Mode for System and Apps by default.
-*   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, etc.) and unnecessary Windows capabilities.
+*   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, etc.) and unnecessary Windows capabilities. **Preserves Notepad and Paint.**
 *   **💥 Self-Destruct**: Installation scripts automatically delete themselves after the first login to ensure a clean slate.
 *   **📜 Log Persistence**: Setup logs are preserved in `C:\Windows\Panther\Autounattend_Log.txt` for troubleshooting.
 *   **🚀 System Optimization**:
     *   **High Performance**: Automatically sets the "High Performance" power plan.
     *   **Power User**: Enables "End Task" in Taskbar context menu.
-    *   **User Experience**: Disables "Finish setting up your device" and "Lock Screen Tips".
+    *   **User Experience**: Disables "Finish setting up your device", "Lock Screen Tips", "Welcome Experience", and "Sync Provider Notifications".
     *   **Space Saving**: Disables Hibernation to save disk space (`hiberfil.sys`).
     *   **Disk I/O**: Disables Last Access Timestamp updates to improve disk performance.
     *   **Gaming**: Disables Game DVR/Bar for better gaming performance.
@@ -93,6 +93,49 @@ If you encounter issues, check the log file created during setup:
     *   Review the log file mentioned above for specific error messages.
     *   Additional debug logs for drivers (e.g., `pnputil`) are saved in `%TEMP%` during setup.
 
+## 📡 WiFi Configuration
+
+For a **Zero-Interruption** experience, a wired Ethernet connection is strongly recommended.
+
+### Easy Method (Recommended)
+
+You can automatically inject your WiFi credentials into `autounattend.xml` using the build script:
+
+```bash
+python build.py --wifi-ssid "MyNetwork" --wifi-pass "MyPassword"
+```
+
+### Manual Method
+
+If you prefer to edit the XML manually, add your network profile inside the `<specialize>` pass. Add the following XML block (customized with your details) inside the `<component name="Microsoft-Windows-Wlan-Svc">`:
+
+```xml
+<WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
+    <name>YourSSID</name>
+    <SSIDConfig>
+        <SSID>
+            <name>YourSSID</name>
+        </SSID>
+    </SSIDConfig>
+    <connectionType>ESS</connectionType>
+    <connectionMode>auto</connectionMode>
+    <MSM>
+        <security>
+            <authEncryption>
+                <authentication>WPA2PSK</authentication>
+                <encryption>AES</encryption>
+                <useOneX>false</useOneX>
+            </authEncryption>
+            <sharedKey>
+                <keyType>passPhrase</keyType>
+                <protected>false</protected>
+                <keyMaterial>YourPassword</keyMaterial>
+            </sharedKey>
+        </security>
+    </MSM>
+</WLANProfile>
+```
+
 ---
 ---
 
@@ -106,15 +149,15 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 
 *   **⚡ Installation Zéro-Interruption**: Tous les logiciels (Chrome, Pilotes, etc.) sont installés durant la phase `Specialize`, **avant** la connexion de l'utilisateur. Aucun popup, aucune attente sur le bureau.
 *   **🤫 Totalement Silencieux**: Tous les scripts sont optimisés pour masquer les sorties et fenêtres. Vous ne verrez rien avant l'écran "Bienvenue".
-*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, Copilot, la recherche Bing, Cortana, l'ID publicitaire, **Widgets**. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
+*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, Copilot, la recherche Bing, Cortana, l'ID publicitaire, **Widgets**, **Publicités Explorateur**, et **Astuces**. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
 *   **🌑 Mode Sombre**: Active le mode sombre pour le système et les applications par défaut.
-*   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Jeux**, **YourPhone**, etc.) et les fonctionnalités Windows inutiles.
+*   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Jeux**, **YourPhone**, etc.) et les fonctionnalités Windows inutiles. **Préserve Notepad et Paint.**
 *   **💥 Auto-destruction**: Les scripts d'installation se suppriment automatiquement après la première connexion pour garantir un état propre.
 *   **📜 Journaux**: Les journaux d'installation sont conservés dans `C:\Windows\Panther\Autounattend_Log.txt` pour le dépannage.
 *   **🚀 Optimisation Système**:
     *   **Haute Performance**: Active automatiquement le plan d'alimentation "Haute Performance".
     *   **Utilisateur Avancé**: Active "Fin de tâche" dans le menu contextuel de la barre des tâches.
-    *   **Expérience Utilisateur**: Désactive "Terminer la configuration de votre appareil" et les astuces de l'écran de verrouillage.
+    *   **Expérience Utilisateur**: Désactive "Terminer la configuration de votre appareil", les astuces de l'écran de verrouillage, et l'expérience de bienvenue.
     *   **Gain d'Espace**: Désactive l'hibernation pour économiser de l'espace disque (`hiberfil.sys`).
     *   **E/S Disque**: Désactive la mise à jour de la date de dernier accès pour améliorer les performances disque.
     *   **Jeu**: Désactive Game DVR/Bar pour de meilleures performances en jeu.
@@ -189,3 +232,46 @@ Si vous rencontrez des problèmes, consultez le fichier journal créé lors de l
 *   **Erreurs de script ?**
     *   Consultez le fichier journal mentionné ci-dessus pour les messages d'erreur spécifiques.
     *   Des journaux de débogage supplémentaires pour les pilotes (ex: `pnputil`) sont enregistrés dans `%TEMP%` pendant l'installation.
+
+## 📡 Configuration WiFi
+
+Pour une expérience **Zéro-Interruption**, une connexion Ethernet filaire est fortement recommandée.
+
+### Méthode Facile (Recommandée)
+
+Vous pouvez injecter automatiquement vos identifiants WiFi dans `autounattend.xml` en utilisant le script de construction :
+
+```bash
+python build.py --wifi-ssid "MonReseau" --wifi-pass "MonMotDePasse"
+```
+
+### Méthode Manuelle
+
+Si vous préférez éditer le XML manuellement, ajoutez votre profil réseau durant la phase `<specialize>`. Ajoutez le bloc XML suivant (personnalisé avec vos détails) à l'intérieur du composant `<component name="Microsoft-Windows-Wlan-Svc">`:
+
+```xml
+<WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
+    <name>VotreSSID</name>
+    <SSIDConfig>
+        <SSID>
+            <name>VotreSSID</name>
+        </SSID>
+    </SSIDConfig>
+    <connectionType>ESS</connectionType>
+    <connectionMode>auto</connectionMode>
+    <MSM>
+        <security>
+            <authEncryption>
+                <authentication>WPA2PSK</authentication>
+                <encryption>AES</encryption>
+                <useOneX>false</useOneX>
+            </authEncryption>
+            <sharedKey>
+                <keyType>passPhrase</keyType>
+                <protected>false</protected>
+                <keyMaterial>VotreMotDePasse</keyMaterial>
+            </sharedKey>
+        </security>
+    </MSM>
+</WLANProfile>
+```

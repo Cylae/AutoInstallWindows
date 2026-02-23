@@ -1,6 +1,7 @@
 import re
 import os
 import html
+import argparse
 
 # Helper function to XML encode content
 def xml_encode(s):
@@ -10,7 +11,7 @@ def xml_encode(s):
     s = s.replace('"', "&quot;")
     return s
 
-def update_autounattend():
+def update_autounattend(ssid=None, password=None):
     xml_path = 'autounattend.xml'
     scripts_dir = 'scripts'
 
@@ -21,6 +22,7 @@ def update_autounattend():
     with open(xml_path, 'r', encoding='utf-8') as f:
         content = f.read()
 
+    # --- Script Updates ---
     # Iterate over all files in scripts directory
     for root, dirs, files in os.walk(scripts_dir):
         for file in files:
@@ -36,29 +38,118 @@ def update_autounattend():
             win_rel_path = rel_path.replace(os.sep, '\\')
 
             # The full path in XML is C:\Windows\Setup\Scripts\<win_rel_path>
-            xml_file_path = f"C:\\Windows\\Setup\\Scripts\\{win_rel_path}"
+            # However, the XML generator often uses forward slashes in attributes or escaped backslashes.
+            # We match the specific <File path="C:\Windows\Setup\Scripts\..."> block.
 
-            # Read script content
-            script_path = os.path.join(root, file)
-            with open(script_path, 'r', encoding='utf-8') as f:
+            # The current build.py was using explicit backslashes.
+            # Let's read the script content first.
+            script_full_path = os.path.join(root, file)
+            with open(script_full_path, 'r', encoding='utf-8') as f:
                 script_content = f.read()
 
             # Prepare encoded content
             encoded_content = xml_encode(script_content)
 
             # Regex to replace content
-            # Pattern: <File path="...xml_file_path...">Content</File>
-            # We use non-greedy match for content
-            pattern = r'(<File path="' + re.escape(xml_file_path) + r'">)(.*?)(</File>)'
+            # We need to construct the exact path string expected in the XML.
+            # Assuming standard path: C:\Windows\Setup\Scripts\SubDir\File.ps1
+            target_path_str = f"C:\\Windows\\Setup\\Scripts\\{win_rel_path}"
+
+            # Escape for regex
+            escaped_path = re.escape(target_path_str)
+
+            # Pattern: <File path="...target_path_str...">Content</File>
+            pattern = r'(<File path="' + escaped_path + r'">)(.*?)(</File>)'
 
             if re.search(pattern, content, re.DOTALL):
-                print(f"Updating {xml_file_path}...")
+                print(f"Updating {target_path_str}...")
+                # Replacement function to preserve the surrounding tags
                 def replacement(match):
                     return match.group(1) + '\n' + encoded_content.strip() + '\n' + match.group(3)
 
                 content = re.sub(pattern, replacement, content, flags=re.DOTALL)
             else:
-                print(f"Warning: File path {xml_file_path} not found in XML. Skipping.")
+                print(f"Warning: File path {target_path_str} not found in XML. Skipping.")
+
+    # --- WiFi Injection ---
+    if ssid and password:
+        print(f"Injecting WiFi Profile for SSID: {ssid}")
+
+        # XML Encode SSID and Password
+        safe_ssid = xml_encode(ssid)
+        safe_password = xml_encode(password)
+
+        # XML Block for WLAN Profile
+        wlan_profile = f"""
+            <WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
+                <name>{safe_ssid}</name>
+                <SSIDConfig>
+                    <SSID>
+                        <name>{safe_ssid}</name>
+                    </SSID>
+                </SSIDConfig>
+                <connectionType>ESS</connectionType>
+                <connectionMode>auto</connectionMode>
+                <MSM>
+                    <security>
+                        <authEncryption>
+                            <authentication>WPA2PSK</authentication>
+                            <encryption>AES</encryption>
+                            <useOneX>false</useOneX>
+                        </authEncryption>
+                        <sharedKey>
+                            <keyType>passPhrase</keyType>
+                            <protected>false</protected>
+                            <keyMaterial>{safe_password}</keyMaterial>
+                        </sharedKey>
+                    </security>
+                </MSM>
+            </WLANProfile>
+        """
+
+        # We need to inject this into the "specialize" pass.
+        # Check if Microsoft-Windows-Wlan-Svc component already exists in specialize pass.
+        # Regex to find the specialize pass and the component within it.
+
+        # Strategy:
+        # 1. Find <settings pass="specialize">
+        # 2. Check if <component name="Microsoft-Windows-Wlan-Svc" ...> exists inside it.
+        # 3. If yes, replace its content (or append). If no, insert it.
+
+        specialize_pattern = r'(<settings pass="specialize">)(.*?)(</settings>)'
+        match_specialize = re.search(specialize_pattern, content, re.DOTALL)
+
+        if match_specialize:
+            specialize_content = match_specialize.group(2)
+
+            wlan_comp_pattern = r'(<component name="Microsoft-Windows-Wlan-Svc".*?>)(.*?)(</component>)'
+            match_wlan = re.search(wlan_comp_pattern, specialize_content, re.DOTALL)
+
+            if match_wlan:
+                # Component exists, replace its content with our profile
+                print("Updating existing Microsoft-Windows-Wlan-Svc component...")
+                new_wlan_comp = match_wlan.group(1) + wlan_profile + match_wlan.group(3)
+                new_specialize_content = re.sub(wlan_comp_pattern, lambda m: new_wlan_comp, specialize_content, flags=re.DOTALL)
+            else:
+                # Component does not exist, append it to the end of specialize settings
+                print("Adding Microsoft-Windows-Wlan-Svc component...")
+                # We need the full component definition including attributes
+                wlan_component = f"""
+            <component name="Microsoft-Windows-Wlan-Svc" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                {wlan_profile}
+            </component>
+                """
+                new_specialize_content = specialize_content + wlan_component
+
+            # Replace the old specialize content with the new one
+            # We must be careful to replace only the content inside the tags
+
+            # A safer way to replace the whole block in the main content:
+            full_replacement = match_specialize.group(1) + new_specialize_content + match_specialize.group(3)
+            content = content.replace(match_specialize.group(0), full_replacement)
+
+        else:
+            print("Error: <settings pass=\"specialize\"> not found in autounattend.xml. Cannot inject WiFi.")
 
     with open(xml_path, 'w', encoding='utf-8') as f:
         f.write(content)
@@ -66,4 +157,10 @@ def update_autounattend():
     print("autounattend.xml updated successfully.")
 
 if __name__ == "__main__":
-    update_autounattend()
+    parser = argparse.ArgumentParser(description="Build and update autounattend.xml with scripts and optional WiFi settings.")
+    parser.add_argument('--wifi-ssid', help='SSID for the WiFi network')
+    parser.add_argument('--wifi-pass', help='Password for the WiFi network')
+
+    args = parser.parse_args()
+
+    update_autounattend(ssid=args.wifi_ssid, password=args.wifi_pass)
