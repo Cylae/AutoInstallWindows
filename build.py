@@ -1,6 +1,5 @@
 import re
 import os
-import html
 import argparse
 
 # Helper function to XML encode content
@@ -22,8 +21,9 @@ def update_autounattend(ssid=None, password=None):
     with open(xml_path, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    # --- Script Updates ---
+    # --- Script Updates and Additions ---
     # Iterate over all files in scripts directory
+
     for root, dirs, files in os.walk(scripts_dir):
         for file in files:
             if not file.endswith('.ps1'):
@@ -38,11 +38,9 @@ def update_autounattend(ssid=None, password=None):
             win_rel_path = rel_path.replace(os.sep, '\\')
 
             # The full path in XML is C:\Windows\Setup\Scripts\<win_rel_path>
-            # However, the XML generator often uses forward slashes in attributes or escaped backslashes.
-            # We match the specific <File path="C:\Windows\Setup\Scripts\..."> block.
+            target_path_str = f"C:\\Windows\\Setup\\Scripts\\{win_rel_path}"
 
-            # The current build.py was using explicit backslashes.
-            # Let's read the script content first.
+            # Read script content
             script_full_path = os.path.join(root, file)
             with open(script_full_path, 'r', encoding='utf-8') as f:
                 script_content = f.read()
@@ -50,26 +48,29 @@ def update_autounattend(ssid=None, password=None):
             # Prepare encoded content
             encoded_content = xml_encode(script_content)
 
-            # Regex to replace content
-            # We need to construct the exact path string expected in the XML.
-            # Assuming standard path: C:\Windows\Setup\Scripts\SubDir\File.ps1
-            target_path_str = f"C:\\Windows\\Setup\\Scripts\\{win_rel_path}"
-
+            # Check if file exists in XML
             # Escape for regex
             escaped_path = re.escape(target_path_str)
-
-            # Pattern: <File path="...target_path_str...">Content</File>
             pattern = r'(<File path="' + escaped_path + r'">)(.*?)(</File>)'
 
             if re.search(pattern, content, re.DOTALL):
-                print(f"Updating {target_path_str}...")
+                print(f"Updating existing file: {target_path_str}")
                 # Replacement function to preserve the surrounding tags
                 def replacement(match):
                     return match.group(1) + '\n' + encoded_content.strip() + '\n' + match.group(3)
 
                 content = re.sub(pattern, replacement, content, flags=re.DOTALL)
             else:
-                print(f"Warning: File path {target_path_str} not found in XML. Skipping.")
+                print(f"Adding new file: {target_path_str}")
+                # Construct new File block
+                new_file_block = f'\t\t<File path="{target_path_str}">\n{encoded_content.strip()}\n\t\t</File>\n'
+
+                # Insert before </Extensions>
+                ext_end_pattern = r'(</Extensions>)'
+                if re.search(ext_end_pattern, content):
+                     content = re.sub(ext_end_pattern, lambda m: new_file_block + m.group(1), content, count=1)
+                else:
+                    print(f"Error: </Extensions> tag not found. Cannot add {target_path_str}.")
 
     # --- WiFi Injection ---
     if ssid and password:
@@ -107,15 +108,6 @@ def update_autounattend(ssid=None, password=None):
             </WLANProfile>
         """
 
-        # We need to inject this into the "specialize" pass.
-        # Check if Microsoft-Windows-Wlan-Svc component already exists in specialize pass.
-        # Regex to find the specialize pass and the component within it.
-
-        # Strategy:
-        # 1. Find <settings pass="specialize">
-        # 2. Check if <component name="Microsoft-Windows-Wlan-Svc" ...> exists inside it.
-        # 3. If yes, replace its content (or append). If no, insert it.
-
         specialize_pattern = r'(<settings pass="specialize">)(.*?)(</settings>)'
         match_specialize = re.search(specialize_pattern, content, re.DOTALL)
 
@@ -129,11 +121,10 @@ def update_autounattend(ssid=None, password=None):
                 # Component exists, replace its content with our profile
                 print("Updating existing Microsoft-Windows-Wlan-Svc component...")
                 new_wlan_comp = match_wlan.group(1) + wlan_profile + match_wlan.group(3)
-                new_specialize_content = re.sub(wlan_comp_pattern, lambda m: new_wlan_comp, specialize_content, flags=re.DOTALL)
+                new_specialize_content = specialize_content.replace(match_wlan.group(0), new_wlan_comp)
             else:
                 # Component does not exist, append it to the end of specialize settings
                 print("Adding Microsoft-Windows-Wlan-Svc component...")
-                # We need the full component definition including attributes
                 wlan_component = f"""
             <component name="Microsoft-Windows-Wlan-Svc" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
                 {wlan_profile}
@@ -142,9 +133,6 @@ def update_autounattend(ssid=None, password=None):
                 new_specialize_content = specialize_content + wlan_component
 
             # Replace the old specialize content with the new one
-            # We must be careful to replace only the content inside the tags
-
-            # A safer way to replace the whole block in the main content:
             full_replacement = match_specialize.group(1) + new_specialize_content + match_specialize.group(3)
             content = content.replace(match_specialize.group(0), full_replacement)
 
