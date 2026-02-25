@@ -32,7 +32,7 @@ function Write-Log {
         New-Item -Path $dir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
     }
 
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
     $logEntry = "[$timestamp] $Message"
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
 }
@@ -58,9 +58,16 @@ function Download-File {
         $testHosts = @("google.com", "microsoft.com", "cloudflare.com")
         foreach ($hostName in $testHosts) {
             try {
-                $null = [System.Net.Dns]::GetHostEntry($hostName)
-                $connected = $true
-                break
+                $client = New-Object System.Net.Sockets.TcpClient
+                $connect = $client.BeginConnect($hostName, 80, $null, $null)
+                $success = $connect.AsyncWaitHandle.WaitOne(2000, $false)
+                if ($success) {
+                    $client.EndConnect($connect)
+                    $connected = $true
+                    $client.Close()
+                    break
+                }
+                $client.Close()
             } catch {}
         }
 

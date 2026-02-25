@@ -161,7 +161,7 @@ function Write-Log {
         New-Item -Path $dir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
     }
 
-    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss&quot;
+    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss.fff&quot;
     $logEntry = &quot;[$timestamp] $Message&quot;
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
 }
@@ -187,9 +187,16 @@ function Download-File {
         $testHosts = @(&quot;google.com&quot;, &quot;microsoft.com&quot;, &quot;cloudflare.com&quot;)
         foreach ($hostName in $testHosts) {
             try {
-                $null = [System.Net.Dns]::GetHostEntry($hostName)
-                $connected = $true
-                break
+                $client = New-Object System.Net.Sockets.TcpClient
+                $connect = $client.BeginConnect($hostName, 80, $null, $null)
+                $success = $connect.AsyncWaitHandle.WaitOne(2000, $false)
+                if ($success) {
+                    $client.EndConnect($connect)
+                    $connected = $true
+                    $client.Close()
+                    break
+                }
+                $client.Close()
             } catch {}
         }
 
@@ -585,7 +592,12 @@ Write-Log &quot;Starting Debloating Process...&quot;
 # Remove Appx Provisioned Packages
 $provisioned = Get-AppxProvisionedPackage -Online
 foreach ($package in $packagesToRemove) {
-    $found = $provisioned | Where-Object { $_.DisplayName -eq $package }
+    # Match against DisplayName (Exact) or PackageName (Wildcard)
+    $found = $provisioned | Where-Object {
+        ($_.DisplayName -eq $package) -or
+        ($_.PackageName -like &quot;*$package*&quot;)
+    }
+
     if ($found) {
         foreach ($item in $found) {
             Write-Log &quot;Removing $($item.DisplayName) ($($item.PackageName))...&quot;
@@ -656,8 +668,8 @@ reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot;
 
 # Disable Edge First Run and Bloat
 reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v HideFirstRunExperience /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
 
 # Disable BitLocker Automatic Device Encryption
 reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\BitLocker&quot; /v &quot;PreventDeviceEncryption&quot; /t REG_DWORD /d 1 /f
@@ -723,6 +735,9 @@ try {
 } catch {
     Write-Log &quot;Failed to disable Last Access Timestamp: $_&quot;
 }
+
+# 5. Disable App Launch Tracking (Privacy/Performance)
+reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System&quot; /v NoInstrumentation /t REG_DWORD /d 1 /f
 
 Write-Log &quot;System Optimizations Applied.&quot;
 </File>

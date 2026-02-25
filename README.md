@@ -20,6 +20,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Space Saving**: Disables Hibernation to save disk space (`hiberfil.sys`).
     *   **Disk I/O**: Disables Last Access Timestamp updates to improve disk performance.
     *   **Gaming**: Disables Game DVR/Bar for better gaming performance.
+    *   **Privacy**: Disables App Launch Tracking.
 *   **🔧 Intelligent Driver Installation**:
     *   **Auto-Detection**: Automatically scans all drives for a `drivers` folder.
     *   **Smart Matching**: Finds installer executables (`*.exe`) automatically—no need to rename files to `setup.exe`.
@@ -75,7 +76,7 @@ This repository uses a build system to generate `autounattend.xml` from modular 
 
 *   **Scripts Location**: All PowerShell scripts are located in the `scripts/` directory.
 *   **Modify**: Edit the `.ps1` files in `scripts/` to make changes.
-*   **Build**: Run `python build.py` to regenerate `autounattend.xml` with your changes.
+*   **Build**: Run `python build.py` to regenerate `autounattend.xml` with your changes. It automatically detects new scripts in `scripts/` and adds them to the XML.
 
 ## ❓ Troubleshooting
 
@@ -161,6 +162,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
     *   **Gain d'Espace**: Désactive l'hibernation pour économiser de l'espace disque (`hiberfil.sys`).
     *   **E/S Disque**: Désactive la mise à jour de la date de dernier accès pour améliorer les performances disque.
     *   **Jeu**: Désactive Game DVR/Bar pour de meilleures performances en jeu.
+    *   **Confidentialité**: Désactive le suivi de lancement des applications.
 *   **🔧 Installation Intelligente des Pilotes**:
     *   **Auto-Détection**: Scanne tous les lecteurs pour trouver le dossier `drivers`.
     *   **Recherche Intelligente**: Trouve automatiquement les exécutables (`*.exe`)—pas besoin de renommer en `setup.exe`.
@@ -215,7 +217,7 @@ Ce dépôt utilise un système de build pour générer `autounattend.xml` à par
 
 *   **Emplacement des Scripts**: Tous les scripts PowerShell se trouvent dans le répertoire `scripts/`.
 *   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications.
-*   **Construire**: Exécutez `python build.py` pour régénérer `autounattend.xml` avec vos changements.
+*   **Construire**: Exécutez `python build.py` pour régénérer `autounattend.xml` avec vos changements. Il détecte automatiquement les nouveaux scripts dans `scripts/` et les ajoute au XML.
 
 ## ❓ Dépannage
 
