@@ -32,9 +32,28 @@ function Write-Log {
         New-Item -Path $dir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
     }
 
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
     $logEntry = "[$timestamp] $Message"
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
+}
+
+function Test-InternetConnection {
+    $hosts = @("google.com", "microsoft.com", "cloudflare.com")
+    foreach ($hostName in $hosts) {
+        try {
+            $tcp = New-Object System.Net.Sockets.TcpClient
+            $connect = $tcp.BeginConnect($hostName, 80, $null, $null)
+            $wait = $connect.AsyncWaitHandle.WaitOne(2000, $false)
+            if ($wait -and $tcp.Connected) {
+                $tcp.Close()
+                return $true
+            }
+            $tcp.Close()
+        } catch {
+            if ($tcp) { $tcp.Close() }
+        }
+    }
+    return $false
 }
 
 function Download-File {
@@ -55,16 +74,9 @@ function Download-File {
 
     # Wait for network
     while (-not $connected -and $retry -lt $maxRetries) {
-        $testHosts = @("google.com", "microsoft.com", "cloudflare.com")
-        foreach ($hostName in $testHosts) {
-            try {
-                $null = [System.Net.Dns]::GetHostEntry($hostName)
-                $connected = $true
-                break
-            } catch {}
-        }
-
-        if (-not $connected) {
+        if (Test-InternetConnection) {
+            $connected = $true
+        } else {
             $retry++
             Start-Sleep -Seconds 2
         }
