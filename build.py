@@ -1,85 +1,107 @@
 import re
-import os
 import html
 import argparse
+import logging
+import sys
+from pathlib import Path
 
-# Helper function to XML encode content
-def xml_encode(s):
-    s = s.replace("&", "&amp;")
-    s = s.replace("<", "&lt;")
-    s = s.replace(">", "&gt;")
-    s = s.replace('"', "&quot;")
-    return s
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
-def update_autounattend(ssid=None, password=None):
-    xml_path = 'autounattend.xml'
-    scripts_dir = 'scripts'
+def get_script_blocks(scripts_dir):
+    """
+    Recursively scans the scripts directory and generates XML <File> blocks for each .ps1 file.
+    """
+    scripts_path = Path(scripts_dir)
+    if not scripts_path.exists():
+        logger.error(f"Scripts directory not found: {scripts_dir}")
+        return ""
 
-    if not os.path.exists(xml_path):
-        print(f"Error: {xml_path} not found.")
+    file_blocks = []
+
+    # Sort files for deterministic output
+    for script_file in sorted(scripts_path.rglob('*.ps1')):
+        try:
+            # Read script content
+            content = script_file.read_text(encoding='utf-8')
+
+            # HTML escape the content, but we need to ensure quotes are handled correctly if needed.
+            # python's html.escape escapes &, <, > and optionally quotes.
+            # The previous script manually replaced &, <, >, " -> &amp;, &lt;, &gt;, &quot;
+            # html.escape(s, quote=True) does exactly that for " as well.
+            encoded_content = html.escape(content, quote=True)
+
+            # Construct the relative path and the target Windows path
+            rel_path = script_file.relative_to(scripts_path)
+            # Convert to Windows backslashes
+            win_rel_path = str(rel_path).replace('/', '\\')
+            target_path = f"C:\\Windows\\Setup\\Scripts\\{win_rel_path}"
+
+            # Create the XML block
+            block = f'<File path="{target_path}">\n{encoded_content}\n</File>'
+            file_blocks.append(block)
+            logger.info(f"Processed script: {rel_path} -> {target_path}")
+
+        except Exception as e:
+            logger.error(f"Failed to process script {script_file}: {e}")
+
+    return "\n\t\t".join(file_blocks)
+
+def update_autounattend(xml_path, scripts_dir, ssid=None, password=None):
+    """
+    Updates the autounattend.xml file with scripts and WiFi configuration.
+    """
+    xml_file = Path(xml_path)
+    if not xml_file.exists():
+        logger.error(f"XML file not found: {xml_path}")
         return
 
-    with open(xml_path, 'r', encoding='utf-8') as f:
-        content = f.read()
+    try:
+        content = xml_file.read_text(encoding='utf-8')
+    except Exception as e:
+        logger.error(f"Failed to read XML file: {e}")
+        return
 
-    # --- Script Updates ---
-    # Iterate over all files in scripts directory
-    for root, dirs, files in os.walk(scripts_dir):
-        for file in files:
-            if not file.endswith('.ps1'):
-                continue
+    # --- Sync Scripts ---
+    logger.info("Synchronizing scripts...")
 
-            # Construct the relative path from scripts_dir
-            # e.g. scripts/Lib/Helper.ps1 -> Lib/Helper.ps1
-            rel_path = os.path.relpath(os.path.join(root, file), scripts_dir)
+    # Extract <ExtractScript> block
+    extract_script_pattern = r'(<ExtractScript>.*?</ExtractScript>)'
+    extract_match = re.search(extract_script_pattern, content, re.DOTALL)
 
-            # Convert to Windows path style for XML matching
-            # e.g. Lib\Helper.ps1
-            win_rel_path = rel_path.replace(os.sep, '\\')
+    if extract_match:
+        extract_script_content = extract_match.group(1)
 
-            # The full path in XML is C:\Windows\Setup\Scripts\<win_rel_path>
-            # However, the XML generator often uses forward slashes in attributes or escaped backslashes.
-            # We match the specific <File path="C:\Windows\Setup\Scripts\..."> block.
+        # Generate new file blocks
+        new_file_blocks = get_script_blocks(scripts_dir)
 
-            # The current build.py was using explicit backslashes.
-            # Let's read the script content first.
-            script_full_path = os.path.join(root, file)
-            with open(script_full_path, 'r', encoding='utf-8') as f:
-                script_content = f.read()
+        # Construct new Extensions block
+        new_extensions_content = f"\n\t\t{extract_script_content}\n\t\t{new_file_blocks}\n\t"
 
-            # Prepare encoded content
-            encoded_content = xml_encode(script_content)
+        # Replace the content inside <Extensions>
+        # We replace the whole inner content of Extensions to ensure clean slate
+        extensions_pattern = r'(<Extensions.*?>)(.*?)(</Extensions>)'
 
-            # Regex to replace content
-            # We need to construct the exact path string expected in the XML.
-            # Assuming standard path: C:\Windows\Setup\Scripts\SubDir\File.ps1
-            target_path_str = f"C:\\Windows\\Setup\\Scripts\\{win_rel_path}"
+        def extensions_replacement(match):
+            return f"{match.group(1)}{new_extensions_content}{match.group(3)}"
 
-            # Escape for regex
-            escaped_path = re.escape(target_path_str)
-
-            # Pattern: <File path="...target_path_str...">Content</File>
-            pattern = r'(<File path="' + escaped_path + r'">)(.*?)(</File>)'
-
-            if re.search(pattern, content, re.DOTALL):
-                print(f"Updating {target_path_str}...")
-                # Replacement function to preserve the surrounding tags
-                def replacement(match):
-                    return match.group(1) + '\n' + encoded_content.strip() + '\n' + match.group(3)
-
-                content = re.sub(pattern, replacement, content, flags=re.DOTALL)
-            else:
-                print(f"Warning: File path {target_path_str} not found in XML. Skipping.")
+        content = re.sub(extensions_pattern, extensions_replacement, content, flags=re.DOTALL)
+        logger.info("Scripts synchronized successfully.")
+    else:
+        logger.error("Could not find <ExtractScript> block in autounattend.xml")
 
     # --- WiFi Injection ---
     if ssid and password:
-        print(f"Injecting WiFi Profile for SSID: {ssid}")
+        logger.info(f"Injecting WiFi Profile for SSID: {ssid}")
 
-        # XML Encode SSID and Password
-        safe_ssid = xml_encode(ssid)
-        safe_password = xml_encode(password)
+        safe_ssid = html.escape(ssid, quote=True)
+        safe_password = html.escape(password, quote=True)
 
-        # XML Block for WLAN Profile
         wlan_profile = f"""
             <WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
                 <name>{safe_ssid}</name>
@@ -107,60 +129,61 @@ def update_autounattend(ssid=None, password=None):
             </WLANProfile>
         """
 
-        # We need to inject this into the "specialize" pass.
-        # Check if Microsoft-Windows-Wlan-Svc component already exists in specialize pass.
-        # Regex to find the specialize pass and the component within it.
-
-        # Strategy:
-        # 1. Find <settings pass="specialize">
-        # 2. Check if <component name="Microsoft-Windows-Wlan-Svc" ...> exists inside it.
-        # 3. If yes, replace its content (or append). If no, insert it.
-
+        # Find specialize pass
         specialize_pattern = r'(<settings pass="specialize">)(.*?)(</settings>)'
         match_specialize = re.search(specialize_pattern, content, re.DOTALL)
 
         if match_specialize:
-            specialize_content = match_specialize.group(2)
+            specialize_inner = match_specialize.group(2)
 
+            # Check for existing WLAN component
             wlan_comp_pattern = r'(<component name="Microsoft-Windows-Wlan-Svc".*?>)(.*?)(</component>)'
-            match_wlan = re.search(wlan_comp_pattern, specialize_content, re.DOTALL)
+            match_wlan = re.search(wlan_comp_pattern, specialize_inner, re.DOTALL)
 
             if match_wlan:
-                # Component exists, replace its content with our profile
-                print("Updating existing Microsoft-Windows-Wlan-Svc component...")
-                new_wlan_comp = match_wlan.group(1) + wlan_profile + match_wlan.group(3)
-                new_specialize_content = re.sub(wlan_comp_pattern, lambda m: new_wlan_comp, specialize_content, flags=re.DOTALL)
+                logger.info("Updating existing Microsoft-Windows-Wlan-Svc component...")
+                # Replace content inside component
+                def wlan_replacement(m):
+                    return f"{m.group(1)}\n{wlan_profile}\n{m.group(3)}"
+
+                new_specialize_inner = re.sub(wlan_comp_pattern, wlan_replacement, specialize_inner, flags=re.DOTALL)
             else:
-                # Component does not exist, append it to the end of specialize settings
-                print("Adding Microsoft-Windows-Wlan-Svc component...")
-                # We need the full component definition including attributes
-                wlan_component = f"""
-            <component name="Microsoft-Windows-Wlan-Svc" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-                {wlan_profile}
-            </component>
-                """
-                new_specialize_content = specialize_content + wlan_component
+                logger.info("Adding new Microsoft-Windows-Wlan-Svc component...")
+                # Create new component
+                new_component = f"""
+        <component name="Microsoft-Windows-Wlan-Svc" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            {wlan_profile}
+        </component>
+"""
+                new_specialize_inner = specialize_inner + new_component
 
-            # Replace the old specialize content with the new one
-            # We must be careful to replace only the content inside the tags
-
-            # A safer way to replace the whole block in the main content:
-            full_replacement = match_specialize.group(1) + new_specialize_content + match_specialize.group(3)
-            content = content.replace(match_specialize.group(0), full_replacement)
+            # Update the specialize block in main content
+            content = content.replace(match_specialize.group(0), f'{match_specialize.group(1)}{new_specialize_inner}{match_specialize.group(3)}')
 
         else:
-            print("Error: <settings pass=\"specialize\"> not found in autounattend.xml. Cannot inject WiFi.")
+            logger.error('<settings pass="specialize"> not found. Cannot inject WiFi.')
 
-    with open(xml_path, 'w', encoding='utf-8') as f:
-        f.write(content)
+    # --- Cleanup ---
+    logger.info("Cleaning up empty settings passes...")
+    # Remove empty settings passes like <settings pass="offlineServicing"></settings>
+    # Allowing for whitespace between tags
+    empty_pass_pattern = r'<settings pass="[^"]+">\s*</settings>'
+    content = re.sub(empty_pass_pattern, '', content)
 
-    print("autounattend.xml updated successfully.")
+    # Write back to file
+    try:
+        xml_file.write_text(content, encoding='utf-8')
+        logger.info(f"Successfully updated {xml_path}")
+    except Exception as e:
+        logger.error(f"Failed to write to XML file: {e}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Build and update autounattend.xml with scripts and optional WiFi settings.")
     parser.add_argument('--wifi-ssid', help='SSID for the WiFi network')
     parser.add_argument('--wifi-pass', help='Password for the WiFi network')
+    parser.add_argument('--xml-path', default='autounattend.xml', help='Path to autounattend.xml')
+    parser.add_argument('--scripts-dir', default='scripts', help='Path to scripts directory')
 
     args = parser.parse_args()
 
-    update_autounattend(ssid=args.wifi_ssid, password=args.wifi_pass)
+    update_autounattend(args.xml_path, args.scripts_dir, ssid=args.wifi_ssid, password=args.wifi_pass)

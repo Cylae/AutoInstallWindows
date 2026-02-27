@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
 	<!-- Optimized by Jules - Senior Windows Deployment Architect -->
-	<settings pass="offlineServicing"></settings>
+
 	<settings pass="windowsPE">
 		<component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
 			<UILanguage>fr-FR</UILanguage>
@@ -17,7 +17,7 @@
 			<UseConfigurationSet>false</UseConfigurationSet>
 		</component>
 	</settings>
-	<settings pass="generalize"></settings>
+
 	<settings pass="specialize">
 		<component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
 			<RunSynchronous>
@@ -40,10 +40,10 @@
             <component name="Microsoft-Windows-Wlan-Svc" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
             <WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
-                <name>Test&amp;Co</name>
+                <name>MyWifi</name>
                 <SSIDConfig>
                     <SSID>
-                        <name>Test&amp;Co</name>
+                        <name>MyWifi</name>
                     </SSID>
                 </SSIDConfig>
                 <connectionType>ESS</connectionType>
@@ -58,16 +58,16 @@
                         <sharedKey>
                             <keyType>passPhrase</keyType>
                             <protected>false</protected>
-                            <keyMaterial>Pass&lt;123&gt;</keyMaterial>
+                            <keyMaterial>MyPass</keyMaterial>
                         </sharedKey>
                     </security>
                 </MSM>
             </WLANProfile>
 
-            </component>
+</component>
                 </settings>
-	<settings pass="auditSystem"></settings>
-	<settings pass="auditUser"></settings>
+
+
 	<settings pass="oobeSystem">
 		<component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
 			<InputLocale>040c:0000040c</InputLocale>
@@ -126,269 +126,81 @@ foreach( $file in $Document.unattend.Extensions.File ) {
 }
 
 		</ExtractScript>
-		<File path="C:\Windows\Setup\Scripts\Lib\Helper.ps1">
-function Get-InstallMedia {
-    # Use .NET DriveInfo to correctly identify Fixed/Removable drives and avoid network/floppy hangs
-    $drives = [System.IO.DriveInfo]::GetDrives() | Where-Object { $_.DriveType -in 'Fixed', 'Removable' -and $_.IsReady }
-    foreach ($drive in $drives) {
-        $path = Join-Path -Path $drive.RootDirectory.FullName -ChildPath &quot;drivers&quot;
-        if (Test-Path -Path $path -PathType Container) {
-            return $drive.RootDirectory.FullName
-        }
-    }
-    return $null
+		<File path="C:\Windows\Setup\Scripts\Apps\Install-Chrome.ps1">
+
+$ErrorActionPreference = &#x27;Stop&#x27;
+. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+
+Write-Log &quot;Starting Chrome Installation...&quot;
+
+# Check if Chrome is already installed
+if ((Test-Path &quot;$env:ProgramFiles\Google\Chrome\Application\chrome.exe&quot;) -or (Test-Path &quot;${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe&quot;)) {
+    Write-Log &quot;Chrome is already installed. Skipping.&quot;
+    return
 }
 
-function Get-InstallerFile {
-    param([string]$Path, [string[]]$Extensions = @(&quot;*.exe&quot;))
-    if (Test-Path -Path $Path) {
-        foreach ($ext in $Extensions) {
-            $file = Get-ChildItem -Path $Path -Filter $ext | Select-Object -First 1
-            if ($file) { return $file.FullName }
-        }
-    }
-    return $null
+$mediaRoot = Get-InstallMedia
+$setupPath = $null
+
+# 1. Try Download (Online First) - Prefer Enterprise MSI
+$url = &#x27;https://dl.google.com/chrome/install/googlechromestandaloneenterprise64.msi&#x27;
+$dest = &quot;$env:TEMP\chrome.msi&quot;
+if (Download-File -Url $url -Destination $dest -Name &quot;Chrome Enterprise MSI&quot;) {
+    $setupPath = $dest
 }
 
-function Write-Log {
-    param(
-        [string]$Message,
-        [string]$Path = &quot;$env:SystemRoot\Panther\Autounattend_Log.txt&quot;
+# 2. Try Local (Fallback)
+if (-not $setupPath -and $mediaRoot) {
+    Write-Log &quot;Download failed. Checking local storage...&quot;
+    $possiblePaths = @(
+        (Join-Path $mediaRoot &quot;apps\chrome&quot;),
+        (Join-Path $mediaRoot &quot;drivers\apps\chrome&quot;),
+        (Join-Path $mediaRoot &quot;Apps&quot;),
+        (Join-Path $mediaRoot &quot;Drivers\Apps&quot;)
     )
-    # Ensure directory exists
-    $dir = Split-Path -Path $Path -Parent
-    if (-not (Test-Path -Path $dir)) {
-        New-Item -Path $dir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
-    }
-
-    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss&quot;
-    $logEntry = &quot;[$timestamp] $Message&quot;
-    Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
-}
-
-function Download-File {
-    param(
-        [string]$Url,
-        [string]$Destination,
-        [string]$Name = &quot;File&quot;
-    )
-
-    # Suppress Progress Bar for Faster Download
-    $ProgressPreference = 'SilentlyContinue'
-
-    if ([string]::IsNullOrWhiteSpace($Url)) { return $false }
-
-    Write-Log &quot;Attempting to download $Name from $Url...&quot;
-
-    # Increase timeout to ~5 minutes (150 * 2s) to handle slow network initialization
-    $maxRetries = 150
-    $retry = 0
-    $connected = $false
-
-    # Wait for network
-    while (-not $connected -and $retry -lt $maxRetries) {
-        $testHosts = @(&quot;google.com&quot;, &quot;microsoft.com&quot;, &quot;cloudflare.com&quot;)
-        foreach ($hostName in $testHosts) {
-            try {
-                $null = [System.Net.Dns]::GetHostEntry($hostName)
-                $connected = $true
+    foreach ($path in $possiblePaths) {
+         if (Test-Path $path) {
+             # Prioritize MSI, then EXE
+             $localInstaller = Get-InstallerFile -Path $path -Extensions @(&quot;*.msi&quot;, &quot;*.exe&quot;)
+             if ($localInstaller) {
+                $setupPath = $localInstaller
                 break
-            } catch {}
-        }
-
-        if (-not $connected) {
-            $retry++
-            Start-Sleep -Seconds 2
-        }
+             }
+         }
     }
-
-    if (-not $connected) {
-        Write-Log &quot;No network connectivity to download $Name.&quot;
-        return $false
-    }
-
-    $downloadRetries = 3
-    $dRetry = 0
-    $downloaded = $false
-
-    while (-not $downloaded -and $dRetry -lt $downloadRetries) {
-        try {
-            # Enable TLS 1.2 and TLS 1.3 (if available)
-            $protocols = [Net.SecurityProtocolType]::Tls12
-            try { $protocols = $protocols -bor [Net.SecurityProtocolType]::Tls13 } catch {}
-            [Net.ServicePointManager]::SecurityProtocol = $protocols
-
-            Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -ErrorAction Stop
-
-            # Verify file size &gt; 1KB (1024 bytes) to ensure valid download
-            if (Test-Path -Path $Destination -And (Get-Item $Destination).Length -gt 1024) {
-                Write-Log &quot;Download of $Name successful.&quot;
-                $downloaded = $true
-            } else {
-                Write-Log &quot;Download of $Name failed (file too small or empty).&quot;
-                throw &quot;File too small&quot;
-            }
-        } catch {
-            $dRetry++
-            Write-Log &quot;Failed to download $Name (Attempt $dRetry/$downloadRetries): $_&quot;
-            Start-Sleep -Seconds 2
-        }
-    }
-
-    return $downloaded
 }
-</File>
-		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Network.ps1">
-$ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
-Write-Log &quot;Starting Network Driver Installation...&quot;
-$mediaRoot = Get-InstallMedia
+if ($setupPath) {
+    Write-Log &quot;Installing Chrome from $setupPath...&quot;
+    try {
+        Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
 
-if ($mediaRoot) {
-    $driverPath = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\network&quot;
-    if (Test-Path -Path $driverPath) {
-        Write-Log &quot;Found network drivers path at $driverPath&quot;
-        # Check if there are any INF files to avoid pnputil error
-        if (Get-ChildItem -Path $driverPath -Filter &quot;*.inf&quot; -Recurse) {
-            try {
-                $pnputilArgs = &quot;/add-driver `&quot;$driverPath\*.inf`&quot; /subdirs /install&quot;
-                # Redirect standard output and error to logs for debugging
-                Start-Process -FilePath &quot;pnputil.exe&quot; -ArgumentList $pnputilArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\pnputil_network.log&quot; -RedirectStandardError &quot;$env:TEMP\pnputil_network_err.log&quot;
-                Write-Log &quot;Network driver installation completed.&quot;
-            }
-            catch {
-                Write-Log &quot;Error installing network drivers: $_&quot;
-            }
+        if ($setupPath -match &#x27;\.msi$&#x27;) {
+            # MSI Installation
+            # Note: msiexec requires strict quoting for paths with spaces
+            $msiArgs = @(&quot;/i&quot;, &quot;$setupPath&quot;, &quot;/qn&quot;, &quot;/norestart&quot;)
+            Start-Process -FilePath &quot;msiexec.exe&quot; -ArgumentList $msiArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
         } else {
-            Write-Log &quot;No INF files found in $driverPath&quot;
+            # EXE Installation
+            Start-Process -FilePath $setupPath -ArgumentList @(&#x27;/silent&#x27;, &#x27;/install&#x27;) -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
         }
-    } else {
-        Write-Log &quot;No network drivers folder found at $driverPath&quot;
+
+        # Cleanup temp file
+        if ($setupPath -match &quot;$env:TEMP\\chrome\.(msi|exe)&quot;) {
+            Remove-Item -Path $setupPath -Force -ErrorAction SilentlyContinue
+        }
+        Write-Log &quot;Chrome installation completed.&quot;
+    } catch {
+        Write-Log &quot;Error installing Chrome: $_&quot;
     }
 } else {
-    Write-Log &quot;Install media not found.&quot;
-}
-</File>
-		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Nvidia.ps1">
-$ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
-
-# OPTIONAL: Set a direct download URL for the Nvidia Driver here.
-$DownloadUrl = &quot;&quot;
-
-Write-Log &quot;Starting Nvidia Driver Installation...&quot;
-$mediaRoot = Get-InstallMedia
-$setupPath = $null
-
-# Try Local (Primary)
-if ($mediaRoot) {
-    Write-Log &quot;Checking local storage...&quot;
-    $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\nvidia&quot;
-    $setupPath = Get-InstallerFile -Path $driverDir
+    Write-Log &quot;Chrome installer not found locally and download failed.&quot;
 }
 
-# Try Download (Fallback if URL provided)
-if (-not $setupPath -and $DownloadUrl) {
-    $dest = &quot;$env:TEMP\nvidia_driver.exe&quot;
-    if (Download-File -Url $DownloadUrl -Destination $dest -Name &quot;Nvidia Driver&quot;) {
-        $setupPath = $dest
-    }
-}
-
-if ($setupPath) {
-    Write-Log &quot;Installing Nvidia driver from $setupPath...&quot;
-    try {
-        Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
-        # -s: Silent, -n: No splash, -f: Force, -noreboot: No reboot
-        Start-Process -FilePath $setupPath -ArgumentList @('-s', '-n', '-f', '-noreboot') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\nvidia_install.log&quot;
-        Write-Log &quot;Nvidia driver installation completed.&quot;
-    }
-    catch {
-        Write-Log &quot;Error installing Nvidia drivers: $_&quot;
-    }
-} else {
-    Write-Log &quot;Nvidia installer not found locally.&quot;
-}
-</File>
-		<File path="C:\Windows\Setup\Scripts\Drivers\Install-AMD.ps1">
-$ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
-
-# OPTIONAL: Set a direct download URL for the AMD Chipset Driver here.
-$DownloadUrl = &quot;&quot;
-
-Write-Log &quot;Starting AMD Chipset Driver Installation...&quot;
-$mediaRoot = Get-InstallMedia
-$setupPath = $null
-
-if ($mediaRoot) {
-    $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\amd&quot;
-    $setupPath = Get-InstallerFile -Path $driverDir
-}
-
-if (-not $setupPath -and $DownloadUrl) {
-    $dest = &quot;$env:TEMP\amd_chipset.exe&quot;
-    if (Download-File -Url $DownloadUrl -Destination $dest -Name &quot;AMD Chipset&quot;) {
-        $setupPath = $dest
-    }
-}
-
-if ($setupPath) {
-    Write-Log &quot;Installing AMD driver from $setupPath...&quot;
-    try {
-        Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
-        # /S: Silent
-        Start-Process -FilePath $setupPath -ArgumentList &quot;/S&quot;, &quot;-noreboot&quot; -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\amd_install.log&quot;
-        Write-Log &quot;AMD Chipset driver installation completed.&quot;
-    }
-    catch {
-        Write-Log &quot;Error installing AMD Chipset drivers: $_&quot;
-    }
-} else {
-    Write-Log &quot;AMD installer not found locally and no download URL provided.&quot;
-}
-</File>
-		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Focusrite.ps1">
-$ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
-
-# OPTIONAL: Set a direct download URL for the Focusrite Driver here.
-$DownloadUrl = &quot;&quot;
-
-Write-Log &quot;Starting Focusrite Driver Installation...&quot;
-$mediaRoot = Get-InstallMedia
-$setupPath = $null
-
-if ($mediaRoot) {
-    $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\focusrite&quot;
-    $setupPath = Get-InstallerFile -Path $driverDir
-}
-
-if (-not $setupPath -and $DownloadUrl) {
-    $dest = &quot;$env:TEMP\focusrite_driver.exe&quot;
-    if (Download-File -Url $DownloadUrl -Destination $dest -Name &quot;Focusrite Driver&quot;) {
-        $setupPath = $dest
-    }
-}
-
-if ($setupPath) {
-    Write-Log &quot;Installing Focusrite driver from $setupPath...&quot;
-    try {
-        Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
-        # /VERYSILENT: No UI, /SUPPRESSMSGBOXES: No popups
-        Start-Process -FilePath $setupPath -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\focusrite_install.log&quot;
-        Write-Log &quot;Focusrite driver installation completed.&quot;
-    }
-    catch {
-        Write-Log &quot;Error installing Focusrite drivers: $_&quot;
-    }
-} else {
-    Write-Log &quot;Focusrite installer not found locally and no download URL provided.&quot;
-}
 </File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Runtimes.ps1">
-$ErrorActionPreference = 'Stop'
+
+$ErrorActionPreference = &#x27;Stop&#x27;
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Visual C++ Runtimes Installation...&quot;
@@ -451,350 +263,11 @@ $url86 = &quot;https://aka.ms/vc14/vc_redist.x86.exe&quot;
 
 Install-Runtime -Url $url64 -DestName &quot;vc_redist.x64.exe&quot; -LogName &quot;Visual C++ Runtimes (x64)&quot; -LocalFolder &quot;vcredist_x64&quot;
 Install-Runtime -Url $url86 -DestName &quot;vc_redist.x86.exe&quot; -LogName &quot;Visual C++ Runtimes (x86)&quot; -LocalFolder &quot;vcredist_x86&quot;
-</File>
-		<File path="C:\Windows\Setup\Scripts\Apps\Install-Chrome.ps1">
-$ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
-Write-Log &quot;Starting Chrome Installation...&quot;
-
-# Check if Chrome is already installed
-if ((Test-Path &quot;$env:ProgramFiles\Google\Chrome\Application\chrome.exe&quot;) -or (Test-Path &quot;${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe&quot;)) {
-    Write-Log &quot;Chrome is already installed. Skipping.&quot;
-    return
-}
-
-$mediaRoot = Get-InstallMedia
-$setupPath = $null
-
-# 1. Try Download (Online First) - Prefer Enterprise MSI
-$url = 'https://dl.google.com/chrome/install/googlechromestandaloneenterprise64.msi'
-$dest = &quot;$env:TEMP\chrome.msi&quot;
-if (Download-File -Url $url -Destination $dest -Name &quot;Chrome Enterprise MSI&quot;) {
-    $setupPath = $dest
-}
-
-# 2. Try Local (Fallback)
-if (-not $setupPath -and $mediaRoot) {
-    Write-Log &quot;Download failed. Checking local storage...&quot;
-    $possiblePaths = @(
-        (Join-Path $mediaRoot &quot;apps\chrome&quot;),
-        (Join-Path $mediaRoot &quot;drivers\apps\chrome&quot;),
-        (Join-Path $mediaRoot &quot;Apps&quot;),
-        (Join-Path $mediaRoot &quot;Drivers\Apps&quot;)
-    )
-    foreach ($path in $possiblePaths) {
-         if (Test-Path $path) {
-             # Prioritize MSI, then EXE
-             $localInstaller = Get-InstallerFile -Path $path -Extensions @(&quot;*.msi&quot;, &quot;*.exe&quot;)
-             if ($localInstaller) {
-                $setupPath = $localInstaller
-                break
-             }
-         }
-    }
-}
-
-if ($setupPath) {
-    Write-Log &quot;Installing Chrome from $setupPath...&quot;
-    try {
-        Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
-
-        if ($setupPath -match '\.msi$') {
-            # MSI Installation
-            # Note: msiexec requires strict quoting for paths with spaces
-            $msiArgs = @(&quot;/i&quot;, &quot;$setupPath&quot;, &quot;/qn&quot;, &quot;/norestart&quot;)
-            Start-Process -FilePath &quot;msiexec.exe&quot; -ArgumentList $msiArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
-        } else {
-            # EXE Installation
-            Start-Process -FilePath $setupPath -ArgumentList @('/silent', '/install') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
-        }
-
-        # Cleanup temp file
-        if ($setupPath -match &quot;$env:TEMP\\chrome\.(msi|exe)&quot;) {
-            Remove-Item -Path $setupPath -Force -ErrorAction SilentlyContinue
-        }
-        Write-Log &quot;Chrome installation completed.&quot;
-    } catch {
-        Write-Log &quot;Error installing Chrome: $_&quot;
-    }
-} else {
-    Write-Log &quot;Chrome installer not found locally and download failed.&quot;
-}
-</File>
-		<File path="C:\Windows\Setup\Scripts\Tweaks\Remove-Bloatware.ps1">
-$ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
-
-$packagesToRemove = @(
-    'Microsoft.Microsoft3DViewer',
-    'Microsoft.BingSearch',
-    'Microsoft.WindowsCamera',
-    'Clipchamp.Clipchamp',
-    'Microsoft.WindowsAlarms',
-    'Microsoft.549981C3F5F10', # Cortana
-    'Microsoft.Copilot',
-    'Microsoft.Windows.DevHome',
-    'MicrosoftCorporationII.MicrosoftFamily',
-    'Microsoft.WindowsFeedbackHub',
-    'Microsoft.GetHelp',
-    'Microsoft.Getstarted',
-    'microsoft.windowscommunicationsapps',
-    'Microsoft.WindowsMaps',
-    'Microsoft.MixedReality.Portal',
-    'Microsoft.BingNews',
-    'Microsoft.MicrosoftOfficeHub',
-    'Microsoft.Office.OneNote',
-    'Microsoft.OutlookForWindows',
-    'Microsoft.People',
-    'Microsoft.Windows.PeopleExperienceHost',
-    'Microsoft.Windows.Photos',
-    'Microsoft.PowerAutomateDesktop',
-    'MicrosoftCorporationII.QuickAssist',
-    'Microsoft.SkypeApp',
-    'Microsoft.MicrosoftSolitaireCollection',
-    'Microsoft.MicrosoftStickyNotes',
-    'MicrosoftTeams',
-    'MSTeams',
-    'Microsoft.Todos',
-    'Microsoft.WindowsSoundRecorder',
-    'Microsoft.Wallet',
-    'Microsoft.BingWeather',
-    'Microsoft.ZuneVideo',
-    'MicrosoftWindows.Client.WebExperience',
-    'Microsoft.Windows.Ai.Copilot.Provider',
-    'Microsoft.YourPhone',
-    'Microsoft.GamingApp',
-    'Microsoft.XboxGameOverlay',
-    'Microsoft.XboxGamingOverlay',
-    'Microsoft.XboxIdentityProvider',
-    'Microsoft.XboxSpeechToTextOverlay',
-    'Microsoft.Windows.ParentalControls'
-)
-
-$capabilitiesToRemove = @(
-    'Print.Fax.Scan',
-    'Browser.InternetExplorer',
-    'MathRecognizer',
-    'OneCoreUAP.OneSync',
-    'App.Support.QuickAssist',
-    'App.StepsRecorder',
-    'Hello.Face',
-    'Media.WindowsMediaPlayer',
-    'Microsoft.Windows.WordPad'
-)
-
-$featuresToRemove = @(
-    'MediaPlayback',
-    'Microsoft-RemoteDesktopConnection',
-    'Recall'
-)
-
-Write-Log &quot;Starting Debloating Process...&quot;
-
-# Remove Appx Provisioned Packages
-$provisioned = Get-AppxProvisionedPackage -Online
-foreach ($package in $packagesToRemove) {
-    $found = $provisioned | Where-Object { $_.DisplayName -eq $package }
-    if ($found) {
-        foreach ($item in $found) {
-            Write-Log &quot;Removing $($item.DisplayName) ($($item.PackageName))...&quot;
-            try {
-                Remove-AppxProvisionedPackage -Online -PackageName $item.PackageName -ErrorAction Continue | Out-Null
-            } catch {
-                Write-Log &quot;Failed to remove $($item.PackageName): $_&quot;
-            }
-        }
-    }
-}
-
-# Remove Capabilities
-$capabilities = Get-WindowsCapability -Online
-foreach ($capName in $capabilitiesToRemove) {
-    $cap = $capabilities | Where-Object { ($_.Name -split '~')[0] -eq $capName -and $_.State -ne 'NotPresent' }
-    if ($cap) {
-        Write-Log &quot;Removing capability $capName...&quot;
-        try {
-            Remove-WindowsCapability -Online -Name $cap.Name -ErrorAction Continue | Out-Null
-        } catch {
-            Write-Log &quot;Failed to remove capability $capName: $_&quot;
-        }
-    }
-}
-
-# Remove Optional Features
-foreach ($feature in $featuresToRemove) {
-    if ((Get-WindowsOptionalFeature -Online -FeatureName $feature -ErrorAction SilentlyContinue).State -eq 'Enabled') {
-        Write-Log &quot;Disabling feature $feature...&quot;
-        try {
-            Disable-WindowsOptionalFeature -Online -FeatureName $feature -Remove -NoRestart -ErrorAction Continue | Out-Null
-        } catch {
-            Write-Log &quot;Failed to disable feature $feature: $_&quot;
-        }
-    }
-}
-
-Write-Log &quot;Debloating Process Completed.&quot;
-</File>
-		<File path="C:\Windows\Setup\Scripts\Tweaks\Configure-Privacy.ps1">
-$ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
-
-Write-Log &quot;Applying Privacy and Registry Tweaks...&quot;
-
-# Disable Telemetry and Data Collection
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; /v AllowTelemetry /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; /v DoNotShowFeedbackNotifications /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection&quot; /v AllowTelemetry /t REG_DWORD /d 0 /f
-
-# Disable Bing Search, Cortana, and Search Highlights
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v AllowCortana /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v DisableWebSearch /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v ConnectedSearchUseWeb /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v AllowCloudSearch /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v EnableDynamicContentInWS /t REG_DWORD /d 0 /f
-
-# Disable Copilot and Recall (AI Screenshot)
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot&quot; /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI&quot; /v DisableAIDataAnalysis /t REG_DWORD /d 1 /f
-
-# Disable News and Interests (Widgets), Search Highlights, and Meet Now
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Dsh&quot; /v AllowNewsAndInterests /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v EnableSearchHighlights /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; /v HideSCAMeetNow /t REG_DWORD /d 1 /f
-
-# Disable Online Tips and Advertising ID
-reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; /v AllowOnlineTips /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot; /v DisabledByGroupPolicy /t REG_DWORD /d 1 /f
-
-# Disable Edge First Run and Bloat
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v HideFirstRunExperience /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
-
-# Disable BitLocker Automatic Device Encryption
-reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\BitLocker&quot; /v &quot;PreventDeviceEncryption&quot; /t REG_DWORD /d 1 /f
-
-# Disable VBS/HVCI (Performance)
-reg.exe add &quot;HKLM\System\CurrentControlSet\Control\DeviceGuard&quot; /v &quot;EnableVirtualizationBasedSecurity&quot; /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\System\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity&quot; /v &quot;Enabled&quot; /t REG_DWORD /d 0 /f
-
-# Disable Telemetry and Maps Services
-$services = @('DiagTrack', 'dmwappushservice', 'MapsBroker', 'lfsvc')
-foreach ($service in $services) {
-    if (Get-Service -Name $service -ErrorAction SilentlyContinue) {
-        Write-Log &quot;Disabling service $service...&quot;
-        try {
-            Stop-Service -Name $service -Force -ErrorAction SilentlyContinue
-            Set-ItemProperty -Path &quot;Registry::HKLM\SYSTEM\CurrentControlSet\Services\$service&quot; -Name &quot;Start&quot; -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
-        } catch {
-            Write-Log &quot;Failed to disable service $service: $_&quot;
-        }
-    }
-}
-
-Write-Log &quot;Privacy Tweaks Applied.&quot;
-</File>
-		<File path="C:\Windows\Setup\Scripts\Tweaks\SetStartPins.ps1">
-$json = '{&quot;pinnedList&quot;:[]}';
-if( [System.Environment]::OSVersion.Version.Build -lt 20000 ) {
-	return;
-}
-$key = 'Registry::HKLM\SOFTWARE\Microsoft\PolicyManager\current\device\Start';
-New-Item -Path $key -ItemType 'Directory' -ErrorAction 'SilentlyContinue';
-Set-ItemProperty -LiteralPath $key -Name 'ConfigureStartPins' -Value $json -Type 'String';
-</File>
-		<File path="C:\Windows\Setup\Scripts\Tweaks\Optimize-System.ps1">
-$ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
-
-Write-Log &quot;Applying System Optimizations...&quot;
-
-# 1. Disable Hibernation (Saves disk space)
-try {
-    powercfg -h off
-    Write-Log &quot;Hibernation disabled.&quot;
-} catch {
-    Write-Log &quot;Failed to disable hibernation: $_&quot;
-}
-
-# 2. Set High Performance Power Plan
-try {
-    powercfg -setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c
-    Write-Log &quot;Power plan set to High Performance.&quot;
-} catch {
-    Write-Log &quot;Failed to set power plan: $_&quot;
-}
-
-# 3. Disable Game DVR (Background recording)
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR&quot; /v AllowGameDVR /t REG_DWORD /d 0 /f
-
-# 4. Disable Last Access Timestamp (Reduces disk I/O)
-try {
-    fsutil behavior set disablelastaccess 1
-    Write-Log &quot;Last Access Timestamp disabled.&quot;
-} catch {
-    Write-Log &quot;Failed to disable Last Access Timestamp: $_&quot;
-}
-
-Write-Log &quot;System Optimizations Applied.&quot;
-</File>
-		<File path="C:\Windows\Setup\Scripts\Specialize.ps1">
-$ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
-
-$scripts = @(
-    &quot;$PSScriptRoot\Drivers\Install-Network.ps1&quot;,
-    &quot;$PSScriptRoot\Tweaks\Remove-Bloatware.ps1&quot;,
-    &quot;$PSScriptRoot\Tweaks\Configure-Privacy.ps1&quot;,
-    &quot;$PSScriptRoot\Tweaks\Optimize-System.ps1&quot;,
-    &quot;$PSScriptRoot\Drivers\Install-Nvidia.ps1&quot;,
-    &quot;$PSScriptRoot\Drivers\Install-AMD.ps1&quot;,
-    &quot;$PSScriptRoot\Drivers\Install-Focusrite.ps1&quot;,
-    &quot;$PSScriptRoot\Apps\Install-Runtimes.ps1&quot;,
-    &quot;$PSScriptRoot\Apps\Install-Chrome.ps1&quot;,
-    &quot;$PSScriptRoot\Tweaks\SetStartPins.ps1&quot;
-)
-
-Write-Log &quot;Starting Specialize Pass (Optimized)...&quot;
-
-foreach ($script in $scripts) {
-    if (Test-Path $script) {
-        Write-Log &quot;Executing $script...&quot;
-        try {
-            &amp; $script
-        } catch {
-            Write-Log &quot;Error executing $script: $_&quot;
-        }
-    } else {
-        Write-Log &quot;Script not found: $script&quot;
-    }
-}
-
-# Generate SetupComplete.cmd for post-OOBE cleanup
-# This ensures unattend.xml is removed to prevent sensitive data leak (if any)
-# We do NOT remove the Scripts folder here because UserOnce.ps1 (RunOnce) needs it.
-$setupCompleteContent = @&quot;
-del /q /f &quot;%WINDIR%\Panther\unattend.xml&quot;
-del /q /f &quot;%WINDIR%\Panther\unattend-original.xml&quot;
-&quot;@
-
-$setupCompletePath = &quot;$env:SystemRoot\Setup\Scripts\SetupComplete.cmd&quot;
-try {
-    $setupDir = Split-Path -Path $setupCompletePath -Parent
-    if (-not (Test-Path $setupDir)) {
-        New-Item -Path $setupDir -ItemType Directory -Force | Out-Null
-    }
-    Set-Content -Path $setupCompletePath -Value $setupCompleteContent -Force
-    Write-Log &quot;Generated SetupComplete.cmd for cleanup.&quot;
-} catch {
-    Write-Log &quot;Error creating SetupComplete.cmd: $_&quot;
-}
-
-Write-Log &quot;Specialize Pass Completed.&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\DefaultUser.ps1">
-$ErrorActionPreference = 'Stop'
+
+$ErrorActionPreference = &#x27;Stop&#x27;
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Configuring Default User...&quot;
@@ -912,9 +385,560 @@ finally {
 }
 
 Write-Log &quot;Default User Configuration Completed.&quot;
+
+</File>
+		<File path="C:\Windows\Setup\Scripts\Drivers\Install-AMD.ps1">
+
+$ErrorActionPreference = &#x27;Stop&#x27;
+. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+
+# OPTIONAL: Set a direct download URL for the AMD Chipset Driver here.
+$DownloadUrl = &quot;&quot;
+
+Write-Log &quot;Starting AMD Chipset Driver Installation...&quot;
+$mediaRoot = Get-InstallMedia
+$setupPath = $null
+
+if ($mediaRoot) {
+    $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\amd&quot;
+    $setupPath = Get-InstallerFile -Path $driverDir
+}
+
+if (-not $setupPath -and $DownloadUrl) {
+    $dest = &quot;$env:TEMP\amd_chipset.exe&quot;
+    if (Download-File -Url $DownloadUrl -Destination $dest -Name &quot;AMD Chipset&quot;) {
+        $setupPath = $dest
+    }
+}
+
+if ($setupPath) {
+    Write-Log &quot;Installing AMD driver from $setupPath...&quot;
+    try {
+        Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
+        # /S: Silent
+        Start-Process -FilePath $setupPath -ArgumentList &quot;/S&quot;, &quot;-noreboot&quot; -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\amd_install.log&quot;
+        Write-Log &quot;AMD Chipset driver installation completed.&quot;
+    }
+    catch {
+        Write-Log &quot;Error installing AMD Chipset drivers: $_&quot;
+    }
+} else {
+    Write-Log &quot;AMD installer not found locally and no download URL provided.&quot;
+}
+
+</File>
+		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Focusrite.ps1">
+
+$ErrorActionPreference = &#x27;Stop&#x27;
+. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+
+# OPTIONAL: Set a direct download URL for the Focusrite Driver here.
+$DownloadUrl = &quot;&quot;
+
+Write-Log &quot;Starting Focusrite Driver Installation...&quot;
+$mediaRoot = Get-InstallMedia
+$setupPath = $null
+
+if ($mediaRoot) {
+    $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\focusrite&quot;
+    $setupPath = Get-InstallerFile -Path $driverDir
+}
+
+if (-not $setupPath -and $DownloadUrl) {
+    $dest = &quot;$env:TEMP\focusrite_driver.exe&quot;
+    if (Download-File -Url $DownloadUrl -Destination $dest -Name &quot;Focusrite Driver&quot;) {
+        $setupPath = $dest
+    }
+}
+
+if ($setupPath) {
+    Write-Log &quot;Installing Focusrite driver from $setupPath...&quot;
+    try {
+        Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
+        # /VERYSILENT: No UI, /SUPPRESSMSGBOXES: No popups
+        Start-Process -FilePath $setupPath -ArgumentList @(&#x27;/VERYSILENT&#x27;, &#x27;/SUPPRESSMSGBOXES&#x27;, &#x27;/NORESTART&#x27;, &#x27;/SP-&#x27;) -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\focusrite_install.log&quot;
+        Write-Log &quot;Focusrite driver installation completed.&quot;
+    }
+    catch {
+        Write-Log &quot;Error installing Focusrite drivers: $_&quot;
+    }
+} else {
+    Write-Log &quot;Focusrite installer not found locally and no download URL provided.&quot;
+}
+
+</File>
+		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Network.ps1">
+
+$ErrorActionPreference = &#x27;Stop&#x27;
+. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+
+Write-Log &quot;Starting Network Driver Installation...&quot;
+$mediaRoot = Get-InstallMedia
+
+if ($mediaRoot) {
+    $driverPath = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\network&quot;
+    if (Test-Path -Path $driverPath) {
+        Write-Log &quot;Found network drivers path at $driverPath&quot;
+        # Check if there are any INF files to avoid pnputil error
+        if (Get-ChildItem -Path $driverPath -Filter &quot;*.inf&quot; -Recurse) {
+            try {
+                $pnputilArgs = &quot;/add-driver `&quot;$driverPath\*.inf`&quot; /subdirs /install&quot;
+                # Redirect standard output and error to logs for debugging
+                Start-Process -FilePath &quot;pnputil.exe&quot; -ArgumentList $pnputilArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\pnputil_network.log&quot; -RedirectStandardError &quot;$env:TEMP\pnputil_network_err.log&quot;
+                Write-Log &quot;Network driver installation completed.&quot;
+            }
+            catch {
+                Write-Log &quot;Error installing network drivers: $_&quot;
+            }
+        } else {
+            Write-Log &quot;No INF files found in $driverPath&quot;
+        }
+    } else {
+        Write-Log &quot;No network drivers folder found at $driverPath&quot;
+    }
+} else {
+    Write-Log &quot;Install media not found.&quot;
+}
+
+</File>
+		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Nvidia.ps1">
+
+$ErrorActionPreference = &#x27;Stop&#x27;
+. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+
+# OPTIONAL: Set a direct download URL for the Nvidia Driver here.
+$DownloadUrl = &quot;&quot;
+
+Write-Log &quot;Starting Nvidia Driver Installation...&quot;
+$mediaRoot = Get-InstallMedia
+$setupPath = $null
+
+# Try Local (Primary)
+if ($mediaRoot) {
+    Write-Log &quot;Checking local storage...&quot;
+    $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\nvidia&quot;
+    $setupPath = Get-InstallerFile -Path $driverDir
+}
+
+# Try Download (Fallback if URL provided)
+if (-not $setupPath -and $DownloadUrl) {
+    $dest = &quot;$env:TEMP\nvidia_driver.exe&quot;
+    if (Download-File -Url $DownloadUrl -Destination $dest -Name &quot;Nvidia Driver&quot;) {
+        $setupPath = $dest
+    }
+}
+
+if ($setupPath) {
+    Write-Log &quot;Installing Nvidia driver from $setupPath...&quot;
+    try {
+        Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
+        # -s: Silent, -n: No splash, -f: Force, -noreboot: No reboot
+        Start-Process -FilePath $setupPath -ArgumentList @(&#x27;-s&#x27;, &#x27;-n&#x27;, &#x27;-f&#x27;, &#x27;-noreboot&#x27;) -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\nvidia_install.log&quot;
+        Write-Log &quot;Nvidia driver installation completed.&quot;
+    }
+    catch {
+        Write-Log &quot;Error installing Nvidia drivers: $_&quot;
+    }
+} else {
+    Write-Log &quot;Nvidia installer not found locally.&quot;
+}
+
+</File>
+		<File path="C:\Windows\Setup\Scripts\Lib\Helper.ps1">
+function Get-InstallMedia {
+    # Use .NET DriveInfo to correctly identify Fixed/Removable drives and avoid network/floppy hangs
+    $drives = [System.IO.DriveInfo]::GetDrives() | Where-Object { $_.DriveType -in &#x27;Fixed&#x27;, &#x27;Removable&#x27; -and $_.IsReady }
+    foreach ($drive in $drives) {
+        $path = Join-Path -Path $drive.RootDirectory.FullName -ChildPath &quot;drivers&quot;
+        if (Test-Path -Path $path -PathType Container) {
+            return $drive.RootDirectory.FullName
+        }
+    }
+    return $null
+}
+
+function Get-InstallerFile {
+    param([string]$Path, [string[]]$Extensions = @(&quot;*.exe&quot;))
+    if (Test-Path -Path $Path) {
+        foreach ($ext in $Extensions) {
+            $file = Get-ChildItem -Path $Path -Filter $ext | Select-Object -First 1
+            if ($file) { return $file.FullName }
+        }
+    }
+    return $null
+}
+
+function Write-Log {
+    param(
+        [string]$Message,
+        [string]$Path = &quot;$env:SystemRoot\Panther\Autounattend_Log.txt&quot;
+    )
+    # Ensure directory exists
+    $dir = Split-Path -Path $Path -Parent
+    if (-not (Test-Path -Path $dir)) {
+        New-Item -Path $dir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
+    }
+
+    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss&quot;
+    $logEntry = &quot;[$timestamp] $Message&quot;
+    Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
+}
+
+function Download-File {
+    param(
+        [string]$Url,
+        [string]$Destination,
+        [string]$Name = &quot;File&quot;
+    )
+
+    # Suppress Progress Bar for Faster Download
+    $ProgressPreference = &#x27;SilentlyContinue&#x27;
+
+    if ([string]::IsNullOrWhiteSpace($Url)) { return $false }
+
+    Write-Log &quot;Attempting to download $Name from $Url...&quot;
+
+    # Increase timeout to ~5 minutes (150 * 2s) to handle slow network initialization
+    $maxRetries = 150
+    $retry = 0
+    $connected = $false
+
+    # Wait for network
+    while (-not $connected -and $retry -lt $maxRetries) {
+        $testHosts = @(&quot;google.com&quot;, &quot;microsoft.com&quot;, &quot;cloudflare.com&quot;)
+        foreach ($hostName in $testHosts) {
+            try {
+                $null = [System.Net.Dns]::GetHostEntry($hostName)
+                $connected = $true
+                break
+            } catch {}
+        }
+
+        if (-not $connected) {
+            $retry++
+            Start-Sleep -Seconds 2
+        }
+    }
+
+    if (-not $connected) {
+        Write-Log &quot;No network connectivity to download $Name.&quot;
+        return $false
+    }
+
+    $downloadRetries = 3
+    $dRetry = 0
+    $downloaded = $false
+
+    while (-not $downloaded -and $dRetry -lt $downloadRetries) {
+        try {
+            # Enable TLS 1.2 and TLS 1.3 (if available)
+            $protocols = [Net.SecurityProtocolType]::Tls12
+            try { $protocols = $protocols -bor [Net.SecurityProtocolType]::Tls13 } catch {}
+            [Net.ServicePointManager]::SecurityProtocol = $protocols
+
+            Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -ErrorAction Stop
+
+            # Verify file size &gt; 1KB (1024 bytes) to ensure valid download
+            if (Test-Path -Path $Destination -And (Get-Item $Destination).Length -gt 1024) {
+                Write-Log &quot;Download of $Name successful.&quot;
+                $downloaded = $true
+            } else {
+                Write-Log &quot;Download of $Name failed (file too small or empty).&quot;
+                throw &quot;File too small&quot;
+            }
+        } catch {
+            $dRetry++
+            Write-Log &quot;Failed to download $Name (Attempt $dRetry/$downloadRetries): $_&quot;
+            Start-Sleep -Seconds 2
+        }
+    }
+
+    return $downloaded
+}
+
+</File>
+		<File path="C:\Windows\Setup\Scripts\Specialize.ps1">
+$ErrorActionPreference = &#x27;Stop&#x27;
+. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+
+$scripts = @(
+    &quot;$PSScriptRoot\Drivers\Install-Network.ps1&quot;,
+    &quot;$PSScriptRoot\Tweaks\Remove-Bloatware.ps1&quot;,
+    &quot;$PSScriptRoot\Tweaks\Configure-Privacy.ps1&quot;,
+    &quot;$PSScriptRoot\Tweaks\Optimize-System.ps1&quot;,
+    &quot;$PSScriptRoot\Drivers\Install-Nvidia.ps1&quot;,
+    &quot;$PSScriptRoot\Drivers\Install-AMD.ps1&quot;,
+    &quot;$PSScriptRoot\Drivers\Install-Focusrite.ps1&quot;,
+    &quot;$PSScriptRoot\Apps\Install-Runtimes.ps1&quot;,
+    &quot;$PSScriptRoot\Apps\Install-Chrome.ps1&quot;,
+    &quot;$PSScriptRoot\Tweaks\SetStartPins.ps1&quot;
+)
+
+Write-Log &quot;Starting Specialize Pass (Optimized)...&quot;
+
+foreach ($script in $scripts) {
+    if (Test-Path $script) {
+        Write-Log &quot;Executing $script...&quot;
+        try {
+            &amp; $script
+        } catch {
+            Write-Log &quot;Error executing $script: $_&quot;
+        }
+    } else {
+        Write-Log &quot;Script not found: $script&quot;
+    }
+}
+
+# Generate SetupComplete.cmd for post-OOBE cleanup
+# This ensures unattend.xml is removed to prevent sensitive data leak (if any)
+# We do NOT remove the Scripts folder here because UserOnce.ps1 (RunOnce) needs it.
+$setupCompleteContent = @&quot;
+del /q /f &quot;%WINDIR%\Panther\unattend.xml&quot;
+del /q /f &quot;%WINDIR%\Panther\unattend-original.xml&quot;
+&quot;@
+
+$setupCompletePath = &quot;$env:SystemRoot\Setup\Scripts\SetupComplete.cmd&quot;
+try {
+    $setupDir = Split-Path -Path $setupCompletePath -Parent
+    if (-not (Test-Path $setupDir)) {
+        New-Item -Path $setupDir -ItemType Directory -Force | Out-Null
+    }
+    Set-Content -Path $setupCompletePath -Value $setupCompleteContent -Force
+    Write-Log &quot;Generated SetupComplete.cmd for cleanup.&quot;
+} catch {
+    Write-Log &quot;Error creating SetupComplete.cmd: $_&quot;
+}
+
+Write-Log &quot;Specialize Pass Completed.&quot;
+
+</File>
+		<File path="C:\Windows\Setup\Scripts\Tweaks\Configure-Privacy.ps1">
+
+$ErrorActionPreference = &#x27;Stop&#x27;
+. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+
+Write-Log &quot;Applying Privacy and Registry Tweaks...&quot;
+
+# Disable Telemetry and Data Collection
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; /v AllowTelemetry /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; /v DoNotShowFeedbackNotifications /t REG_DWORD /d 1 /f
+reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection&quot; /v AllowTelemetry /t REG_DWORD /d 0 /f
+
+# Disable Bing Search, Cortana, and Search Highlights
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v AllowCortana /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v DisableWebSearch /t REG_DWORD /d 1 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v ConnectedSearchUseWeb /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v AllowCloudSearch /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v EnableDynamicContentInWS /t REG_DWORD /d 0 /f
+
+# Disable Copilot and Recall (AI Screenshot)
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot&quot; /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI&quot; /v DisableAIDataAnalysis /t REG_DWORD /d 1 /f
+
+# Disable News and Interests (Widgets), Search Highlights, and Meet Now
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Dsh&quot; /v AllowNewsAndInterests /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v EnableSearchHighlights /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; /v HideSCAMeetNow /t REG_DWORD /d 1 /f
+
+# Disable Online Tips and Advertising ID
+reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; /v AllowOnlineTips /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot; /v DisabledByGroupPolicy /t REG_DWORD /d 1 /f
+
+# Disable Edge First Run and Bloat
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v HideFirstRunExperience /t REG_DWORD /d 1 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+
+# Disable BitLocker Automatic Device Encryption
+reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\BitLocker&quot; /v &quot;PreventDeviceEncryption&quot; /t REG_DWORD /d 1 /f
+
+# Disable VBS/HVCI (Performance)
+reg.exe add &quot;HKLM\System\CurrentControlSet\Control\DeviceGuard&quot; /v &quot;EnableVirtualizationBasedSecurity&quot; /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\System\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity&quot; /v &quot;Enabled&quot; /t REG_DWORD /d 0 /f
+
+# Disable Telemetry and Maps Services
+$services = @(&#x27;DiagTrack&#x27;, &#x27;dmwappushservice&#x27;, &#x27;MapsBroker&#x27;, &#x27;lfsvc&#x27;)
+foreach ($service in $services) {
+    if (Get-Service -Name $service -ErrorAction SilentlyContinue) {
+        Write-Log &quot;Disabling service $service...&quot;
+        try {
+            Stop-Service -Name $service -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path &quot;Registry::HKLM\SYSTEM\CurrentControlSet\Services\$service&quot; -Name &quot;Start&quot; -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
+        } catch {
+            Write-Log &quot;Failed to disable service $service: $_&quot;
+        }
+    }
+}
+
+Write-Log &quot;Privacy Tweaks Applied.&quot;
+
+</File>
+		<File path="C:\Windows\Setup\Scripts\Tweaks\Optimize-System.ps1">
+
+$ErrorActionPreference = &#x27;Stop&#x27;
+. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+
+Write-Log &quot;Applying System Optimizations...&quot;
+
+# 1. Disable Hibernation (Saves disk space)
+try {
+    powercfg -h off
+    Write-Log &quot;Hibernation disabled.&quot;
+} catch {
+    Write-Log &quot;Failed to disable hibernation: $_&quot;
+}
+
+# 2. Set High Performance Power Plan
+try {
+    powercfg -setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c
+    Write-Log &quot;Power plan set to High Performance.&quot;
+} catch {
+    Write-Log &quot;Failed to set power plan: $_&quot;
+}
+
+# 3. Disable Game DVR (Background recording)
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR&quot; /v AllowGameDVR /t REG_DWORD /d 0 /f
+
+# 4. Disable Last Access Timestamp (Reduces disk I/O)
+try {
+    fsutil behavior set disablelastaccess 1
+    Write-Log &quot;Last Access Timestamp disabled.&quot;
+} catch {
+    Write-Log &quot;Failed to disable Last Access Timestamp: $_&quot;
+}
+
+Write-Log &quot;System Optimizations Applied.&quot;
+
+</File>
+		<File path="C:\Windows\Setup\Scripts\Tweaks\Remove-Bloatware.ps1">
+$ErrorActionPreference = &#x27;Stop&#x27;
+. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+
+$packagesToRemove = @(
+    &#x27;Microsoft.Microsoft3DViewer&#x27;,
+    &#x27;Microsoft.BingSearch&#x27;,
+    &#x27;Microsoft.WindowsCamera&#x27;,
+    &#x27;Clipchamp.Clipchamp&#x27;,
+    &#x27;Microsoft.WindowsAlarms&#x27;,
+    &#x27;Microsoft.549981C3F5F10&#x27;, # Cortana
+    &#x27;Microsoft.Copilot&#x27;,
+    &#x27;Microsoft.Windows.DevHome&#x27;,
+    &#x27;MicrosoftCorporationII.MicrosoftFamily&#x27;,
+    &#x27;Microsoft.WindowsFeedbackHub&#x27;,
+    &#x27;Microsoft.GetHelp&#x27;,
+    &#x27;Microsoft.Getstarted&#x27;,
+    &#x27;microsoft.windowscommunicationsapps&#x27;,
+    &#x27;Microsoft.WindowsMaps&#x27;,
+    &#x27;Microsoft.MixedReality.Portal&#x27;,
+    &#x27;Microsoft.BingNews&#x27;,
+    &#x27;Microsoft.MicrosoftOfficeHub&#x27;,
+    &#x27;Microsoft.Office.OneNote&#x27;,
+    &#x27;Microsoft.OutlookForWindows&#x27;,
+    &#x27;Microsoft.People&#x27;,
+    &#x27;Microsoft.Windows.PeopleExperienceHost&#x27;,
+    &#x27;Microsoft.Windows.Photos&#x27;,
+    &#x27;Microsoft.PowerAutomateDesktop&#x27;,
+    &#x27;MicrosoftCorporationII.QuickAssist&#x27;,
+    &#x27;Microsoft.SkypeApp&#x27;,
+    &#x27;Microsoft.MicrosoftSolitaireCollection&#x27;,
+    &#x27;Microsoft.MicrosoftStickyNotes&#x27;,
+    &#x27;MicrosoftTeams&#x27;,
+    &#x27;MSTeams&#x27;,
+    &#x27;Microsoft.Todos&#x27;,
+    &#x27;Microsoft.WindowsSoundRecorder&#x27;,
+    &#x27;Microsoft.Wallet&#x27;,
+    &#x27;Microsoft.BingWeather&#x27;,
+    &#x27;Microsoft.ZuneVideo&#x27;,
+    &#x27;MicrosoftWindows.Client.WebExperience&#x27;,
+    &#x27;Microsoft.Windows.Ai.Copilot.Provider&#x27;,
+    &#x27;Microsoft.YourPhone&#x27;,
+    &#x27;Microsoft.GamingApp&#x27;,
+    &#x27;Microsoft.XboxGameOverlay&#x27;,
+    &#x27;Microsoft.XboxGamingOverlay&#x27;,
+    &#x27;Microsoft.XboxIdentityProvider&#x27;,
+    &#x27;Microsoft.XboxSpeechToTextOverlay&#x27;,
+    &#x27;Microsoft.Windows.ParentalControls&#x27;
+)
+
+$capabilitiesToRemove = @(
+    &#x27;Print.Fax.Scan&#x27;,
+    &#x27;Browser.InternetExplorer&#x27;,
+    &#x27;MathRecognizer&#x27;,
+    &#x27;OneCoreUAP.OneSync&#x27;,
+    &#x27;App.Support.QuickAssist&#x27;,
+    &#x27;App.StepsRecorder&#x27;,
+    &#x27;Hello.Face&#x27;,
+    &#x27;Media.WindowsMediaPlayer&#x27;,
+    &#x27;Microsoft.Windows.WordPad&#x27;
+)
+
+$featuresToRemove = @(
+    &#x27;MediaPlayback&#x27;,
+    &#x27;Microsoft-RemoteDesktopConnection&#x27;,
+    &#x27;Recall&#x27;
+)
+
+Write-Log &quot;Starting Debloating Process...&quot;
+
+# Remove Appx Provisioned Packages
+$provisioned = Get-AppxProvisionedPackage -Online
+foreach ($package in $packagesToRemove) {
+    $found = $provisioned | Where-Object { $_.DisplayName -eq $package }
+    if ($found) {
+        foreach ($item in $found) {
+            Write-Log &quot;Removing $($item.DisplayName) ($($item.PackageName))...&quot;
+            try {
+                Remove-AppxProvisionedPackage -Online -PackageName $item.PackageName -ErrorAction Continue | Out-Null
+            } catch {
+                Write-Log &quot;Failed to remove $($item.PackageName): $_&quot;
+            }
+        }
+    }
+}
+
+# Remove Capabilities
+$capabilities = Get-WindowsCapability -Online
+foreach ($capName in $capabilitiesToRemove) {
+    $cap = $capabilities | Where-Object { ($_.Name -split &#x27;~&#x27;)[0] -eq $capName -and $_.State -ne &#x27;NotPresent&#x27; }
+    if ($cap) {
+        Write-Log &quot;Removing capability $capName...&quot;
+        try {
+            Remove-WindowsCapability -Online -Name $cap.Name -ErrorAction Continue | Out-Null
+        } catch {
+            Write-Log &quot;Failed to remove capability $capName: $_&quot;
+        }
+    }
+}
+
+# Remove Optional Features
+foreach ($feature in $featuresToRemove) {
+    if ((Get-WindowsOptionalFeature -Online -FeatureName $feature -ErrorAction SilentlyContinue).State -eq &#x27;Enabled&#x27;) {
+        Write-Log &quot;Disabling feature $feature...&quot;
+        try {
+            Disable-WindowsOptionalFeature -Online -FeatureName $feature -Remove -NoRestart -ErrorAction Continue | Out-Null
+        } catch {
+            Write-Log &quot;Failed to disable feature $feature: $_&quot;
+        }
+    }
+}
+
+Write-Log &quot;Debloating Process Completed.&quot;
+
+</File>
+		<File path="C:\Windows\Setup\Scripts\Tweaks\SetStartPins.ps1">
+
+$json = &#x27;{&quot;pinnedList&quot;:[]}&#x27;;
+if( [System.Environment]::OSVersion.Version.Build -lt 20000 ) {
+	return;
+}
+$key = &#x27;Registry::HKLM\SOFTWARE\Microsoft\PolicyManager\current\device\Start&#x27;;
+New-Item -Path $key -ItemType &#x27;Directory&#x27; -ErrorAction &#x27;SilentlyContinue&#x27;;
+Set-ItemProperty -LiteralPath $key -Name &#x27;ConfigureStartPins&#x27; -Value $json -Type &#x27;String&#x27;;
+
+
 </File>
 		<File path="C:\Windows\Setup\Scripts\UserOnce.ps1">
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = &#x27;Stop&#x27;
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Configuring User Account...&quot;
@@ -958,7 +982,7 @@ Write-Log &quot;User Configuration Completed.&quot;
 # Self-Destruct: Cleanup Scripts
 # Wait 5 seconds then delete the script folder
 Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 5 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden
-</File>
 
+</File>
 	</Extensions>
 </unattend>
