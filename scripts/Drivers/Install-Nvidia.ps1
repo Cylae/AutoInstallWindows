@@ -2,19 +2,26 @@
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\Lib\Helper.ps1"
 
+# OPTIONAL: Set a direct download URL for the Nvidia Driver here.
+$DownloadUrl = ""
+
 Write-Log "Starting Nvidia Driver Installation..."
 $mediaRoot = Get-InstallMedia
 $setupPath = $null
 
-# Online check removed due to API deprecation.
-# To use a direct download, set the URL below manually or use the local drivers folder.
-# $url = "https://..."
-
-# Try Local (Fallback/Primary)
-if (-not $setupPath -and $mediaRoot) {
+# Try Local (Primary)
+if ($mediaRoot) {
     Write-Log "Checking local storage..."
     $driverDir = Join-Path -Path $mediaRoot -ChildPath "drivers\nvidia"
     $setupPath = Get-InstallerFile -Path $driverDir
+}
+
+# Try Download (Fallback if URL provided)
+if (-not $setupPath -and $DownloadUrl) {
+    $dest = "$env:TEMP\nvidia_driver.exe"
+    if (Download-File -Url $DownloadUrl -Destination $dest -Name "Nvidia Driver") {
+        $setupPath = $dest
+    }
 }
 
 if ($setupPath) {
