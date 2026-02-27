@@ -44,6 +44,9 @@ function Download-File {
         [string]$Name = "File"
     )
 
+    # Suppress Progress Bar for Faster Download
+    $ProgressPreference = 'SilentlyContinue'
+
     if ([string]::IsNullOrWhiteSpace($Url)) { return $false }
 
     Write-Log "Attempting to download $Name from $Url..."

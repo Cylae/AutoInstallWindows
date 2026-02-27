@@ -8,15 +8,15 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 
 *   **⚡ Zero-Interruption Setup**: All software (Chrome, Drivers, etc.) is installed during the `Specialize` pass, *before* the user logs in. No popups, no waiting at the desktop.
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
-*   **🛡️ Privacy Hardened**: Disables Telemetry, Copilot, Bing Search, Cortana, Advertising ID, Search Highlights, **Widgets**, **File Explorer Ads**, and **Tips/Suggestions**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
+*   **🛡️ Privacy Hardened**: Disables Telemetry, **Recall** (AI Screenshot), Copilot, Bing Search, Cortana, Advertising ID, **Search Highlights**, **Widgets**, **File Explorer Ads**, and **Tips/Suggestions**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
 *   **🌑 Dark Mode**: Enables Dark Mode for System and Apps by default.
-*   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, etc.) and unnecessary Windows capabilities. **Preserves Notepad and Paint.**
+*   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, **Meet Now** icon, etc.) and unnecessary Windows capabilities. **Preserves Notepad and Paint.**
 *   **💥 Self-Destruct**: Installation scripts automatically delete themselves after the first login to ensure a clean slate.
 *   **📜 Log Persistence**: Setup logs are preserved in `C:\Windows\Panther\Autounattend_Log.txt` for troubleshooting.
 *   **🚀 System Optimization**:
     *   **High Performance**: Automatically sets the "High Performance" power plan.
-    *   **Power User**: Enables "End Task" in Taskbar context menu.
-    *   **User Experience**: Disables "Finish setting up your device", "Lock Screen Tips", "Welcome Experience", and "Sync Provider Notifications".
+    *   **Power User**: Enables "End Task" in Taskbar context menu, shows **Seconds in System Clock**, and Disables Transparency effects.
+    *   **User Experience**: Disables "Finish setting up your device", "Lock Screen Tips", "Welcome Experience", "Sync Provider Notifications", **Widgets (News and Interests)**, and **Chat/Teams** icon.
     *   **Space Saving**: Disables Hibernation to save disk space (`hiberfil.sys`).
     *   **Disk I/O**: Disables Last Access Timestamp updates to improve disk performance.
     *   **Gaming**: Disables Game DVR/Bar for better gaming performance.
@@ -60,7 +60,7 @@ USB_ROOT/
 
 *   **Chrome**: Preferentially downloads and installs the **Enterprise MSI** for optimal silent deployment. Supports both `.msi` and `.exe` local installers.
 *   **Visual C++**: Automatically downloads from Microsoft, falls back to local `vcredist_x64`/`vcredist_x86` folders if offline.
-*   **Nvidia**: Requires local installer in `drivers/nvidia` or manual URL configuration in script (Auto-download API is deprecated).
+*   **Nvidia**: Requires local installer in `drivers/nvidia` or manual URL configuration in script.
 
 ## 📝 Usage
 
@@ -149,15 +149,15 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 
 *   **⚡ Installation Zéro-Interruption**: Tous les logiciels (Chrome, Pilotes, etc.) sont installés durant la phase `Specialize`, **avant** la connexion de l'utilisateur. Aucun popup, aucune attente sur le bureau.
 *   **🤫 Totalement Silencieux**: Tous les scripts sont optimisés pour masquer les sorties et fenêtres. Vous ne verrez rien avant l'écran "Bienvenue".
-*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, Copilot, la recherche Bing, Cortana, l'ID publicitaire, **Widgets**, **Publicités Explorateur**, et **Astuces**. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
+*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, **Recall** (Capture d'écran IA), Copilot, la recherche Bing, Cortana, l'ID publicitaire, **Widgets**, **Publicités Explorateur**, et **Astuces**. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
 *   **🌑 Mode Sombre**: Active le mode sombre pour le système et les applications par défaut.
-*   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Jeux**, **YourPhone**, etc.) et les fonctionnalités Windows inutiles. **Préserve Notepad et Paint.**
+*   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Jeux**, **YourPhone**, **Meet Now**, etc.) et les fonctionnalités Windows inutiles. **Préserve Notepad et Paint.**
 *   **💥 Auto-destruction**: Les scripts d'installation se suppriment automatiquement après la première connexion pour garantir un état propre.
 *   **📜 Journaux**: Les journaux d'installation sont conservés dans `C:\Windows\Panther\Autounattend_Log.txt` pour le dépannage.
 *   **🚀 Optimisation Système**:
     *   **Haute Performance**: Active automatiquement le plan d'alimentation "Haute Performance".
-    *   **Utilisateur Avancé**: Active "Fin de tâche" dans le menu contextuel de la barre des tâches.
-    *   **Expérience Utilisateur**: Désactive "Terminer la configuration de votre appareil", les astuces de l'écran de verrouillage, et l'expérience de bienvenue.
+    *   **Utilisateur Avancé**: Active "Fin de tâche" dans le menu contextuel, affiche les **Secondes dans l'horloge**, et désactive la transparence.
+    *   **Expérience Utilisateur**: Désactive "Terminer la configuration de votre appareil", les astuces de l'écran de verrouillage, l'expérience de bienvenue, **Widgets (Actualités)** et l'icône **Chat/Teams**.
     *   **Gain d'Espace**: Désactive l'hibernation pour économiser de l'espace disque (`hiberfil.sys`).
     *   **E/S Disque**: Désactive la mise à jour de la date de dernier accès pour améliorer les performances disque.
     *   **Jeu**: Désactive Game DVR/Bar pour de meilleures performances en jeu.
@@ -200,7 +200,7 @@ RACINE_USB/
 
 *   **Chrome**: Télécharge et installe de préférence le **MSI Entreprise** pour un déploiement silencieux optimal. Supporte les installateurs locaux `.msi` et `.exe`.
 *   **Visual C++**: Télécharge automatiquement depuis Microsoft, bascule sur les dossiers `vcredist_x64`/`vcredist_x86` si hors-ligne.
-*   **Nvidia**: Nécessite un installateur local ou une configuration manuelle de l'URL (L'API d'auto-téléchargement est obsolète).
+*   **Nvidia**: Nécessite un installateur local ou une configuration manuelle de l'URL.
 
 ## 📝 Utilisation
 
