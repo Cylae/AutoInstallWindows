@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
 	<!-- Optimized by Jules - Senior Windows Deployment Architect -->
-	<settings pass="offlineServicing"></settings>
 	<settings pass="windowsPE">
 		<component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
 			<UILanguage>fr-FR</UILanguage>
@@ -17,7 +16,6 @@
 			<UseConfigurationSet>false</UseConfigurationSet>
 		</component>
 	</settings>
-	<settings pass="generalize"></settings>
 	<settings pass="specialize">
 		<component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
 			<RunSynchronous>
@@ -66,8 +64,6 @@
 
             </component>
                 </settings>
-	<settings pass="auditSystem"></settings>
-	<settings pass="auditUser"></settings>
 	<settings pass="oobeSystem">
 		<component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
 			<InputLocale>040c:0000040c</InputLocale>
@@ -161,7 +157,7 @@ function Write-Log {
         New-Item -Path $dir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
     }
 
-    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss&quot;
+    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss.fff&quot;
     $logEntry = &quot;[$timestamp] $Message&quot;
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
 }
@@ -240,7 +236,7 @@ function Download-File {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Network.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Network Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
@@ -252,9 +248,11 @@ if ($mediaRoot) {
         # Check if there are any INF files to avoid pnputil error
         if (Get-ChildItem -Path $driverPath -Filter &quot;*.inf&quot; -Recurse) {
             try {
-                $pnputilArgs = &quot;/add-driver `&quot;$driverPath\*.inf`&quot; /subdirs /install&quot;
+                $pnputilArgs = @('/add-driver', &quot;$driverPath\*.inf&quot;, '/subdirs', '/install')
                 # Redirect standard output and error to logs for debugging
                 Start-Process -FilePath &quot;pnputil.exe&quot; -ArgumentList $pnputilArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\pnputil_network.log&quot; -RedirectStandardError &quot;$env:TEMP\pnputil_network_err.log&quot;
+                if (Test-Path &quot;$env:TEMP\pnputil_network.log&quot;) { Write-Log (Get-Content &quot;$env:TEMP\pnputil_network.log&quot; -Raw) }
+                if (Test-Path &quot;$env:TEMP\pnputil_network_err.log&quot;) { Write-Log (Get-Content &quot;$env:TEMP\pnputil_network_err.log&quot; -Raw) }
                 Write-Log &quot;Network driver installation completed.&quot;
             }
             catch {
@@ -272,7 +270,7 @@ if ($mediaRoot) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Nvidia.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 # OPTIONAL: Set a direct download URL for the Nvidia Driver here.
 $DownloadUrl = &quot;&quot;
@@ -301,7 +299,9 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # -s: Silent, -n: No splash, -f: Force, -noreboot: No reboot
-        Start-Process -FilePath $setupPath -ArgumentList @('-s', '-n', '-f', '-noreboot') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\nvidia_install.log&quot;
+        Start-Process -FilePath $setupPath -ArgumentList @('-s', '-n', '-f', '-noreboot') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\nvidia_install.log&quot; -RedirectStandardError &quot;$env:TEMP\nvidia_install_err.log&quot;
+        if (Test-Path &quot;$env:TEMP\nvidia_install.log&quot;) { Write-Log (Get-Content &quot;$env:TEMP\nvidia_install.log&quot; -Raw) }
+        if (Test-Path &quot;$env:TEMP\nvidia_install_err.log&quot;) { Write-Log (Get-Content &quot;$env:TEMP\nvidia_install_err.log&quot; -Raw) }
         Write-Log &quot;Nvidia driver installation completed.&quot;
     }
     catch {
@@ -313,7 +313,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-AMD.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 # OPTIONAL: Set a direct download URL for the AMD Chipset Driver here.
 $DownloadUrl = &quot;&quot;
@@ -339,7 +339,9 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # /S: Silent
-        Start-Process -FilePath $setupPath -ArgumentList &quot;/S&quot;, &quot;-noreboot&quot; -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\amd_install.log&quot;
+        Start-Process -FilePath $setupPath -ArgumentList @(&quot;/S&quot;, &quot;-noreboot&quot;) -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\amd_install.log&quot; -RedirectStandardError &quot;$env:TEMP\amd_install_err.log&quot;
+        if (Test-Path &quot;$env:TEMP\amd_install.log&quot;) { Write-Log (Get-Content &quot;$env:TEMP\amd_install.log&quot; -Raw) }
+        if (Test-Path &quot;$env:TEMP\amd_install_err.log&quot;) { Write-Log (Get-Content &quot;$env:TEMP\amd_install_err.log&quot; -Raw) }
         Write-Log &quot;AMD Chipset driver installation completed.&quot;
     }
     catch {
@@ -351,7 +353,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Focusrite.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 # OPTIONAL: Set a direct download URL for the Focusrite Driver here.
 $DownloadUrl = &quot;&quot;
@@ -377,7 +379,9 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # /VERYSILENT: No UI, /SUPPRESSMSGBOXES: No popups
-        Start-Process -FilePath $setupPath -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\focusrite_install.log&quot;
+        Start-Process -FilePath $setupPath -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\focusrite_install.log&quot; -RedirectStandardError &quot;$env:TEMP\focusrite_install_err.log&quot;
+        if (Test-Path &quot;$env:TEMP\focusrite_install.log&quot;) { Write-Log (Get-Content &quot;$env:TEMP\focusrite_install.log&quot; -Raw) }
+        if (Test-Path &quot;$env:TEMP\focusrite_install_err.log&quot;) { Write-Log (Get-Content &quot;$env:TEMP\focusrite_install_err.log&quot; -Raw) }
         Write-Log &quot;Focusrite driver installation completed.&quot;
     }
     catch {
@@ -389,7 +393,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Runtimes.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Visual C++ Runtimes Installation...&quot;
 
@@ -435,7 +439,9 @@ function Install-Runtime {
         Write-Log &quot;Installing $LogName from $setupPath...&quot;
         try {
             Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
-            Start-Process -FilePath $setupPath -ArgumentList @(&quot;/install&quot;, &quot;/quiet&quot;, &quot;/norestart&quot;) -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\${DestName}_install.log&quot;
+            Start-Process -FilePath $setupPath -ArgumentList @(&quot;/install&quot;, &quot;/quiet&quot;, &quot;/norestart&quot;) -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\${DestName}_install.log&quot; -RedirectStandardError &quot;$env:TEMP\${DestName}_install_err.log&quot;
+            if (Test-Path &quot;$env:TEMP\${DestName}_install.log&quot;) { Write-Log (Get-Content &quot;$env:TEMP\${DestName}_install.log&quot; -Raw) }
+            if (Test-Path &quot;$env:TEMP\${DestName}_install_err.log&quot;) { Write-Log (Get-Content &quot;$env:TEMP\${DestName}_install_err.log&quot; -Raw) }
             Write-Log &quot;$LogName installation completed.&quot;
         } catch {
             Write-Log &quot;Error installing $LogName: $_&quot;
@@ -454,7 +460,7 @@ Install-Runtime -Url $url86 -DestName &quot;vc_redist.x86.exe&quot; -LogName &qu
 </File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Chrome.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Chrome Installation...&quot;
 
@@ -504,11 +510,14 @@ if ($setupPath) {
             # MSI Installation
             # Note: msiexec requires strict quoting for paths with spaces
             $msiArgs = @(&quot;/i&quot;, &quot;$setupPath&quot;, &quot;/qn&quot;, &quot;/norestart&quot;)
-            Start-Process -FilePath &quot;msiexec.exe&quot; -ArgumentList $msiArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
+            Start-Process -FilePath &quot;msiexec.exe&quot; -ArgumentList $msiArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot; -RedirectStandardError &quot;$env:TEMP\chrome_install_err.log&quot;
         } else {
             # EXE Installation
-            Start-Process -FilePath $setupPath -ArgumentList @('/silent', '/install') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
+            Start-Process -FilePath $setupPath -ArgumentList @('/silent', '/install') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot; -RedirectStandardError &quot;$env:TEMP\chrome_install_err.log&quot;
         }
+
+        if (Test-Path &quot;$env:TEMP\chrome_install.log&quot;) { Write-Log (Get-Content &quot;$env:TEMP\chrome_install.log&quot; -Raw) }
+        if (Test-Path &quot;$env:TEMP\chrome_install_err.log&quot;) { Write-Log (Get-Content &quot;$env:TEMP\chrome_install_err.log&quot; -Raw) }
 
         # Cleanup temp file
         if ($setupPath -match &quot;$env:TEMP\\chrome\.(msi|exe)&quot;) {
@@ -524,7 +533,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Remove-Bloatware.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 $packagesToRemove = @(
     'Microsoft.Microsoft3DViewer',
@@ -595,7 +604,7 @@ Write-Log &quot;Starting Debloating Process...&quot;
 # Remove Appx Provisioned Packages
 $provisioned = Get-AppxProvisionedPackage -Online
 foreach ($package in $packagesToRemove) {
-    $found = $provisioned | Where-Object { $_.DisplayName -eq $package }
+    $found = $provisioned | Where-Object { $_.DisplayName -eq $package -or $_.PackageName -like &quot;*$package*&quot; }
     if ($found) {
         foreach ($item in $found) {
             Write-Log &quot;Removing $($item.DisplayName) ($($item.PackageName))...&quot;
@@ -638,7 +647,7 @@ Write-Log &quot;Debloating Process Completed.&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Configure-Privacy.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Applying Privacy and Registry Tweaks...&quot;
 
@@ -669,8 +678,8 @@ reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot;
 
 # Disable Edge First Run and Bloat
 reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v HideFirstRunExperience /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
 
 # Disable BitLocker Automatic Device Encryption
 reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\BitLocker&quot; /v &quot;PreventDeviceEncryption&quot; /t REG_DWORD /d 1 /f
@@ -706,7 +715,7 @@ Set-ItemProperty -LiteralPath $key -Name 'ConfigureStartPins' -Value $json -Type
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Optimize-System.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Applying System Optimizations...&quot;
 
@@ -951,6 +960,14 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
     }
 } else {
     Write-Log &quot;Winget not found. Skipping auto-update task registration.&quot;
+}
+
+# Per-User Copilot Cleanup
+try {
+    Write-Log &quot;Removing Copilot Appx packages for current user...&quot;
+    Get-AppxPackage -Name &quot;*Copilot*&quot; -ErrorAction SilentlyContinue | Remove-AppxPackage -ErrorAction SilentlyContinue
+} catch {
+    Write-Log &quot;Failed to remove per-user Copilot packages: $_&quot;
 }
 
 Write-Log &quot;User Configuration Completed.&quot;

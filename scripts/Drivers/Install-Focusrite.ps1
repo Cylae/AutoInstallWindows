@@ -1,6 +1,6 @@
 
 $ErrorActionPreference = 'Stop'
-. "$PSScriptRoot\Lib\Helper.ps1"
+. "$PSScriptRoot\..\Lib\Helper.ps1"
 
 # OPTIONAL: Set a direct download URL for the Focusrite Driver here.
 $DownloadUrl = ""
@@ -26,7 +26,9 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # /VERYSILENT: No UI, /SUPPRESSMSGBOXES: No popups
-        Start-Process -FilePath $setupPath -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-') -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\focusrite_install.log"
+        Start-Process -FilePath $setupPath -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-') -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\focusrite_install.log" -RedirectStandardError "$env:TEMP\focusrite_install_err.log"
+        if (Test-Path "$env:TEMP\focusrite_install.log") { Write-Log (Get-Content "$env:TEMP\focusrite_install.log" -Raw) }
+        if (Test-Path "$env:TEMP\focusrite_install_err.log") { Write-Log (Get-Content "$env:TEMP\focusrite_install_err.log" -Raw) }
         Write-Log "Focusrite driver installation completed."
     }
     catch {

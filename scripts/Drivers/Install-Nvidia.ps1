@@ -1,6 +1,6 @@
 
 $ErrorActionPreference = 'Stop'
-. "$PSScriptRoot\Lib\Helper.ps1"
+. "$PSScriptRoot\..\Lib\Helper.ps1"
 
 # OPTIONAL: Set a direct download URL for the Nvidia Driver here.
 $DownloadUrl = ""
@@ -29,7 +29,9 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # -s: Silent, -n: No splash, -f: Force, -noreboot: No reboot
-        Start-Process -FilePath $setupPath -ArgumentList @('-s', '-n', '-f', '-noreboot') -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\nvidia_install.log"
+        Start-Process -FilePath $setupPath -ArgumentList @('-s', '-n', '-f', '-noreboot') -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\nvidia_install.log" -RedirectStandardError "$env:TEMP\nvidia_install_err.log"
+        if (Test-Path "$env:TEMP\nvidia_install.log") { Write-Log (Get-Content "$env:TEMP\nvidia_install.log" -Raw) }
+        if (Test-Path "$env:TEMP\nvidia_install_err.log") { Write-Log (Get-Content "$env:TEMP\nvidia_install_err.log" -Raw) }
         Write-Log "Nvidia driver installation completed."
     }
     catch {

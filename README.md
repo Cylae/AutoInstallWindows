@@ -36,7 +36,8 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Secure Downloads**: Supports **TLS 1.2 and 1.3** for secure file downloads.
     *   **Smart Media Detection**: Filters for Fixed and Removable drives to prevent hangs on network/floppy drives.
     *   **Fail-Safe Execution**: Scripts include existence checks (e.g., RunOnce) to prevent errors on subsequent logins.
-    *   **Advanced Error Handling**: Improved logging and registry handling for fail-safe execution.
+*   **Advanced Error Handling**: Improved logging (millisecond precision, unified stdout/stderr capture) and registry handling for fail-safe execution.
+*   **Automated Build System**: Python build script (`build.py`) features robust cross-platform path handling, auto-cleanup of empty XML nodes, and automatic full synchronization of the script repository with `autounattend.xml`.
 
 ## 📂 Folder Structure
 
@@ -176,7 +177,8 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **🛡️ Robustesse Améliorée**:
     *   **Téléchargements Sécurisés**: Supporte **TLS 1.2 et 1.3** pour des téléchargements sécurisés.
     *   **Détection Intelligente**: Filtre les lecteurs Fixes et Amovibles pour éviter les blocages.
-    *   **Gestion d'Erreurs Avancée**: Journaux améliorés et gestion robuste du registre pour une exécution sans faille.
+    *   **Gestion d'Erreurs Avancée**: Journaux améliorés (précision à la milliseconde, capture unifiée stdout/stderr) et gestion robuste du registre pour une exécution sans faille.
+    *   **Système de Build Automatisé**: Le script Python (`build.py`) assure une gestion robuste des chemins cross-platform, le nettoyage automatique des nœuds XML vides, et une synchronisation complète et automatique du répertoire des scripts avec `autounattend.xml`.
 
 ## 📂 Structure des Dossiers
 

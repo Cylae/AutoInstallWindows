@@ -1,6 +1,6 @@
 
 $ErrorActionPreference = 'Stop'
-. "$PSScriptRoot\Lib\Helper.ps1"
+. "$PSScriptRoot\..\Lib\Helper.ps1"
 
 Write-Log "Starting Visual C++ Runtimes Installation..."
 
@@ -46,7 +46,9 @@ function Install-Runtime {
         Write-Log "Installing $LogName from $setupPath..."
         try {
             Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
-            Start-Process -FilePath $setupPath -ArgumentList @("/install", "/quiet", "/norestart") -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\${DestName}_install.log"
+            Start-Process -FilePath $setupPath -ArgumentList @("/install", "/quiet", "/norestart") -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\${DestName}_install.log" -RedirectStandardError "$env:TEMP\${DestName}_install_err.log"
+            if (Test-Path "$env:TEMP\${DestName}_install.log") { Write-Log (Get-Content "$env:TEMP\${DestName}_install.log" -Raw) }
+            if (Test-Path "$env:TEMP\${DestName}_install_err.log") { Write-Log (Get-Content "$env:TEMP\${DestName}_install_err.log" -Raw) }
             Write-Log "$LogName installation completed."
         } catch {
             Write-Log "Error installing $LogName: $_"

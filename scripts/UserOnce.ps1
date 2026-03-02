@@ -37,6 +37,14 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
     Write-Log "Winget not found. Skipping auto-update task registration."
 }
 
+# Per-User Copilot Cleanup
+try {
+    Write-Log "Removing Copilot Appx packages for current user..."
+    Get-AppxPackage -Name "*Copilot*" -ErrorAction SilentlyContinue | Remove-AppxPackage -ErrorAction SilentlyContinue
+} catch {
+    Write-Log "Failed to remove per-user Copilot packages: $_"
+}
+
 Write-Log "User Configuration Completed."
 
 # Self-Destruct: Cleanup Scripts
