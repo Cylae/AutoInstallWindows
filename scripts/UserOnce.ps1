@@ -3,6 +3,15 @@ $ErrorActionPreference = 'Stop'
 
 Write-Log "Configuring User Account..."
 
+# Cleanup Copilot (Per-User)
+try {
+    Write-Log "Attempting per-user Copilot cleanup..."
+    Get-AppxPackage -Name "*Copilot*" -ErrorAction Stop | Remove-AppxPackage -ErrorAction Stop
+    Write-Log "Copilot app removed for current user."
+} catch {
+    Write-Log "Copilot not found or error removing for current user: $_"
+}
+
 # Register Daily Winget Auto-Update Task (Transparent)
 if (Get-Command winget -ErrorAction SilentlyContinue) {
     $taskName = "DailySoftwareUpdate"
@@ -40,5 +49,5 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
 Write-Log "User Configuration Completed."
 
 # Self-Destruct: Cleanup Scripts
-# Wait 5 seconds then delete the script folder
-Start-Process -FilePath "cmd.exe" -ArgumentList "/c timeout /t 5 /nobreak > NUL & rmdir /s /q `"$env:SystemRoot\Setup\Scripts`"" -WindowStyle Hidden
+# Wait 10 seconds then delete the script folder
+Start-Process -FilePath "cmd.exe" -ArgumentList "/c timeout /t 10 /nobreak > NUL & rmdir /s /q `"$env:SystemRoot\Setup\Scripts`"" -WindowStyle Hidden
