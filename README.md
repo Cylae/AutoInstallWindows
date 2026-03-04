@@ -8,7 +8,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 
 *   **⚡ Zero-Interruption Setup**: All software (Chrome, Drivers, etc.) is installed during the `Specialize` pass, *before* the user logs in. No popups, no waiting at the desktop.
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
-*   **🛡️ Privacy Hardened**: Disables Telemetry, **Recall** (AI Screenshot), Copilot, Bing Search, Cortana, Advertising ID, **Search Highlights**, **Widgets**, **File Explorer Ads**, and **Tips/Suggestions**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
+*   **🛡️ Privacy Hardened**: Disables Telemetry, **Recall** (AI Screenshot), Copilot, Bing Search, Cortana, Advertising ID, **Search Highlights**, **Widgets**, **File Explorer Ads**, and **Tips/Suggestions**. Disables Windows Error Reporting, Shared Experiences, Consumer Features, and Activity History. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
 *   **🌑 Dark Mode**: Enables Dark Mode for System and Apps by default.
 *   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, **Meet Now** icon, etc.) and unnecessary Windows capabilities. **Preserves Notepad and Paint.**
 *   **💥 Self-Destruct**: Installation scripts automatically delete themselves after the first login to ensure a clean slate.
@@ -16,7 +16,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 *   **🚀 System Optimization**:
     *   **High Performance**: Automatically sets the "High Performance" power plan.
     *   **Power User**: Enables "End Task" in Taskbar context menu, shows **Seconds in System Clock**, and Disables Transparency effects.
-    *   **User Experience**: Disables "Finish setting up your device", "Lock Screen Tips", "Welcome Experience", "Sync Provider Notifications", **Widgets (News and Interests)**, and **Chat/Teams** icon.
+    *   **User Experience**: Disables "Finish setting up your device", "Lock Screen Tips", "Welcome Experience", "Sync Provider Notifications", **Widgets (News and Interests)**, and **Chat/Teams** icon. Disables Sticky Keys, Toggle Keys, and Filter Keys shortcuts.
     *   **Space Saving**: Disables Hibernation to save disk space (`hiberfil.sys`).
     *   **Disk I/O**: Disables Last Access Timestamp updates to improve disk performance.
     *   **Gaming**: Disables Game DVR/Bar for better gaming performance.
@@ -36,7 +36,8 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Secure Downloads**: Supports **TLS 1.2 and 1.3** for secure file downloads.
     *   **Smart Media Detection**: Filters for Fixed and Removable drives to prevent hangs on network/floppy drives.
     *   **Fail-Safe Execution**: Scripts include existence checks (e.g., RunOnce) to prevent errors on subsequent logins.
-    *   **Advanced Error Handling**: Improved logging and registry handling for fail-safe execution.
+    *   **Advanced Error Handling**: Improved logging (including error streams), millisecond precision timestamps, and registry handling for fail-safe execution.
+    *   **Build System Integration**: `build.py` uses full synchronization of the `scripts/` directory, updating the XML dynamically and automatically cleaning up empty Settings passes.
 
 ## 📂 Folder Structure
 
@@ -149,7 +150,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 
 *   **⚡ Installation Zéro-Interruption**: Tous les logiciels (Chrome, Pilotes, etc.) sont installés durant la phase `Specialize`, **avant** la connexion de l'utilisateur. Aucun popup, aucune attente sur le bureau.
 *   **🤫 Totalement Silencieux**: Tous les scripts sont optimisés pour masquer les sorties et fenêtres. Vous ne verrez rien avant l'écran "Bienvenue".
-*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, **Recall** (Capture d'écran IA), Copilot, la recherche Bing, Cortana, l'ID publicitaire, **Widgets**, **Publicités Explorateur**, et **Astuces**. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
+*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, **Recall** (Capture d'écran IA), Copilot, la recherche Bing, Cortana, l'ID publicitaire, **Widgets**, **Publicités Explorateur**, et **Astuces**. Désactive le rapport d'erreurs Windows, les expériences partagées, les fonctionnalités grand public et l'historique d'activité. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
 *   **🌑 Mode Sombre**: Active le mode sombre pour le système et les applications par défaut.
 *   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Jeux**, **YourPhone**, **Meet Now**, etc.) et les fonctionnalités Windows inutiles. **Préserve Notepad et Paint.**
 *   **💥 Auto-destruction**: Les scripts d'installation se suppriment automatiquement après la première connexion pour garantir un état propre.
@@ -157,7 +158,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **🚀 Optimisation Système**:
     *   **Haute Performance**: Active automatiquement le plan d'alimentation "Haute Performance".
     *   **Utilisateur Avancé**: Active "Fin de tâche" dans le menu contextuel, affiche les **Secondes dans l'horloge**, et désactive la transparence.
-    *   **Expérience Utilisateur**: Désactive "Terminer la configuration de votre appareil", les astuces de l'écran de verrouillage, l'expérience de bienvenue, **Widgets (Actualités)** et l'icône **Chat/Teams**.
+    *   **Expérience Utilisateur**: Désactive "Terminer la configuration de votre appareil", les astuces de l'écran de verrouillage, l'expérience de bienvenue, **Widgets (Actualités)** et l'icône **Chat/Teams**. Désactive les raccourcis Touches rémanentes, Touches filtres et Touches bascules.
     *   **Gain d'Espace**: Désactive l'hibernation pour économiser de l'espace disque (`hiberfil.sys`).
     *   **E/S Disque**: Désactive la mise à jour de la date de dernier accès pour améliorer les performances disque.
     *   **Jeu**: Désactive Game DVR/Bar pour de meilleures performances en jeu.
@@ -176,7 +177,8 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **🛡️ Robustesse Améliorée**:
     *   **Téléchargements Sécurisés**: Supporte **TLS 1.2 et 1.3** pour des téléchargements sécurisés.
     *   **Détection Intelligente**: Filtre les lecteurs Fixes et Amovibles pour éviter les blocages.
-    *   **Gestion d'Erreurs Avancée**: Journaux améliorés et gestion robuste du registre pour une exécution sans faille.
+    *   **Gestion d'Erreurs Avancée**: Journaux améliorés (incluant les flux d'erreurs), horodatages avec une précision à la milliseconde, et gestion robuste du registre pour une exécution sans faille.
+    *   **Intégration du Système de Build**: `build.py` effectue une synchronisation complète du répertoire `scripts/`, mettant à jour le XML dynamiquement et nettoyant automatiquement les passes de configuration vides.
 
 ## 📂 Structure des Dossiers
 

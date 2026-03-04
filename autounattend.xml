@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
 	<!-- Optimized by Jules - Senior Windows Deployment Architect -->
-	<settings pass="offlineServicing"></settings>
 	<settings pass="windowsPE">
 		<component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
 			<UILanguage>fr-FR</UILanguage>
@@ -17,7 +16,6 @@
 			<UseConfigurationSet>false</UseConfigurationSet>
 		</component>
 	</settings>
-	<settings pass="generalize"></settings>
 	<settings pass="specialize">
 		<component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
 			<RunSynchronous>
@@ -66,8 +64,6 @@
 
             </component>
                 </settings>
-	<settings pass="auditSystem"></settings>
-	<settings pass="auditUser"></settings>
 	<settings pass="oobeSystem">
 		<component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
 			<InputLocale>040c:0000040c</InputLocale>
@@ -161,7 +157,7 @@ function Write-Log {
         New-Item -Path $dir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
     }
 
-    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss&quot;
+    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss.fff&quot;
     $logEntry = &quot;[$timestamp] $Message&quot;
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
 }
@@ -207,7 +203,7 @@ function Download-File {
         return $false
     }
 
-    $downloadRetries = 3
+    $downloadRetries = 5
     $dRetry = 0
     $downloaded = $false
 
@@ -231,13 +227,13 @@ function Download-File {
         } catch {
             $dRetry++
             Write-Log &quot;Failed to download $Name (Attempt $dRetry/$downloadRetries): $_&quot;
-            Start-Sleep -Seconds 2
+            Start-Sleep -Seconds 5
         }
     }
 
     return $downloaded
 }
-</File>
+		</File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Network.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -269,7 +265,7 @@ if ($mediaRoot) {
 } else {
     Write-Log &quot;Install media not found.&quot;
 }
-</File>
+		</File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Nvidia.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -301,7 +297,7 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # -s: Silent, -n: No splash, -f: Force, -noreboot: No reboot
-        Start-Process -FilePath $setupPath -ArgumentList @('-s', '-n', '-f', '-noreboot') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\nvidia_install.log&quot;
+        Start-Process -FilePath $setupPath -ArgumentList @('-s', '-n', '-f', '-noreboot') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\nvidia_install.log&quot; -RedirectStandardError &quot;$env:TEMP\nvidia_install_err.log&quot;
         Write-Log &quot;Nvidia driver installation completed.&quot;
     }
     catch {
@@ -310,7 +306,7 @@ if ($setupPath) {
 } else {
     Write-Log &quot;Nvidia installer not found locally.&quot;
 }
-</File>
+		</File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-AMD.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -339,7 +335,7 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # /S: Silent
-        Start-Process -FilePath $setupPath -ArgumentList &quot;/S&quot;, &quot;-noreboot&quot; -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\amd_install.log&quot;
+        Start-Process -FilePath $setupPath -ArgumentList &quot;/S&quot;, &quot;-noreboot&quot; -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\amd_install.log&quot; -RedirectStandardError &quot;$env:TEMP\amd_install_err.log&quot;
         Write-Log &quot;AMD Chipset driver installation completed.&quot;
     }
     catch {
@@ -348,7 +344,7 @@ if ($setupPath) {
 } else {
     Write-Log &quot;AMD installer not found locally and no download URL provided.&quot;
 }
-</File>
+		</File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Focusrite.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -377,7 +373,7 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # /VERYSILENT: No UI, /SUPPRESSMSGBOXES: No popups
-        Start-Process -FilePath $setupPath -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\focusrite_install.log&quot;
+        Start-Process -FilePath $setupPath -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\focusrite_install.log&quot; -RedirectStandardError &quot;$env:TEMP\focusrite_install_err.log&quot;
         Write-Log &quot;Focusrite driver installation completed.&quot;
     }
     catch {
@@ -386,7 +382,7 @@ if ($setupPath) {
 } else {
     Write-Log &quot;Focusrite installer not found locally and no download URL provided.&quot;
 }
-</File>
+		</File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Runtimes.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -435,7 +431,7 @@ function Install-Runtime {
         Write-Log &quot;Installing $LogName from $setupPath...&quot;
         try {
             Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
-            Start-Process -FilePath $setupPath -ArgumentList @(&quot;/install&quot;, &quot;/quiet&quot;, &quot;/norestart&quot;) -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\${DestName}_install.log&quot;
+            Start-Process -FilePath $setupPath -ArgumentList @(&quot;/install&quot;, &quot;/quiet&quot;, &quot;/norestart&quot;) -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\${DestName}_install.log&quot; -RedirectStandardError &quot;$env:TEMP\${DestName}_install_err.log&quot;
             Write-Log &quot;$LogName installation completed.&quot;
         } catch {
             Write-Log &quot;Error installing $LogName: $_&quot;
@@ -451,7 +447,7 @@ $url86 = &quot;https://aka.ms/vc14/vc_redist.x86.exe&quot;
 
 Install-Runtime -Url $url64 -DestName &quot;vc_redist.x64.exe&quot; -LogName &quot;Visual C++ Runtimes (x64)&quot; -LocalFolder &quot;vcredist_x64&quot;
 Install-Runtime -Url $url86 -DestName &quot;vc_redist.x86.exe&quot; -LogName &quot;Visual C++ Runtimes (x86)&quot; -LocalFolder &quot;vcredist_x86&quot;
-</File>
+		</File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Chrome.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -504,10 +500,10 @@ if ($setupPath) {
             # MSI Installation
             # Note: msiexec requires strict quoting for paths with spaces
             $msiArgs = @(&quot;/i&quot;, &quot;$setupPath&quot;, &quot;/qn&quot;, &quot;/norestart&quot;)
-            Start-Process -FilePath &quot;msiexec.exe&quot; -ArgumentList $msiArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
+            Start-Process -FilePath &quot;msiexec.exe&quot; -ArgumentList $msiArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot; -RedirectStandardError &quot;$env:TEMP\chrome_install_err.log&quot;
         } else {
             # EXE Installation
-            Start-Process -FilePath $setupPath -ArgumentList @('/silent', '/install') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
+            Start-Process -FilePath $setupPath -ArgumentList @('/silent', '/install') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot; -RedirectStandardError &quot;$env:TEMP\chrome_install_err.log&quot;
         }
 
         # Cleanup temp file
@@ -521,7 +517,7 @@ if ($setupPath) {
 } else {
     Write-Log &quot;Chrome installer not found locally and download failed.&quot;
 }
-</File>
+		</File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Remove-Bloatware.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -595,7 +591,7 @@ Write-Log &quot;Starting Debloating Process...&quot;
 # Remove Appx Provisioned Packages
 $provisioned = Get-AppxProvisionedPackage -Online
 foreach ($package in $packagesToRemove) {
-    $found = $provisioned | Where-Object { $_.DisplayName -eq $package }
+    $found = $provisioned | Where-Object { $_.DisplayName -eq $package -or $_.PackageName -like &quot;*$package*&quot; }
     if ($found) {
         foreach ($item in $found) {
             Write-Log &quot;Removing $($item.DisplayName) ($($item.PackageName))...&quot;
@@ -635,7 +631,7 @@ foreach ($feature in $featuresToRemove) {
 }
 
 Write-Log &quot;Debloating Process Completed.&quot;
-</File>
+		</File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Configure-Privacy.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -669,8 +665,15 @@ reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot;
 
 # Disable Edge First Run and Bloat
 reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v HideFirstRunExperience /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+
+# Disable Windows Error Reporting, Shared Experiences, Consumer Features, Activity History
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsErrorReporting&quot; /v Disabled /t REG_DWORD /d 1 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v EnableCdp /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent&quot; /v DisableWindowsConsumerFeatures /t REG_DWORD /d 1 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v PublishUserActivities /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v UploadUserActivities /t REG_DWORD /d 0 /f
 
 # Disable BitLocker Automatic Device Encryption
 reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\BitLocker&quot; /v &quot;PreventDeviceEncryption&quot; /t REG_DWORD /d 1 /f
@@ -694,7 +697,7 @@ foreach ($service in $services) {
 }
 
 Write-Log &quot;Privacy Tweaks Applied.&quot;
-</File>
+		</File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\SetStartPins.ps1">
 $json = '{&quot;pinnedList&quot;:[]}';
 if( [System.Environment]::OSVersion.Version.Build -lt 20000 ) {
@@ -703,7 +706,7 @@ if( [System.Environment]::OSVersion.Version.Build -lt 20000 ) {
 $key = 'Registry::HKLM\SOFTWARE\Microsoft\PolicyManager\current\device\Start';
 New-Item -Path $key -ItemType 'Directory' -ErrorAction 'SilentlyContinue';
 Set-ItemProperty -LiteralPath $key -Name 'ConfigureStartPins' -Value $json -Type 'String';
-</File>
+		</File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Optimize-System.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -738,7 +741,7 @@ try {
 }
 
 Write-Log &quot;System Optimizations Applied.&quot;
-</File>
+		</File>
 		<File path="C:\Windows\Setup\Scripts\Specialize.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -792,7 +795,7 @@ try {
 }
 
 Write-Log &quot;Specialize Pass Completed.&quot;
-</File>
+		</File>
 		<File path="C:\Windows\Setup\Scripts\DefaultUser.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -867,6 +870,11 @@ try {
     # Disable &quot;Finish setting up your device&quot;
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement&quot; /v ScoobeSystemSettingEnabled /t REG_DWORD /d 0 /f
 
+    # Disable Sticky Keys Shortcuts
+    reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\StickyKeys&quot; /v Flags /t REG_SZ /d &quot;506&quot; /f
+    reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\ToggleKeys&quot; /v Flags /t REG_SZ /d &quot;58&quot; /f
+    reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\Keyboard Response&quot; /v Flags /t REG_SZ /d &quot;122&quot; /f
+
     # Run UserOnce on first login (if script exists)
     # We wrap in cmd /c &quot;if exist ...&quot; to prevent errors for subsequent users after self-destruct
     $uScript = &quot;C:\Windows\Setup\Scripts\UserOnce.ps1&quot;
@@ -912,7 +920,7 @@ finally {
 }
 
 Write-Log &quot;Default User Configuration Completed.&quot;
-</File>
+		</File>
 		<File path="C:\Windows\Setup\Scripts\UserOnce.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
@@ -921,7 +929,7 @@ Write-Log &quot;Configuring User Account...&quot;
 
 # Register Daily Winget Auto-Update Task (Transparent)
 if (Get-Command winget -ErrorAction SilentlyContinue) {
-    $taskName = &quot;DailySoftwareUpdate&quot;
+    $taskName = &quot;DailySoftwareUpdate-$env:USERNAME&quot;
     $wingetCmd = &quot;winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements&quot;
     $action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `\&quot;$wingetCmd`\&quot;&quot;
     $trigger = New-ScheduledTaskTrigger -Daily -At 13:00
@@ -956,9 +964,9 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
 Write-Log &quot;User Configuration Completed.&quot;
 
 # Self-Destruct: Cleanup Scripts
-# Wait 5 seconds then delete the script folder
-Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 5 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden
-</File>
+# Wait 10 seconds then delete the script folder
+Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 10 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden
+		</File>
 
 	</Extensions>
 </unattend>
