@@ -29,7 +29,7 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # -s: Silent, -n: No splash, -f: Force, -noreboot: No reboot
-        Start-Process -FilePath $setupPath -ArgumentList @('-s', '-n', '-f', '-noreboot') -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\nvidia_install.log"
+        Start-Process -FilePath $setupPath -ArgumentList @('-s', '-n', '-f', '-noreboot') -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\nvidia_install.log" -RedirectStandardError "$env:TEMP\nvidia_install_err.log"
         Write-Log "Nvidia driver installation completed."
     }
     catch {

@@ -39,6 +39,15 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
 
 Write-Log "User Configuration Completed."
 
+# Remove Copilot (Per-User)
+try {
+    Write-Log "Attempting to remove Copilot AppxPackage for current user..."
+    Get-AppxPackage -Name "*Microsoft.Windows.Ai.Copilot.Provider*" | Remove-AppxPackage -ErrorAction Stop
+    Write-Log "Copilot AppxPackage removed successfully."
+} catch {
+    Write-Log "Failed to remove Copilot AppxPackage (might already be removed): $_"
+}
+
 # Self-Destruct: Cleanup Scripts
-# Wait 5 seconds then delete the script folder
-Start-Process -FilePath "cmd.exe" -ArgumentList "/c timeout /t 5 /nobreak > NUL & rmdir /s /q `"$env:SystemRoot\Setup\Scripts`"" -WindowStyle Hidden
+# Wait 10 seconds then delete the script folder
+Start-Process -FilePath "cmd.exe" -ArgumentList "/c timeout /t 10 /nobreak > NUL & rmdir /s /q `"$env:SystemRoot\Setup\Scripts`"" -WindowStyle Hidden
