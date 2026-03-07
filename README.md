@@ -8,14 +8,14 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 
 *   **⚡ Zero-Interruption Setup**: All software (Chrome, Drivers, etc.) is installed during the `Specialize` pass, *before* the user logs in. No popups, no waiting at the desktop.
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
-*   **🛡️ Privacy Hardened**: Disables Telemetry, **Recall** (AI Screenshot), Copilot, Bing Search, Cortana, Advertising ID, **Search Highlights**, **Widgets**, **File Explorer Ads**, and **Tips/Suggestions**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
+*   **🛡️ Privacy Hardened**: Disables Telemetry, **Recall** (AI Screenshot), Copilot, Bing Search, Cortana, Advertising ID, **Search Highlights**, **Widgets**, **File Explorer Ads**, **Tips/Suggestions**, **Error Reporting**, **Shared Experiences/Activity History**, **Typing Insights**, and **Tailored Experiences**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
 *   **🌑 Dark Mode**: Enables Dark Mode for System and Apps by default.
 *   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, **Meet Now** icon, etc.) and unnecessary Windows capabilities. **Preserves Notepad and Paint.**
 *   **💥 Self-Destruct**: Installation scripts automatically delete themselves after the first login to ensure a clean slate.
 *   **📜 Log Persistence**: Setup logs are preserved in `C:\Windows\Panther\Autounattend_Log.txt` for troubleshooting.
 *   **🚀 System Optimization**:
     *   **High Performance**: Automatically sets the "High Performance" power plan.
-    *   **Power User**: Enables "End Task" in Taskbar context menu, shows **Seconds in System Clock**, and Disables Transparency effects.
+    *   **Power User**: Enables "End Task" in Taskbar context menu, shows **Seconds in System Clock**, Disables Transparency effects, and **Disables Accessibility Shortcuts** (Sticky Keys, Toggle Keys, Filter Keys) to prevent gaming interruptions.
     *   **User Experience**: Disables "Finish setting up your device", "Lock Screen Tips", "Welcome Experience", "Sync Provider Notifications", **Widgets (News and Interests)**, and **Chat/Teams** icon.
     *   **Space Saving**: Disables Hibernation to save disk space (`hiberfil.sys`).
     *   **Disk I/O**: Disables Last Access Timestamp updates to improve disk performance.
@@ -149,14 +149,14 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 
 *   **⚡ Installation Zéro-Interruption**: Tous les logiciels (Chrome, Pilotes, etc.) sont installés durant la phase `Specialize`, **avant** la connexion de l'utilisateur. Aucun popup, aucune attente sur le bureau.
 *   **🤫 Totalement Silencieux**: Tous les scripts sont optimisés pour masquer les sorties et fenêtres. Vous ne verrez rien avant l'écran "Bienvenue".
-*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, **Recall** (Capture d'écran IA), Copilot, la recherche Bing, Cortana, l'ID publicitaire, **Widgets**, **Publicités Explorateur**, et **Astuces**. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
+*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, **Recall** (Capture d'écran IA), Copilot, la recherche Bing, Cortana, l'ID publicitaire, **Widgets**, **Publicités Explorateur**, **Astuces**, **Rapports d'Erreurs**, **Historique d'Activités**, **Saisie intuitive**, et **Expériences Personnalisées**. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
 *   **🌑 Mode Sombre**: Active le mode sombre pour le système et les applications par défaut.
 *   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Jeux**, **YourPhone**, **Meet Now**, etc.) et les fonctionnalités Windows inutiles. **Préserve Notepad et Paint.**
 *   **💥 Auto-destruction**: Les scripts d'installation se suppriment automatiquement après la première connexion pour garantir un état propre.
 *   **📜 Journaux**: Les journaux d'installation sont conservés dans `C:\Windows\Panther\Autounattend_Log.txt` pour le dépannage.
 *   **🚀 Optimisation Système**:
     *   **Haute Performance**: Active automatiquement le plan d'alimentation "Haute Performance".
-    *   **Utilisateur Avancé**: Active "Fin de tâche" dans le menu contextuel, affiche les **Secondes dans l'horloge**, et désactive la transparence.
+    *   **Utilisateur Avancé**: Active "Fin de tâche" dans le menu contextuel, affiche les **Secondes dans l'horloge**, désactive la transparence, et **désactive les Raccourcis d'Accessibilité** (Touches rémanentes, Touches bascules, Touches filtres).
     *   **Expérience Utilisateur**: Désactive "Terminer la configuration de votre appareil", les astuces de l'écran de verrouillage, l'expérience de bienvenue, **Widgets (Actualités)** et l'icône **Chat/Teams**.
     *   **Gain d'Espace**: Désactive l'hibernation pour économiser de l'espace disque (`hiberfil.sys`).
     *   **E/S Disque**: Désactive la mise à jour de la date de dernier accès pour améliorer les performances disque.

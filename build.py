@@ -1,83 +1,64 @@
 import re
-import os
-import html
 import argparse
+import html
+import logging
+from pathlib import Path
 
-# Helper function to XML encode content
-def xml_encode(s):
-    s = s.replace("&", "&amp;")
-    s = s.replace("<", "&lt;")
-    s = s.replace(">", "&gt;")
-    s = s.replace('"', "&quot;")
-    return s
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 def update_autounattend(ssid=None, password=None):
-    xml_path = 'autounattend.xml'
-    scripts_dir = 'scripts'
+    xml_path = Path('autounattend.xml')
+    scripts_dir = Path('scripts')
 
-    if not os.path.exists(xml_path):
-        print(f"Error: {xml_path} not found.")
+    if not xml_path.exists():
+        logging.error(f"Error: {xml_path} not found.")
         return
 
-    with open(xml_path, 'r', encoding='utf-8') as f:
-        content = f.read()
+    content = xml_path.read_text(encoding='utf-8')
 
     # --- Script Updates ---
-    # Iterate over all files in scripts directory
-    for root, dirs, files in os.walk(scripts_dir):
-        for file in files:
-            if not file.endswith('.ps1'):
-                continue
+    # Iterate over all .ps1 files in scripts directory
+    for script_file in scripts_dir.rglob('*.ps1'):
+        # Construct the relative path from scripts_dir
+        rel_path = script_file.relative_to(scripts_dir)
+        win_rel_path = str(rel_path).replace('/', '\\')
 
-            # Construct the relative path from scripts_dir
-            # e.g. scripts/Lib/Helper.ps1 -> Lib/Helper.ps1
-            rel_path = os.path.relpath(os.path.join(root, file), scripts_dir)
+        script_content = script_file.read_text(encoding='utf-8')
+        encoded_content = html.escape(script_content, quote=False)
+        encoded_content = encoded_content.replace('"', "&quot;")
 
-            # Convert to Windows path style for XML matching
-            # e.g. Lib\Helper.ps1
-            win_rel_path = rel_path.replace(os.sep, '\\')
+        target_path_str = f"C:\\Windows\\Setup\\Scripts\\{win_rel_path}"
+        escaped_path = re.escape(target_path_str)
 
-            # The full path in XML is C:\Windows\Setup\Scripts\<win_rel_path>
-            # However, the XML generator often uses forward slashes in attributes or escaped backslashes.
-            # We match the specific <File path="C:\Windows\Setup\Scripts\..."> block.
+        pattern = r'(<File path="' + escaped_path + r'">)(.*?)(</File>)'
 
-            # The current build.py was using explicit backslashes.
-            # Let's read the script content first.
-            script_full_path = os.path.join(root, file)
-            with open(script_full_path, 'r', encoding='utf-8') as f:
-                script_content = f.read()
+        if re.search(pattern, content, re.DOTALL):
+            logging.info(f"Updating {target_path_str}...")
+            def replacement(match):
+                return match.group(1) + '\n' + encoded_content.strip() + '\n' + match.group(3)
 
-            # Prepare encoded content
-            encoded_content = xml_encode(script_content)
+            content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+        else:
+            logging.warning(f"Warning: File path {target_path_str} not found in XML. Skipping.")
 
-            # Regex to replace content
-            # We need to construct the exact path string expected in the XML.
-            # Assuming standard path: C:\Windows\Setup\Scripts\SubDir\File.ps1
-            target_path_str = f"C:\\Windows\\Setup\\Scripts\\{win_rel_path}"
-
-            # Escape for regex
-            escaped_path = re.escape(target_path_str)
-
-            # Pattern: <File path="...target_path_str...">Content</File>
-            pattern = r'(<File path="' + escaped_path + r'">)(.*?)(</File>)'
-
-            if re.search(pattern, content, re.DOTALL):
-                print(f"Updating {target_path_str}...")
-                # Replacement function to preserve the surrounding tags
-                def replacement(match):
-                    return match.group(1) + '\n' + encoded_content.strip() + '\n' + match.group(3)
-
-                content = re.sub(pattern, replacement, content, flags=re.DOTALL)
-            else:
-                print(f"Warning: File path {target_path_str} not found in XML. Skipping.")
+    # Remove empty XML passes
+    passes = ['offlineServicing', 'generalize', 'auditSystem', 'auditUser']
+    for p in passes:
+        # Match passes that contain only whitespace between opening and closing tags
+        # and capture any leading whitespace on the line to avoid orphaned indentation
+        pattern = r'^[ \t]*<settings pass="' + p + r'">\s*</settings>\r?\n?'
+        if re.search(pattern, content, flags=re.MULTILINE):
+            logging.info(f"Removing empty settings pass: {p}")
+            content = re.sub(pattern, '', content, flags=re.MULTILINE)
 
     # --- WiFi Injection ---
     if ssid and password:
-        print(f"Injecting WiFi Profile for SSID: {ssid}")
+        logging.info(f"Injecting WiFi Profile for SSID: {ssid}")
 
         # XML Encode SSID and Password
-        safe_ssid = xml_encode(ssid)
-        safe_password = xml_encode(password)
+        safe_ssid = html.escape(ssid, quote=False).replace('"', "&quot;")
+        safe_password = html.escape(password, quote=False).replace('"', "&quot;")
 
         # XML Block for WLAN Profile
         wlan_profile = f"""
@@ -149,12 +130,11 @@ def update_autounattend(ssid=None, password=None):
             content = content.replace(match_specialize.group(0), full_replacement)
 
         else:
-            print("Error: <settings pass=\"specialize\"> not found in autounattend.xml. Cannot inject WiFi.")
+            logging.error("Error: <settings pass=\"specialize\"> not found in autounattend.xml. Cannot inject WiFi.")
 
-    with open(xml_path, 'w', encoding='utf-8') as f:
-        f.write(content)
+    xml_path.write_text(content, encoding='utf-8')
 
-    print("autounattend.xml updated successfully.")
+    logging.info("autounattend.xml updated successfully.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Build and update autounattend.xml with scripts and optional WiFi settings.")

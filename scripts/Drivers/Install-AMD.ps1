@@ -26,7 +26,7 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # /S: Silent
-        Start-Process -FilePath $setupPath -ArgumentList "/S", "-noreboot" -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\amd_install.log"
+        Start-Process -FilePath $setupPath -ArgumentList @('/S', '-noreboot') -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\amd_install.log"
         Write-Log "AMD Chipset driver installation completed."
     }
     catch {

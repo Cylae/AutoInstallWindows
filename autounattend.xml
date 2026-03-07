@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
 	<!-- Optimized by Jules - Senior Windows Deployment Architect -->
-	<settings pass="offlineServicing"></settings>
-	<settings pass="windowsPE">
+		<settings pass="windowsPE">
 		<component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
 			<UILanguage>fr-FR</UILanguage>
 		</component>
@@ -17,8 +16,7 @@
 			<UseConfigurationSet>false</UseConfigurationSet>
 		</component>
 	</settings>
-	<settings pass="generalize"></settings>
-	<settings pass="specialize">
+		<settings pass="specialize">
 		<component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
 			<RunSynchronous>
 				<RunSynchronousCommand wcm:action="add">
@@ -66,9 +64,7 @@
 
             </component>
                 </settings>
-	<settings pass="auditSystem"></settings>
-	<settings pass="auditUser"></settings>
-	<settings pass="oobeSystem">
+			<settings pass="oobeSystem">
 		<component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
 			<InputLocale>040c:0000040c</InputLocale>
 			<SystemLocale>fr-FR</SystemLocale>
@@ -161,7 +157,7 @@ function Write-Log {
         New-Item -Path $dir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
     }
 
-    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss&quot;
+    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss.fff&quot;
     $logEntry = &quot;[$timestamp] $Message&quot;
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
 }
@@ -207,7 +203,7 @@ function Download-File {
         return $false
     }
 
-    $downloadRetries = 3
+    $downloadRetries = 5
     $dRetry = 0
     $downloaded = $false
 
@@ -231,7 +227,7 @@ function Download-File {
         } catch {
             $dRetry++
             Write-Log &quot;Failed to download $Name (Attempt $dRetry/$downloadRetries): $_&quot;
-            Start-Sleep -Seconds 2
+            Start-Sleep -Seconds 5
         }
     }
 
@@ -339,7 +335,7 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # /S: Silent
-        Start-Process -FilePath $setupPath -ArgumentList &quot;/S&quot;, &quot;-noreboot&quot; -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\amd_install.log&quot;
+        Start-Process -FilePath $setupPath -ArgumentList @('/S', '-noreboot') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\amd_install.log&quot;
         Write-Log &quot;AMD Chipset driver installation completed.&quot;
     }
     catch {
@@ -595,7 +591,7 @@ Write-Log &quot;Starting Debloating Process...&quot;
 # Remove Appx Provisioned Packages
 $provisioned = Get-AppxProvisionedPackage -Online
 foreach ($package in $packagesToRemove) {
-    $found = $provisioned | Where-Object { $_.DisplayName -eq $package }
+    $found = $provisioned | Where-Object { $_.DisplayName -eq $package -or $_.PackageName -like &quot;*$package*&quot; }
     if ($found) {
         foreach ($item in $found) {
             Write-Log &quot;Removing $($item.DisplayName) ($($item.PackageName))...&quot;
@@ -647,6 +643,17 @@ reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; 
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; /v DoNotShowFeedbackNotifications /t REG_DWORD /d 1 /f
 reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection&quot; /v AllowTelemetry /t REG_DWORD /d 0 /f
 
+# Disable Windows Error Reporting
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting&quot; /v Disabled /t REG_DWORD /d 1 /f
+
+# Disable Shared Experiences / Activity History
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v EnableActivityFeed /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v PublishUserActivities /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v UploadUserActivities /t REG_DWORD /d 0 /f
+
+# Disable Consumer Features
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent&quot; /v DisableWindowsConsumerFeatures /t REG_DWORD /d 1 /f
+
 # Disable Bing Search, Cortana, and Search Highlights
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v AllowCortana /t REG_DWORD /d 0 /f
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v DisableWebSearch /t REG_DWORD /d 1 /f
@@ -669,8 +676,8 @@ reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot;
 
 # Disable Edge First Run and Bloat
 reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v HideFirstRunExperience /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
 
 # Disable BitLocker Automatic Device Encryption
 reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\BitLocker&quot; /v &quot;PreventDeviceEncryption&quot; /t REG_DWORD /d 1 /f
@@ -736,6 +743,10 @@ try {
 } catch {
     Write-Log &quot;Failed to disable Last Access Timestamp: $_&quot;
 }
+
+# 5. Disable App Launch Tracking
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\EdgeUI&quot; /v DisableMFUTracking /t REG_DWORD /d 1 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer&quot; /v NoInstrumentation /t REG_DWORD /d 1 /f
 
 Write-Log &quot;System Optimizations Applied.&quot;
 </File>
@@ -867,6 +878,15 @@ try {
     # Disable &quot;Finish setting up your device&quot;
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement&quot; /v ScoobeSystemSettingEnabled /t REG_DWORD /d 0 /f
 
+    # Privacy Settings
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Input\TIPC&quot; /v Enabled /t REG_DWORD /d 0 /f # Disable Typing Insights
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Privacy&quot; /v TailoredExperiencesWithDiagnosticDataEnabled /t REG_DWORD /d 0 /f # Disable Tailored Experiences
+
+    # Disable Accessibility Shortcuts
+    reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\StickyKeys&quot; /v Flags /t REG_SZ /d &quot;506&quot; /f
+    reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\ToggleKeys&quot; /v Flags /t REG_SZ /d &quot;58&quot; /f
+    reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\Keyboard Response&quot; /v Flags /t REG_SZ /d &quot;122&quot; /f
+
     # Run UserOnce on first login (if script exists)
     # We wrap in cmd /c &quot;if exist ...&quot; to prevent errors for subsequent users after self-destruct
     $uScript = &quot;C:\Windows\Setup\Scripts\UserOnce.ps1&quot;
@@ -956,8 +976,8 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
 Write-Log &quot;User Configuration Completed.&quot;
 
 # Self-Destruct: Cleanup Scripts
-# Wait 5 seconds then delete the script folder
-Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 5 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden
+# Wait 10 seconds then delete the script folder
+Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 10 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden
 </File>
 
 	</Extensions>
