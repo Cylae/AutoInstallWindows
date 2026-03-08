@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
 	<!-- Optimized by Jules - Senior Windows Deployment Architect -->
-	<settings pass="offlineServicing"></settings>
 	<settings pass="windowsPE">
 		<component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
 			<UILanguage>fr-FR</UILanguage>
@@ -17,7 +16,6 @@
 			<UseConfigurationSet>false</UseConfigurationSet>
 		</component>
 	</settings>
-	<settings pass="generalize"></settings>
 	<settings pass="specialize">
 		<component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
 			<RunSynchronous>
@@ -66,8 +64,6 @@
 
             </component>
                 </settings>
-	<settings pass="auditSystem"></settings>
-	<settings pass="auditUser"></settings>
 	<settings pass="oobeSystem">
 		<component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
 			<InputLocale>040c:0000040c</InputLocale>
@@ -129,7 +125,7 @@ foreach( $file in $Document.unattend.Extensions.File ) {
 		<File path="C:\Windows\Setup\Scripts\Lib\Helper.ps1">
 function Get-InstallMedia {
     # Use .NET DriveInfo to correctly identify Fixed/Removable drives and avoid network/floppy hangs
-    $drives = [System.IO.DriveInfo]::GetDrives() | Where-Object { $_.DriveType -in 'Fixed', 'Removable' -and $_.IsReady }
+    $drives = [System.IO.DriveInfo]::GetDrives() | Where-Object { $_.DriveType -in &#x27;Fixed&#x27;, &#x27;Removable&#x27; -and $_.IsReady }
     foreach ($drive in $drives) {
         $path = Join-Path -Path $drive.RootDirectory.FullName -ChildPath &quot;drivers&quot;
         if (Test-Path -Path $path -PathType Container) {
@@ -161,7 +157,7 @@ function Write-Log {
         New-Item -Path $dir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
     }
 
-    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss&quot;
+    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss.fff&quot;
     $logEntry = &quot;[$timestamp] $Message&quot;
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
 }
@@ -174,7 +170,7 @@ function Download-File {
     )
 
     # Suppress Progress Bar for Faster Download
-    $ProgressPreference = 'SilentlyContinue'
+    $ProgressPreference = &#x27;SilentlyContinue&#x27;
 
     if ([string]::IsNullOrWhiteSpace($Url)) { return $false }
 
@@ -207,7 +203,7 @@ function Download-File {
         return $false
     }
 
-    $downloadRetries = 3
+    $downloadRetries = 5
     $dRetry = 0
     $downloaded = $false
 
@@ -231,7 +227,7 @@ function Download-File {
         } catch {
             $dRetry++
             Write-Log &quot;Failed to download $Name (Attempt $dRetry/$downloadRetries): $_&quot;
-            Start-Sleep -Seconds 2
+            Start-Sleep -Seconds 5
         }
     }
 
@@ -239,7 +235,7 @@ function Download-File {
 }
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Network.ps1">
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = &#x27;Stop&#x27;
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Network Driver Installation...&quot;
@@ -271,7 +267,7 @@ if ($mediaRoot) {
 }
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Nvidia.ps1">
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = &#x27;Stop&#x27;
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 # OPTIONAL: Set a direct download URL for the Nvidia Driver here.
@@ -301,7 +297,7 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # -s: Silent, -n: No splash, -f: Force, -noreboot: No reboot
-        Start-Process -FilePath $setupPath -ArgumentList @('-s', '-n', '-f', '-noreboot') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\nvidia_install.log&quot;
+        Start-Process -FilePath $setupPath -ArgumentList @(&#x27;-s&#x27;, &#x27;-n&#x27;, &#x27;-f&#x27;, &#x27;-noreboot&#x27;) -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\nvidia_install.log&quot;
         Write-Log &quot;Nvidia driver installation completed.&quot;
     }
     catch {
@@ -312,7 +308,7 @@ if ($setupPath) {
 }
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-AMD.ps1">
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = &#x27;Stop&#x27;
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 # OPTIONAL: Set a direct download URL for the AMD Chipset Driver here.
@@ -350,7 +346,7 @@ if ($setupPath) {
 }
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Focusrite.ps1">
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = &#x27;Stop&#x27;
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 # OPTIONAL: Set a direct download URL for the Focusrite Driver here.
@@ -377,7 +373,7 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # /VERYSILENT: No UI, /SUPPRESSMSGBOXES: No popups
-        Start-Process -FilePath $setupPath -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\focusrite_install.log&quot;
+        Start-Process -FilePath $setupPath -ArgumentList @(&#x27;/VERYSILENT&#x27;, &#x27;/SUPPRESSMSGBOXES&#x27;, &#x27;/NORESTART&#x27;, &#x27;/SP-&#x27;) -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\focusrite_install.log&quot;
         Write-Log &quot;Focusrite driver installation completed.&quot;
     }
     catch {
@@ -388,7 +384,7 @@ if ($setupPath) {
 }
 </File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Runtimes.ps1">
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = &#x27;Stop&#x27;
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Visual C++ Runtimes Installation...&quot;
@@ -453,7 +449,7 @@ Install-Runtime -Url $url64 -DestName &quot;vc_redist.x64.exe&quot; -LogName &qu
 Install-Runtime -Url $url86 -DestName &quot;vc_redist.x86.exe&quot; -LogName &quot;Visual C++ Runtimes (x86)&quot; -LocalFolder &quot;vcredist_x86&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Chrome.ps1">
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = &#x27;Stop&#x27;
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Chrome Installation...&quot;
@@ -468,7 +464,7 @@ $mediaRoot = Get-InstallMedia
 $setupPath = $null
 
 # 1. Try Download (Online First) - Prefer Enterprise MSI
-$url = 'https://dl.google.com/chrome/install/googlechromestandaloneenterprise64.msi'
+$url = &#x27;https://dl.google.com/chrome/install/googlechromestandaloneenterprise64.msi&#x27;
 $dest = &quot;$env:TEMP\chrome.msi&quot;
 if (Download-File -Url $url -Destination $dest -Name &quot;Chrome Enterprise MSI&quot;) {
     $setupPath = $dest
@@ -500,14 +496,14 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
 
-        if ($setupPath -match '\.msi$') {
+        if ($setupPath -match &#x27;\.msi$&#x27;) {
             # MSI Installation
             # Note: msiexec requires strict quoting for paths with spaces
             $msiArgs = @(&quot;/i&quot;, &quot;$setupPath&quot;, &quot;/qn&quot;, &quot;/norestart&quot;)
             Start-Process -FilePath &quot;msiexec.exe&quot; -ArgumentList $msiArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
         } else {
             # EXE Installation
-            Start-Process -FilePath $setupPath -ArgumentList @('/silent', '/install') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
+            Start-Process -FilePath $setupPath -ArgumentList @(&#x27;/silent&#x27;, &#x27;/install&#x27;) -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
         }
 
         # Cleanup temp file
@@ -523,71 +519,71 @@ if ($setupPath) {
 }
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Remove-Bloatware.ps1">
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = &#x27;Stop&#x27;
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 $packagesToRemove = @(
-    'Microsoft.Microsoft3DViewer',
-    'Microsoft.BingSearch',
-    'Microsoft.WindowsCamera',
-    'Clipchamp.Clipchamp',
-    'Microsoft.WindowsAlarms',
-    'Microsoft.549981C3F5F10', # Cortana
-    'Microsoft.Copilot',
-    'Microsoft.Windows.DevHome',
-    'MicrosoftCorporationII.MicrosoftFamily',
-    'Microsoft.WindowsFeedbackHub',
-    'Microsoft.GetHelp',
-    'Microsoft.Getstarted',
-    'microsoft.windowscommunicationsapps',
-    'Microsoft.WindowsMaps',
-    'Microsoft.MixedReality.Portal',
-    'Microsoft.BingNews',
-    'Microsoft.MicrosoftOfficeHub',
-    'Microsoft.Office.OneNote',
-    'Microsoft.OutlookForWindows',
-    'Microsoft.People',
-    'Microsoft.Windows.PeopleExperienceHost',
-    'Microsoft.Windows.Photos',
-    'Microsoft.PowerAutomateDesktop',
-    'MicrosoftCorporationII.QuickAssist',
-    'Microsoft.SkypeApp',
-    'Microsoft.MicrosoftSolitaireCollection',
-    'Microsoft.MicrosoftStickyNotes',
-    'MicrosoftTeams',
-    'MSTeams',
-    'Microsoft.Todos',
-    'Microsoft.WindowsSoundRecorder',
-    'Microsoft.Wallet',
-    'Microsoft.BingWeather',
-    'Microsoft.ZuneVideo',
-    'MicrosoftWindows.Client.WebExperience',
-    'Microsoft.Windows.Ai.Copilot.Provider',
-    'Microsoft.YourPhone',
-    'Microsoft.GamingApp',
-    'Microsoft.XboxGameOverlay',
-    'Microsoft.XboxGamingOverlay',
-    'Microsoft.XboxIdentityProvider',
-    'Microsoft.XboxSpeechToTextOverlay',
-    'Microsoft.Windows.ParentalControls'
+    &#x27;Microsoft.Microsoft3DViewer&#x27;,
+    &#x27;Microsoft.BingSearch&#x27;,
+    &#x27;Microsoft.WindowsCamera&#x27;,
+    &#x27;Clipchamp.Clipchamp&#x27;,
+    &#x27;Microsoft.WindowsAlarms&#x27;,
+    &#x27;Microsoft.549981C3F5F10&#x27;, # Cortana
+    &#x27;Microsoft.Copilot&#x27;,
+    &#x27;Microsoft.Windows.DevHome&#x27;,
+    &#x27;MicrosoftCorporationII.MicrosoftFamily&#x27;,
+    &#x27;Microsoft.WindowsFeedbackHub&#x27;,
+    &#x27;Microsoft.GetHelp&#x27;,
+    &#x27;Microsoft.Getstarted&#x27;,
+    &#x27;microsoft.windowscommunicationsapps&#x27;,
+    &#x27;Microsoft.WindowsMaps&#x27;,
+    &#x27;Microsoft.MixedReality.Portal&#x27;,
+    &#x27;Microsoft.BingNews&#x27;,
+    &#x27;Microsoft.MicrosoftOfficeHub&#x27;,
+    &#x27;Microsoft.Office.OneNote&#x27;,
+    &#x27;Microsoft.OutlookForWindows&#x27;,
+    &#x27;Microsoft.People&#x27;,
+    &#x27;Microsoft.Windows.PeopleExperienceHost&#x27;,
+    &#x27;Microsoft.Windows.Photos&#x27;,
+    &#x27;Microsoft.PowerAutomateDesktop&#x27;,
+    &#x27;MicrosoftCorporationII.QuickAssist&#x27;,
+    &#x27;Microsoft.SkypeApp&#x27;,
+    &#x27;Microsoft.MicrosoftSolitaireCollection&#x27;,
+    &#x27;Microsoft.MicrosoftStickyNotes&#x27;,
+    &#x27;MicrosoftTeams&#x27;,
+    &#x27;MSTeams&#x27;,
+    &#x27;Microsoft.Todos&#x27;,
+    &#x27;Microsoft.WindowsSoundRecorder&#x27;,
+    &#x27;Microsoft.Wallet&#x27;,
+    &#x27;Microsoft.BingWeather&#x27;,
+    &#x27;Microsoft.ZuneVideo&#x27;,
+    &#x27;MicrosoftWindows.Client.WebExperience&#x27;,
+    &#x27;Microsoft.Windows.Ai.Copilot.Provider&#x27;,
+    &#x27;Microsoft.YourPhone&#x27;,
+    &#x27;Microsoft.GamingApp&#x27;,
+    &#x27;Microsoft.XboxGameOverlay&#x27;,
+    &#x27;Microsoft.XboxGamingOverlay&#x27;,
+    &#x27;Microsoft.XboxIdentityProvider&#x27;,
+    &#x27;Microsoft.XboxSpeechToTextOverlay&#x27;,
+    &#x27;Microsoft.Windows.ParentalControls&#x27;
 )
 
 $capabilitiesToRemove = @(
-    'Print.Fax.Scan',
-    'Browser.InternetExplorer',
-    'MathRecognizer',
-    'OneCoreUAP.OneSync',
-    'App.Support.QuickAssist',
-    'App.StepsRecorder',
-    'Hello.Face',
-    'Media.WindowsMediaPlayer',
-    'Microsoft.Windows.WordPad'
+    &#x27;Print.Fax.Scan&#x27;,
+    &#x27;Browser.InternetExplorer&#x27;,
+    &#x27;MathRecognizer&#x27;,
+    &#x27;OneCoreUAP.OneSync&#x27;,
+    &#x27;App.Support.QuickAssist&#x27;,
+    &#x27;App.StepsRecorder&#x27;,
+    &#x27;Hello.Face&#x27;,
+    &#x27;Media.WindowsMediaPlayer&#x27;,
+    &#x27;Microsoft.Windows.WordPad&#x27;
 )
 
 $featuresToRemove = @(
-    'MediaPlayback',
-    'Microsoft-RemoteDesktopConnection',
-    'Recall'
+    &#x27;MediaPlayback&#x27;,
+    &#x27;Microsoft-RemoteDesktopConnection&#x27;,
+    &#x27;Recall&#x27;
 )
 
 Write-Log &quot;Starting Debloating Process...&quot;
@@ -611,7 +607,7 @@ foreach ($package in $packagesToRemove) {
 # Remove Capabilities
 $capabilities = Get-WindowsCapability -Online
 foreach ($capName in $capabilitiesToRemove) {
-    $cap = $capabilities | Where-Object { ($_.Name -split '~')[0] -eq $capName -and $_.State -ne 'NotPresent' }
+    $cap = $capabilities | Where-Object { ($_.Name -split &#x27;~&#x27;)[0] -eq $capName -and $_.State -ne &#x27;NotPresent&#x27; }
     if ($cap) {
         Write-Log &quot;Removing capability $capName...&quot;
         try {
@@ -624,7 +620,7 @@ foreach ($capName in $capabilitiesToRemove) {
 
 # Remove Optional Features
 foreach ($feature in $featuresToRemove) {
-    if ((Get-WindowsOptionalFeature -Online -FeatureName $feature -ErrorAction SilentlyContinue).State -eq 'Enabled') {
+    if ((Get-WindowsOptionalFeature -Online -FeatureName $feature -ErrorAction SilentlyContinue).State -eq &#x27;Enabled&#x27;) {
         Write-Log &quot;Disabling feature $feature...&quot;
         try {
             Disable-WindowsOptionalFeature -Online -FeatureName $feature -Remove -NoRestart -ErrorAction Continue | Out-Null
@@ -637,7 +633,7 @@ foreach ($feature in $featuresToRemove) {
 Write-Log &quot;Debloating Process Completed.&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Configure-Privacy.ps1">
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = &#x27;Stop&#x27;
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Applying Privacy and Registry Tweaks...&quot;
@@ -669,8 +665,14 @@ reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot;
 
 # Disable Edge First Run and Bloat
 reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v HideFirstRunExperience /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+
+# Disable Windows Error Reporting, Shared Experiences, Consumer Features, and Activity History
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting&quot; /v Disabled /t REG_DWORD /d 1 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v EnableCdp /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent&quot; /v DisableWindowsConsumerFeatures /t REG_DWORD /d 1 /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v PublishUserActivities /t REG_DWORD /d 0 /f
 
 # Disable BitLocker Automatic Device Encryption
 reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\BitLocker&quot; /v &quot;PreventDeviceEncryption&quot; /t REG_DWORD /d 1 /f
@@ -680,7 +682,7 @@ reg.exe add &quot;HKLM\System\CurrentControlSet\Control\DeviceGuard&quot; /v &qu
 reg.exe add &quot;HKLM\System\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity&quot; /v &quot;Enabled&quot; /t REG_DWORD /d 0 /f
 
 # Disable Telemetry and Maps Services
-$services = @('DiagTrack', 'dmwappushservice', 'MapsBroker', 'lfsvc')
+$services = @(&#x27;DiagTrack&#x27;, &#x27;dmwappushservice&#x27;, &#x27;MapsBroker&#x27;, &#x27;lfsvc&#x27;)
 foreach ($service in $services) {
     if (Get-Service -Name $service -ErrorAction SilentlyContinue) {
         Write-Log &quot;Disabling service $service...&quot;
@@ -696,16 +698,16 @@ foreach ($service in $services) {
 Write-Log &quot;Privacy Tweaks Applied.&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\SetStartPins.ps1">
-$json = '{&quot;pinnedList&quot;:[]}';
+$json = &#x27;{&quot;pinnedList&quot;:[]}&#x27;;
 if( [System.Environment]::OSVersion.Version.Build -lt 20000 ) {
 	return;
 }
-$key = 'Registry::HKLM\SOFTWARE\Microsoft\PolicyManager\current\device\Start';
-New-Item -Path $key -ItemType 'Directory' -ErrorAction 'SilentlyContinue';
-Set-ItemProperty -LiteralPath $key -Name 'ConfigureStartPins' -Value $json -Type 'String';
+$key = &#x27;Registry::HKLM\SOFTWARE\Microsoft\PolicyManager\current\device\Start&#x27;;
+New-Item -Path $key -ItemType &#x27;Directory&#x27; -ErrorAction &#x27;SilentlyContinue&#x27;;
+Set-ItemProperty -LiteralPath $key -Name &#x27;ConfigureStartPins&#x27; -Value $json -Type &#x27;String&#x27;;
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Optimize-System.ps1">
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = &#x27;Stop&#x27;
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Applying System Optimizations...&quot;
@@ -737,10 +739,14 @@ try {
     Write-Log &quot;Failed to disable Last Access Timestamp: $_&quot;
 }
 
+# 5. Disable App Launch Tracking
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\EdgeUI&quot; /v DisableMFUTracking /t REG_DWORD /d 1 /f
+reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; /v NoInstrumentation /t REG_DWORD /d 1 /f
+
 Write-Log &quot;System Optimizations Applied.&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\Specialize.ps1">
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = &#x27;Stop&#x27;
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 $scripts = @(
@@ -794,7 +800,7 @@ try {
 Write-Log &quot;Specialize Pass Completed.&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\DefaultUser.ps1">
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = &#x27;Stop&#x27;
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Configuring Default User...&quot;
@@ -867,6 +873,10 @@ try {
     # Disable &quot;Finish setting up your device&quot;
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement&quot; /v ScoobeSystemSettingEnabled /t REG_DWORD /d 0 /f
 
+    # Disable Typing Insights and Tailored Experiences
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Input\TIPC&quot; /v Enabled /t REG_DWORD /d 0 /f
+    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Privacy&quot; /v TailoredExperiencesWithDiagnosticDataEnabled /t REG_DWORD /d 0 /f
+
     # Run UserOnce on first login (if script exists)
     # We wrap in cmd /c &quot;if exist ...&quot; to prevent errors for subsequent users after self-destruct
     $uScript = &quot;C:\Windows\Setup\Scripts\UserOnce.ps1&quot;
@@ -914,14 +924,14 @@ finally {
 Write-Log &quot;Default User Configuration Completed.&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\UserOnce.ps1">
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = &#x27;Stop&#x27;
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Configuring User Account...&quot;
 
 # Register Daily Winget Auto-Update Task (Transparent)
 if (Get-Command winget -ErrorAction SilentlyContinue) {
-    $taskName = &quot;DailySoftwareUpdate&quot;
+    $taskName = &quot;DailySoftwareUpdate-$env:USERNAME&quot;
     $wingetCmd = &quot;winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements&quot;
     $action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `\&quot;$wingetCmd`\&quot;&quot;
     $trigger = New-ScheduledTaskTrigger -Daily -At 13:00

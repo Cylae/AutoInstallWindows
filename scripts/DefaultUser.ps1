@@ -72,6 +72,10 @@ try {
     # Disable "Finish setting up your device"
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement" /v ScoobeSystemSettingEnabled /t REG_DWORD /d 0 /f
 
+    # Disable Typing Insights and Tailored Experiences
+    reg.exe add "$defaultUserHive\Software\Microsoft\Input\TIPC" /v Enabled /t REG_DWORD /d 0 /f
+    reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Privacy" /v TailoredExperiencesWithDiagnosticDataEnabled /t REG_DWORD /d 0 /f
+
     # Run UserOnce on first login (if script exists)
     # We wrap in cmd /c "if exist ..." to prevent errors for subsequent users after self-destruct
     $uScript = "C:\Windows\Setup\Scripts\UserOnce.ps1"

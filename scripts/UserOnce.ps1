@@ -5,7 +5,7 @@ Write-Log "Configuring User Account..."
 
 # Register Daily Winget Auto-Update Task (Transparent)
 if (Get-Command winget -ErrorAction SilentlyContinue) {
-    $taskName = "DailySoftwareUpdate"
+    $taskName = "DailySoftwareUpdate-$env:USERNAME"
     $wingetCmd = "winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements"
     $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-WindowStyle Hidden -Command `\"$wingetCmd`\""
     $trigger = New-ScheduledTaskTrigger -Daily -At 13:00
