@@ -47,6 +47,11 @@ $packagesToRemove = @(
     'Microsoft.Windows.ParentalControls'
 )
 
+$packagesToKeep = @(
+    'Microsoft.MSPaint',
+    'Microsoft.WindowsNotepad'
+)
+
 $capabilitiesToRemove = @(
     'Print.Fax.Scan',
     'Browser.InternetExplorer',
@@ -70,9 +75,13 @@ Write-Log "Starting Debloating Process..."
 # Remove Appx Provisioned Packages
 $provisioned = Get-AppxProvisionedPackage -Online
 foreach ($package in $packagesToRemove) {
-    $found = $provisioned | Where-Object { $_.DisplayName -eq $package }
+    $found = $provisioned | Where-Object { $_.DisplayName -eq $package -or $_.PackageName -like "*$package*" }
     if ($found) {
         foreach ($item in $found) {
+            if ($packagesToKeep -contains $item.DisplayName) {
+                Write-Log "Skipping preserved package $($item.DisplayName)..."
+                continue
+            }
             Write-Log "Removing $($item.DisplayName) ($($item.PackageName))..."
             try {
                 Remove-AppxProvisionedPackage -Online -PackageName $item.PackageName -ErrorAction Continue | Out-Null

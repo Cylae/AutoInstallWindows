@@ -31,4 +31,8 @@ try {
     Write-Log "Failed to disable Last Access Timestamp: $_"
 }
 
+# 5. Disable App Launch Tracking
+reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\EdgeUI" /v DisableMFUTracking /t REG_DWORD /d 1 /f
+reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v NoInstrumentation /t REG_DWORD /d 1 /f
+
 Write-Log "System Optimizations Applied."

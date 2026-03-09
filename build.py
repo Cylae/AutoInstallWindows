@@ -69,7 +69,15 @@ def update_autounattend(ssid=None, password=None):
 
                 content = re.sub(pattern, replacement, content, flags=re.DOTALL)
             else:
-                print(f"Warning: File path {target_path_str} not found in XML. Skipping.")
+                print(f"File path {target_path_str} not found in XML. Appending it...")
+                # Append a new <File> block just before the closing </Extensions> tag.
+                new_file_block = f'<File path="{target_path_str}">\n{encoded_content.strip()}\n</File>'
+                # Look for </Extensions> and insert the block before it.
+                extensions_close_pattern = r'(</Extensions>)'
+                if re.search(extensions_close_pattern, content):
+                    content = re.sub(extensions_close_pattern, f'{new_file_block}\n\t\\1', content, count=1)
+                else:
+                    print("Error: </Extensions> tag not found in autounattend.xml. Cannot append new script.")
 
     # --- WiFi Injection ---
     if ssid and password:
@@ -150,6 +158,13 @@ def update_autounattend(ssid=None, password=None):
 
         else:
             print("Error: <settings pass=\"specialize\"> not found in autounattend.xml. Cannot inject WiFi.")
+
+    # Remove empty settings passes to clean up autounattend.xml
+    passes_to_remove = ['offlineServicing', 'generalize', 'auditSystem', 'auditUser']
+    for pass_name in passes_to_remove:
+        # Match e.g. `<settings pass="offlineServicing"></settings>` on a line and remove it with leading whitespace
+        empty_pass_pattern = r'^[ \t]*<settings pass="' + re.escape(pass_name) + r'"></settings>[\r\n]*'
+        content = re.sub(empty_pass_pattern, '', content, flags=re.MULTILINE)
 
     with open(xml_path, 'w', encoding='utf-8') as f:
         f.write(content)
