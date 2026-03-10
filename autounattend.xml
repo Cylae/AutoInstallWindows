@@ -685,8 +685,8 @@ reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot;
 
 # Disable Edge First Run and Bloat
 reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v HideFirstRunExperience /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
 
 # Disable BitLocker Automatic Device Encryption
 reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\BitLocker&quot; /v &quot;PreventDeviceEncryption&quot; /t REG_DWORD /d 1 /f
@@ -949,44 +949,40 @@ $ErrorActionPreference = 'Stop'
 Write-Log &quot;Configuring User Account...&quot;
 
 # Register Daily Winget Auto-Update Task (Transparent)
-if (Get-Command winget -ErrorAction SilentlyContinue) {
-    $taskName = &quot;DailySoftwareUpdate&quot;
-    $wingetCmd = &quot;winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements&quot;
-    $action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `\&quot;$wingetCmd`\&quot;&quot;
-    $trigger = New-ScheduledTaskTrigger -Daily -At 13:00
-    # Attempt 1: Try with Highest RunLevel (Admin)
-    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
+$taskName = &quot;DailySoftwareUpdate&quot;
+$wingetCmd = &quot;winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements&quot;
+$action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `\&quot;$wingetCmd`\&quot;&quot;
+$trigger = New-ScheduledTaskTrigger -Daily -At 13:00
+# Attempt 1: Try with Highest RunLevel (Admin)
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
 
-    $registered = $false
+$registered = $false
+try {
+    Write-Log &quot;Attempting to register Winget task with Highest privileges...&quot;
+    Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Highest -Force -ErrorAction Stop | Out-Null
+    $registered = $true
+    Write-Log &quot;Registered Daily Winget Auto-Update Task (Highest).&quot;
+} catch {
+    Write-Log &quot;Failed to register Winget task with Highest privileges: $_&quot;
+}
+
+# Attempt 2: Try with Limited (User) privileges if Admin failed (e.g., UAC issue)
+if (-not $registered) {
     try {
-        Write-Log &quot;Attempting to register Winget task with Highest privileges...&quot;
-        Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Highest -Force -ErrorAction Stop | Out-Null
+        Write-Log &quot;Attempting to register Winget task with Limited privileges...&quot;
+        Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Limited -Force -ErrorAction Stop | Out-Null
         $registered = $true
-        Write-Log &quot;Registered Daily Winget Auto-Update Task (Highest).&quot;
+        Write-Log &quot;Registered Daily Winget Auto-Update Task (Limited).&quot;
     } catch {
-        Write-Log &quot;Failed to register Winget task with Highest privileges: $_&quot;
+        Write-Log &quot;Failed to register Winget task (Limited): $_&quot;
     }
-
-    # Attempt 2: Try with Limited (User) privileges if Admin failed (e.g., UAC issue)
-    if (-not $registered) {
-        try {
-            Write-Log &quot;Attempting to register Winget task with Limited privileges...&quot;
-            Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Limited -Force -ErrorAction Stop | Out-Null
-            $registered = $true
-            Write-Log &quot;Registered Daily Winget Auto-Update Task (Limited).&quot;
-        } catch {
-            Write-Log &quot;Failed to register Winget task (Limited): $_&quot;
-        }
-    }
-} else {
-    Write-Log &quot;Winget not found. Skipping auto-update task registration.&quot;
 }
 
 Write-Log &quot;User Configuration Completed.&quot;
 
 # Self-Destruct: Cleanup Scripts
-# Wait 5 seconds then delete the script folder
-Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 5 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden
+# Wait 10 seconds then delete the script folder to ensure the calling process terminates cleanly
+Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 10 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden
 </File>
 
 	</Extensions>
