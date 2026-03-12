@@ -32,7 +32,7 @@ function Write-Log {
         New-Item -Path $dir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
     }
 
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
     $logEntry = "[$timestamp] $Message"
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
 }
@@ -59,9 +59,9 @@ function Download-File {
     # Wait for network
     while (-not $connected -and $retry -lt $maxRetries) {
         $testHosts = @("google.com", "microsoft.com", "cloudflare.com")
-        foreach ($hostName in $testHosts) {
+        foreach ($targetHost in $testHosts) {
             try {
-                $null = [System.Net.Dns]::GetHostEntry($hostName)
+                $null = [System.Net.Dns]::GetHostEntry($targetHost)
                 $connected = $true
                 break
             } catch {}
@@ -78,7 +78,7 @@ function Download-File {
         return $false
     }
 
-    $downloadRetries = 3
+    $downloadRetries = 5
     $dRetry = 0
     $downloaded = $false
 
@@ -102,7 +102,7 @@ function Download-File {
         } catch {
             $dRetry++
             Write-Log "Failed to download $Name (Attempt $dRetry/$downloadRetries): $_"
-            Start-Sleep -Seconds 2
+            Start-Sleep -Seconds 5
         }
     }
 

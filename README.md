@@ -25,18 +25,18 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Smart Matching**: Finds installer executables (`*.exe`) automatically—no need to rename files to `setup.exe`.
     *   **Included Support**: Scripts for Network, Nvidia GPU, AMD Chipset, and Focusrite Audio drivers.
 *   **🌐 Robust App Installation**:
-    *   **Smart Connectivity**: Verified internet checks against multiple reliable hosts (Google, Cloudflare, Microsoft) with robust retry logic.
+    *   **Smart Connectivity**: Verified internet checks against multiple reliable hosts (Google, Cloudflare, Microsoft) with robust retry logic. Extended network retry logic (5 attempts, 5s delay) to ensure resilience against slow or flaky connections.
     *   **Online First**: Prioritizes downloading the latest Chrome and Visual C++ Runtimes from the internet.
     *   **Offline Fallback**: Automatically checks for local installers if internet is unavailable.
     *   **Visual C++ Runtimes**: Automatically downloads and installs the latest VC++ 2015-2022 Redistributable (**x64 and x86**).
 *   **🔄 Transparent Auto-Updates**:
-    *   **Daily Updates**: Registers a hidden scheduled task to run `winget upgrade --all` daily (includes `source update`).
+    *   **Daily Updates**: Registers a hidden scheduled task to run `winget upgrade --all` daily (includes `source update`). Automatically configured unconditionally even if App Installer is installing in the background.
     *   **Silent**: Updates happen in the background without user intervention (configured with `--disable-interactivity`).
 *   **🛡️ Enhanced Robustness**:
     *   **Secure Downloads**: Supports **TLS 1.2 and 1.3** for secure file downloads.
     *   **Smart Media Detection**: Filters for Fixed and Removable drives to prevent hangs on network/floppy drives.
     *   **Fail-Safe Execution**: Scripts include existence checks (e.g., RunOnce) to prevent errors on subsequent logins.
-    *   **Advanced Error Handling**: Improved logging and registry handling for fail-safe execution.
+    *   **Advanced Error Handling**: Improved, millisecond-precision logging and registry handling for fail-safe execution. Errors from command line installers and packages are logged gracefully.
 
 ## 📂 Folder Structure
 
@@ -166,17 +166,17 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
     *   **Recherche Intelligente**: Trouve automatiquement les exécutables (`*.exe`)—pas besoin de renommer en `setup.exe`.
     *   **Support Inclus**: Scripts pour Réseau, GPU Nvidia, Chipset AMD et Audio Focusrite.
 *   **🌐 Installation d'Applications Robuste**:
-    *   **Connectivité Intelligente**: Vérifie la connexion internet via plusieurs hôtes fiables (Google, Cloudflare, Microsoft).
+    *   **Connectivité Intelligente**: Vérifie la connexion internet via plusieurs hôtes fiables (Google, Cloudflare, Microsoft). Logique de relance réseau étendue (5 tentatives, délai de 5s) pour assurer la résilience contre les connexions lentes ou instables.
     *   **En Ligne en Priorité**: Privilégie le téléchargement du dernier installateur Chrome et Visual C++ depuis Internet.
     *   **Repli Hors-ligne**: Vérifie automatiquement les installateurs locaux si Internet n'est pas disponible.
     *   **Runtimes Visual C++**: Télécharge et installe automatiquement les derniers Runtimes VC++ 2015-2022 (**x64 et x86**).
 *   **🔄 Mises à Jour Automatiques Transparentes**:
-    *   **Quotidien**: Enregistre une tâche planifiée masquée pour exécuter `winget upgrade --all` chaque jour.
+    *   **Quotidien**: Enregistre une tâche planifiée masquée pour exécuter `winget upgrade --all` chaque jour. Automatiquement configuré de manière inconditionnelle même si App Installer s'installe en arrière-plan.
     *   **Silencieux**: Les mises à jour se font en arrière-plan sans intervention de l'utilisateur (configuré avec `--disable-interactivity`).
 *   **🛡️ Robustesse Améliorée**:
     *   **Téléchargements Sécurisés**: Supporte **TLS 1.2 et 1.3** pour des téléchargements sécurisés.
     *   **Détection Intelligente**: Filtre les lecteurs Fixes et Amovibles pour éviter les blocages.
-    *   **Gestion d'Erreurs Avancée**: Journaux améliorés et gestion robuste du registre pour une exécution sans faille.
+    *   **Gestion d'Erreurs Avancée**: Journaux améliorés, avec une précision à la milliseconde, et gestion robuste du registre pour une exécution sans faille. Les erreurs des packages d'installation en ligne de commande sont gracieusement journalisées.
 
 ## 📂 Structure des Dossiers
 

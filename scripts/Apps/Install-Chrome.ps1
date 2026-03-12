@@ -50,10 +50,10 @@ if ($setupPath) {
             # MSI Installation
             # Note: msiexec requires strict quoting for paths with spaces
             $msiArgs = @("/i", "$setupPath", "/qn", "/norestart")
-            Start-Process -FilePath "msiexec.exe" -ArgumentList $msiArgs -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\chrome_install.log"
+            Start-Process -FilePath "msiexec.exe" -ArgumentList $msiArgs -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\chrome_install.log" -RedirectStandardError "$env:TEMP\chrome_install_err.log"
         } else {
             # EXE Installation
-            Start-Process -FilePath $setupPath -ArgumentList @('/silent', '/install') -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\chrome_install.log"
+            Start-Process -FilePath $setupPath -ArgumentList @('/silent', '/install') -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\chrome_install.log" -RedirectStandardError "$env:TEMP\chrome_install_err.log"
         }
 
         # Cleanup temp file
