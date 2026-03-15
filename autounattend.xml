@@ -157,7 +157,7 @@ function Write-Log {
         New-Item -Path $dir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
     }
 
-    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss&quot;
+    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss.fff&quot;
     $logEntry = &quot;[$timestamp] $Message&quot;
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
 }
@@ -236,7 +236,7 @@ function Download-File {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Network.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Network Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
@@ -248,7 +248,7 @@ if ($mediaRoot) {
         # Check if there are any INF files to avoid pnputil error
         if (Get-ChildItem -Path $driverPath -Filter &quot;*.inf&quot; -Recurse) {
             try {
-                $pnputilArgs = &quot;/add-driver `&quot;$driverPath\*.inf`&quot; /subdirs /install&quot;
+                $pnputilArgs = @(&quot;/add-driver&quot;, &quot;$driverPath\*.inf&quot;, &quot;/subdirs&quot;, &quot;/install&quot;)
                 # Redirect standard output and error to logs for debugging
                 Start-Process -FilePath &quot;pnputil.exe&quot; -ArgumentList $pnputilArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\pnputil_network.log&quot; -RedirectStandardError &quot;$env:TEMP\pnputil_network_err.log&quot;
                 Write-Log &quot;Network driver installation completed.&quot;
@@ -268,7 +268,7 @@ if ($mediaRoot) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Nvidia.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 # OPTIONAL: Set a direct download URL for the Nvidia Driver here.
 $DownloadUrl = &quot;&quot;
@@ -309,7 +309,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-AMD.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 # OPTIONAL: Set a direct download URL for the AMD Chipset Driver here.
 $DownloadUrl = &quot;&quot;
@@ -347,7 +347,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Focusrite.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 # OPTIONAL: Set a direct download URL for the Focusrite Driver here.
 $DownloadUrl = &quot;&quot;
@@ -385,7 +385,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Runtimes.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Visual C++ Runtimes Installation...&quot;
 
@@ -450,7 +450,7 @@ Install-Runtime -Url $url86 -DestName &quot;vc_redist.x86.exe&quot; -LogName &qu
 </File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Chrome.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Chrome Installation...&quot;
 
@@ -520,7 +520,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Remove-Bloatware.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 $packagesToRemove = @(
     'Microsoft.Microsoft3DViewer',
@@ -643,7 +643,7 @@ Write-Log &quot;Debloating Process Completed.&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Configure-Privacy.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Applying Privacy and Registry Tweaks...&quot;
 
@@ -685,8 +685,8 @@ reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot;
 
 # Disable Edge First Run and Bloat
 reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v HideFirstRunExperience /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
 
 # Disable BitLocker Automatic Device Encryption
 reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\BitLocker&quot; /v &quot;PreventDeviceEncryption&quot; /t REG_DWORD /d 1 /f
@@ -722,7 +722,7 @@ Set-ItemProperty -LiteralPath $key -Name 'ConfigureStartPins' -Value $json -Type
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Optimize-System.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Applying System Optimizations...&quot;
 
@@ -949,44 +949,57 @@ $ErrorActionPreference = 'Stop'
 Write-Log &quot;Configuring User Account...&quot;
 
 # Register Daily Winget Auto-Update Task (Transparent)
-if (Get-Command winget -ErrorAction SilentlyContinue) {
-    $taskName = &quot;DailySoftwareUpdate&quot;
-    $wingetCmd = &quot;winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements&quot;
-    $action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `\&quot;$wingetCmd`\&quot;&quot;
-    $trigger = New-ScheduledTaskTrigger -Daily -At 13:00
-    # Attempt 1: Try with Highest RunLevel (Admin)
-    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
+$taskName = &quot;DailySoftwareUpdate&quot;
+$wingetCmd = &quot;winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements&quot;
+$action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `&quot;$wingetCmd`&quot;&quot;
+$trigger = New-ScheduledTaskTrigger -Daily -At 13:00
+# Attempt 1: Try with Highest RunLevel (Admin)
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
 
-    $registered = $false
+$registered = $false
+try {
+    Write-Log &quot;Attempting to register Winget task with Highest privileges...&quot;
+    Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Highest -Force -ErrorAction Stop | Out-Null
+    $registered = $true
+    Write-Log &quot;Registered Daily Winget Auto-Update Task (Highest).&quot;
+} catch {
+    Write-Log &quot;Failed to register Winget task with Highest privileges: $_&quot;
+}
+
+# Attempt 2: Try with Limited (User) privileges if Admin failed (e.g., UAC issue)
+if (-not $registered) {
     try {
-        Write-Log &quot;Attempting to register Winget task with Highest privileges...&quot;
-        Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Highest -Force -ErrorAction Stop | Out-Null
+        Write-Log &quot;Attempting to register Winget task with Limited privileges...&quot;
+        Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Limited -Force -ErrorAction Stop | Out-Null
         $registered = $true
-        Write-Log &quot;Registered Daily Winget Auto-Update Task (Highest).&quot;
+        Write-Log &quot;Registered Daily Winget Auto-Update Task (Limited).&quot;
     } catch {
-        Write-Log &quot;Failed to register Winget task with Highest privileges: $_&quot;
+        Write-Log &quot;Failed to register Winget task (Limited): $_&quot;
+    }
+}
+
+# Clean up Copilot for user
+try {
+    Write-Log &quot;Removing Copilot for user...&quot;
+    $appx = Get-AppxPackage -Name &quot;Microsoft.Windows.Ai.Copilot.Provider&quot; -ErrorAction SilentlyContinue
+    if ($appx) {
+        Remove-AppxPackage -Package $appx.PackageFullName -ErrorAction Stop
     }
 
-    # Attempt 2: Try with Limited (User) privileges if Admin failed (e.g., UAC issue)
-    if (-not $registered) {
-        try {
-            Write-Log &quot;Attempting to register Winget task with Limited privileges...&quot;
-            Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Limited -Force -ErrorAction Stop | Out-Null
-            $registered = $true
-            Write-Log &quot;Registered Daily Winget Auto-Update Task (Limited).&quot;
-        } catch {
-            Write-Log &quot;Failed to register Winget task (Limited): $_&quot;
-        }
+    $copilotKey = &quot;HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot;
+    if (-not (Test-Path $copilotKey)) {
+        New-Item -Path $copilotKey -Force | Out-Null
     }
-} else {
-    Write-Log &quot;Winget not found. Skipping auto-update task registration.&quot;
+    Set-ItemProperty -Path $copilotKey -Name &quot;ShowCopilotButton&quot; -Value 0 -Type DWord -Force
+} catch {
+    Write-Log &quot;Failed to clean up Copilot: $_&quot;
 }
 
 Write-Log &quot;User Configuration Completed.&quot;
 
 # Self-Destruct: Cleanup Scripts
-# Wait 5 seconds then delete the script folder
-Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 5 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden
+# Wait 10 seconds then delete the script folder
+Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 10 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden
 </File>
 
 	</Extensions>
