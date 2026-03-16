@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-. "$PSScriptRoot\Lib\Helper.ps1"
+. "$PSScriptRoot\..\Lib\Helper.ps1"
 
 $packagesToRemove = @(
     'Microsoft.Microsoft3DViewer',

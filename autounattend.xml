@@ -236,7 +236,7 @@ function Download-File {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Network.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Network Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
@@ -268,7 +268,7 @@ if ($mediaRoot) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Nvidia.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 # OPTIONAL: Set a direct download URL for the Nvidia Driver here.
 $DownloadUrl = &quot;&quot;
@@ -309,7 +309,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-AMD.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 # OPTIONAL: Set a direct download URL for the AMD Chipset Driver here.
 $DownloadUrl = &quot;&quot;
@@ -347,7 +347,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Focusrite.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 # OPTIONAL: Set a direct download URL for the Focusrite Driver here.
 $DownloadUrl = &quot;&quot;
@@ -385,7 +385,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Runtimes.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Visual C++ Runtimes Installation...&quot;
 
@@ -450,7 +450,7 @@ Install-Runtime -Url $url86 -DestName &quot;vc_redist.x86.exe&quot; -LogName &qu
 </File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Chrome.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Starting Chrome Installation...&quot;
 
@@ -520,7 +520,7 @@ if ($setupPath) {
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Remove-Bloatware.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 $packagesToRemove = @(
     'Microsoft.Microsoft3DViewer',
@@ -643,7 +643,7 @@ Write-Log &quot;Debloating Process Completed.&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Configure-Privacy.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Applying Privacy and Registry Tweaks...&quot;
 
@@ -722,7 +722,7 @@ Set-ItemProperty -LiteralPath $key -Name 'ConfigureStartPins' -Value $json -Type
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Optimize-System.ps1">
 $ErrorActionPreference = 'Stop'
-. &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
+. &quot;$PSScriptRoot\..\Lib\Helper.ps1&quot;
 
 Write-Log &quot;Applying System Optimizations...&quot;
 

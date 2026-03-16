@@ -1,6 +1,6 @@
 
 $ErrorActionPreference = 'Stop'
-. "$PSScriptRoot\Lib\Helper.ps1"
+. "$PSScriptRoot\..\Lib\Helper.ps1"
 
 Write-Log "Applying Privacy and Registry Tweaks..."
 

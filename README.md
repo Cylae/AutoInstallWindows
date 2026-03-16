@@ -37,6 +37,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Smart Media Detection**: Filters for Fixed and Removable drives to prevent hangs on network/floppy drives.
     *   **Fail-Safe Execution**: Scripts include existence checks (e.g., RunOnce) to prevent errors on subsequent logins.
     *   **Advanced Error Handling**: Improved logging and registry handling for fail-safe execution.
+    *   **Relative Path Fixing**: The paths of `Helper.ps1` in the subdirectory scripts have been fixed.
 
 ## 📂 Folder Structure
 
@@ -177,6 +178,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
     *   **Téléchargements Sécurisés**: Supporte **TLS 1.2 et 1.3** pour des téléchargements sécurisés.
     *   **Détection Intelligente**: Filtre les lecteurs Fixes et Amovibles pour éviter les blocages.
     *   **Gestion d'Erreurs Avancée**: Journaux améliorés et gestion robuste du registre pour une exécution sans faille.
+    *   **Correction des Chemins Relatifs**: Les chemins de `Helper.ps1` dans les sous-répertoires ont été corrigés.
 
 ## 📂 Structure des Dossiers
 
