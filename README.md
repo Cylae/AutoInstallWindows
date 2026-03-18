@@ -12,7 +12,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 *   **🌑 Dark Mode**: Enables Dark Mode for System and Apps by default.
 *   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, **Meet Now** icon, etc.) and unnecessary Windows capabilities. **Preserves Notepad and Paint.**
 *   **💥 Self-Destruct**: Installation scripts automatically delete themselves after the first login to ensure a clean slate.
-*   **📜 Log Persistence**: Setup logs are preserved in `C:\Windows\Panther\Autounattend_Log.txt` for troubleshooting.
+*   **📜 Log Persistence**: Setup logs are preserved in `C:\Windows\Panther\Autounattend_Log.txt` for troubleshooting with millisecond precision.
 *   **🚀 System Optimization**:
     *   **High Performance**: Automatically sets the "High Performance" power plan.
     *   **Power User**: Enables "End Task" in Taskbar context menu, shows **Seconds in System Clock**, and Disables Transparency effects.
@@ -25,18 +25,18 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Smart Matching**: Finds installer executables (`*.exe`) automatically—no need to rename files to `setup.exe`.
     *   **Included Support**: Scripts for Network, Nvidia GPU, AMD Chipset, and Focusrite Audio drivers.
 *   **🌐 Robust App Installation**:
-    *   **Smart Connectivity**: Verified internet checks against multiple reliable hosts (Google, Cloudflare, Microsoft) with robust retry logic.
+    *   **Smart Connectivity**: Verified internet checks against multiple reliable hosts (Google, Cloudflare, Microsoft) with robust retry logic (5 attempts with 5-second delays).
     *   **Online First**: Prioritizes downloading the latest Chrome and Visual C++ Runtimes from the internet.
     *   **Offline Fallback**: Automatically checks for local installers if internet is unavailable.
     *   **Visual C++ Runtimes**: Automatically downloads and installs the latest VC++ 2015-2022 Redistributable (**x64 and x86**).
 *   **🔄 Transparent Auto-Updates**:
-    *   **Daily Updates**: Registers a hidden scheduled task to run `winget upgrade --all` daily (includes `source update`).
+    *   **Daily Updates**: Registers a hidden scheduled task to run `winget upgrade --all` daily (includes `source update`) unconditionally.
     *   **Silent**: Updates happen in the background without user intervention (configured with `--disable-interactivity`).
 *   **🛡️ Enhanced Robustness**:
     *   **Secure Downloads**: Supports **TLS 1.2 and 1.3** for secure file downloads.
     *   **Smart Media Detection**: Filters for Fixed and Removable drives to prevent hangs on network/floppy drives.
-    *   **Fail-Safe Execution**: Scripts include existence checks (e.g., RunOnce) to prevent errors on subsequent logins.
-    *   **Advanced Error Handling**: Improved logging and registry handling for fail-safe execution.
+    *   **Fail-Safe Execution**: Scripts include existence checks (e.g., RunOnce) and try-catch package cleanup to prevent errors on subsequent logins.
+    *   **Advanced Error Handling**: Improved logging (`Start-Process` proper error redirection) and registry handling for fail-safe execution.
 
 ## 📂 Folder Structure
 
@@ -153,7 +153,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **🌑 Mode Sombre**: Active le mode sombre pour le système et les applications par défaut.
 *   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Jeux**, **YourPhone**, **Meet Now**, etc.) et les fonctionnalités Windows inutiles. **Préserve Notepad et Paint.**
 *   **💥 Auto-destruction**: Les scripts d'installation se suppriment automatiquement après la première connexion pour garantir un état propre.
-*   **📜 Journaux**: Les journaux d'installation sont conservés dans `C:\Windows\Panther\Autounattend_Log.txt` pour le dépannage.
+*   **📜 Journaux**: Les journaux d'installation sont conservés dans `C:\Windows\Panther\Autounattend_Log.txt` pour le dépannage avec une précision en millisecondes.
 *   **🚀 Optimisation Système**:
     *   **Haute Performance**: Active automatiquement le plan d'alimentation "Haute Performance".
     *   **Utilisateur Avancé**: Active "Fin de tâche" dans le menu contextuel, affiche les **Secondes dans l'horloge**, et désactive la transparence.
@@ -166,17 +166,17 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
     *   **Recherche Intelligente**: Trouve automatiquement les exécutables (`*.exe`)—pas besoin de renommer en `setup.exe`.
     *   **Support Inclus**: Scripts pour Réseau, GPU Nvidia, Chipset AMD et Audio Focusrite.
 *   **🌐 Installation d'Applications Robuste**:
-    *   **Connectivité Intelligente**: Vérifie la connexion internet via plusieurs hôtes fiables (Google, Cloudflare, Microsoft).
+    *   **Connectivité Intelligente**: Vérifie la connexion internet via plusieurs hôtes fiables (Google, Cloudflare, Microsoft) avec logique de nouvelle tentative (5 tentatives avec délais de 5 secondes).
     *   **En Ligne en Priorité**: Privilégie le téléchargement du dernier installateur Chrome et Visual C++ depuis Internet.
     *   **Repli Hors-ligne**: Vérifie automatiquement les installateurs locaux si Internet n'est pas disponible.
     *   **Runtimes Visual C++**: Télécharge et installe automatiquement les derniers Runtimes VC++ 2015-2022 (**x64 et x86**).
 *   **🔄 Mises à Jour Automatiques Transparentes**:
-    *   **Quotidien**: Enregistre une tâche planifiée masquée pour exécuter `winget upgrade --all` chaque jour.
+    *   **Quotidien**: Enregistre inconditionnellement une tâche planifiée masquée pour exécuter `winget upgrade --all` chaque jour.
     *   **Silencieux**: Les mises à jour se font en arrière-plan sans intervention de l'utilisateur (configuré avec `--disable-interactivity`).
 *   **🛡️ Robustesse Améliorée**:
     *   **Téléchargements Sécurisés**: Supporte **TLS 1.2 et 1.3** pour des téléchargements sécurisés.
     *   **Détection Intelligente**: Filtre les lecteurs Fixes et Amovibles pour éviter les blocages.
-    *   **Gestion d'Erreurs Avancée**: Journaux améliorés et gestion robuste du registre pour une exécution sans faille.
+    *   **Gestion d'Erreurs Avancée**: Journaux améliorés (redirection correcte des erreurs `Start-Process`), vérifications d'existence et nettoyage try-catch des packages pour une exécution sans faille.
 
 ## 📂 Structure des Dossiers
 
