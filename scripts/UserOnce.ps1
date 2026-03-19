@@ -40,5 +40,5 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
 Write-Log "User Configuration Completed."
 
 # Self-Destruct: Cleanup Scripts
-# Wait 5 seconds then delete the script folder
-Start-Process -FilePath "cmd.exe" -ArgumentList "/c timeout /t 5 /nobreak > NUL & rmdir /s /q `"$env:SystemRoot\Setup\Scripts`"" -WindowStyle Hidden
+# Wait 10 seconds then delete the script folder
+Start-Process -FilePath "cmd.exe" -ArgumentList @("/c", "timeout", "/t", "10", "/nobreak", ">", "NUL", "&", "rmdir", "/s", "/q", "`"$env:SystemRoot\Setup\Scripts`"") -WindowStyle Hidden

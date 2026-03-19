@@ -36,7 +36,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Secure Downloads**: Supports **TLS 1.2 and 1.3** for secure file downloads.
     *   **Smart Media Detection**: Filters for Fixed and Removable drives to prevent hangs on network/floppy drives.
     *   **Fail-Safe Execution**: Scripts include existence checks (e.g., RunOnce) to prevent errors on subsequent logins.
-    *   **Advanced Error Handling**: Improved logging and registry handling for fail-safe execution.
+    *   **Advanced Error Handling**: Improved logging with millisecond precision, prevention of process deadlocks via standard error redirection, and an increased 10-second self-destruct timeout for cleaner script termination.
 
 ## 📂 Folder Structure
 
@@ -176,7 +176,8 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **🛡️ Robustesse Améliorée**:
     *   **Téléchargements Sécurisés**: Supporte **TLS 1.2 et 1.3** pour des téléchargements sécurisés.
     *   **Détection Intelligente**: Filtre les lecteurs Fixes et Amovibles pour éviter les blocages.
-    *   **Gestion d'Erreurs Avancée**: Journaux améliorés et gestion robuste du registre pour une exécution sans faille.
+    *   **Exécution Sécurisée**: Les scripts incluent des vérifications d'existence (par ex. RunOnce) pour éviter les erreurs lors des connexions suivantes.
+    *   **Gestion d'Erreurs Avancée**: Journaux améliorés avec précision à la milliseconde, prévention des blocages de processus via la redirection des erreurs standards, et délai d'autodestruction augmenté à 10 secondes pour une fin de script plus propre.
 
 ## 📂 Structure des Dossiers
 
