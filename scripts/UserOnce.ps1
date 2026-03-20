@@ -7,7 +7,7 @@ Write-Log "Configuring User Account..."
 if (Get-Command winget -ErrorAction SilentlyContinue) {
     $taskName = "DailySoftwareUpdate"
     $wingetCmd = "winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements"
-    $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-WindowStyle Hidden -Command `\"$wingetCmd`\""
+    $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-WindowStyle Hidden -Command `"$wingetCmd`""
     $trigger = New-ScheduledTaskTrigger -Daily -At 13:00
     # Attempt 1: Try with Highest RunLevel (Admin)
     $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
@@ -40,5 +40,5 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
 Write-Log "User Configuration Completed."
 
 # Self-Destruct: Cleanup Scripts
-# Wait 5 seconds then delete the script folder
-Start-Process -FilePath "cmd.exe" -ArgumentList "/c timeout /t 5 /nobreak > NUL & rmdir /s /q `"$env:SystemRoot\Setup\Scripts`"" -WindowStyle Hidden
+# Wait 10 seconds then delete the script folder
+Start-Process -FilePath "cmd.exe" -ArgumentList "/c timeout /t 10 /nobreak > NUL & rmdir /s /q `"$env:SystemRoot\Setup\Scripts`"" -WindowStyle Hidden

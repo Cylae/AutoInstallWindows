@@ -1,6 +1,6 @@
 
 $ErrorActionPreference = 'Stop'
-. "$PSScriptRoot\Lib\Helper.ps1"
+. "$PSScriptRoot\..\Lib\Helper.ps1"
 
 # OPTIONAL: Set a direct download URL for the AMD Chipset Driver here.
 $DownloadUrl = ""
@@ -26,7 +26,7 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # /S: Silent
-        Start-Process -FilePath $setupPath -ArgumentList "/S", "-noreboot" -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\amd_install.log"
+        Start-Process -FilePath $setupPath -ArgumentList @("/S", "-noreboot") -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\amd_install.log" -RedirectStandardError "$env:TEMP\amd_install_err.log"
         Write-Log "AMD Chipset driver installation completed."
     }
     catch {

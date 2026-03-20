@@ -71,7 +71,11 @@ USB_ROOT/
 
 ## 🛠️ For Developers
 
-This repository uses a build system to generate `autounattend.xml` from modular PowerShell scripts. `build.py` automatically injects scripts, creates `<File>` blocks if they are missing, and removes empty XML blocks for a cleaner file.
+This repository uses a refactored Python build system (`build.py` utilizing `pathlib` and `logging`) to generate `autounattend.xml` from modular PowerShell scripts. The build script automatically injects code, creates `<File>` blocks if they are missing, and removes empty XML blocks for a cleaner file.
+
+**Recent Enhancements:**
+*   **Millisecond Precision Logging**: Log timestamps are now generated with millisecond accuracy (`yyyy-MM-dd HH:mm:ss.fff`) to aid in debugging complex race conditions.
+*   **Improved Installer Robustness**: Installation scripts strictly use arrays for argument passing and comprehensively redirect both standard error (`stderr`) and standard output (`stdout`) to individual log files in `%TEMP%`, significantly reducing the chance of background process deadlocks.
 
 *   **Scripts Location**: All PowerShell scripts are located in the `scripts/` directory.
 *   **Modify**: Edit the `.ps1` files in `scripts/` to make changes.
@@ -211,7 +215,11 @@ RACINE_USB/
 
 ## 🛠️ Pour les Développeurs
 
-Ce dépôt utilise un système de build pour générer `autounattend.xml` à partir de scripts PowerShell modulaires. `build.py` injecte automatiquement les scripts, crée des blocs `<File>` s'ils sont manquants et supprime les blocs XML vides pour un fichier plus propre.
+Ce dépôt utilise un système de build refactorisé en Python (`build.py` utilisant `pathlib` et `logging`) pour générer `autounattend.xml` à partir de scripts PowerShell modulaires. Le script injecte automatiquement le code, crée des blocs `<File>` s'ils sont manquants et supprime les blocs XML vides pour un fichier plus propre.
+
+**Améliorations Récentes:**
+*   **Journalisation à la Milliseconde** : Les horodatages des journaux sont désormais générés avec une précision à la milliseconde (`yyyy-MM-dd HH:mm:ss.fff`) pour faciliter le débogage.
+*   **Robustesse Améliorée des Installateurs** : Les scripts d'installation utilisent strictement des tableaux pour passer les arguments et redirigent de manière complète les erreurs (`stderr`) ainsi que la sortie standard (`stdout`) vers des fichiers de log individuels dans `%TEMP%`, réduisant significativement les risques de blocages des processus en arrière-plan.
 
 *   **Emplacement des Scripts**: Tous les scripts PowerShell se trouvent dans le répertoire `scripts/`.
 *   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications.
