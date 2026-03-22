@@ -556,7 +556,10 @@ $packagesToRemove = @(
     'Microsoft.WindowsSoundRecorder',
     'Microsoft.Wallet',
     'Microsoft.BingWeather',
+    'Microsoft.BingFinance',
+    'Microsoft.BingSports',
     'Microsoft.ZuneVideo',
+    'Microsoft.ZuneMusic',
     'MicrosoftWindows.Client.WebExperience',
     'Microsoft.Windows.Ai.Copilot.Provider',
     'Microsoft.YourPhone',
@@ -652,6 +655,12 @@ reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; 
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; /v DoNotShowFeedbackNotifications /t REG_DWORD /d 1 /f
 reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection&quot; /v AllowTelemetry /t REG_DWORD /d 0 /f
 
+# Disable Location Tracking
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors&quot; /v DisableLocation /t REG_DWORD /d 1 /f
+
+# Disable Delivery Optimization
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization&quot; /v DODownloadMode /t REG_DWORD /d 0 /f
+
 # Disable Windows Error Reporting
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting&quot; /v Disabled /t REG_DWORD /d 1 /f
 
@@ -726,12 +735,13 @@ $ErrorActionPreference = 'Stop'
 
 Write-Log &quot;Applying System Optimizations...&quot;
 
-# 1. Disable Hibernation (Saves disk space)
+# 1. Disable Hibernation and Fast Startup
 try {
     powercfg -h off
-    Write-Log &quot;Hibernation disabled.&quot;
+    reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power&quot; /v HiberbootEnabled /t REG_DWORD /d 0 /f
+    Write-Log &quot;Hibernation and Fast Startup disabled.&quot;
 } catch {
-    Write-Log &quot;Failed to disable hibernation: $_&quot;
+    Write-Log &quot;Failed to disable hibernation or fast startup: $_&quot;
 }
 
 # 2. Set High Performance Power Plan
@@ -892,6 +902,11 @@ try {
     reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\Keyboard Response&quot; /v Flags /t REG_SZ /d &quot;122&quot; /f
     reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\ToggleKeys&quot; /v Flags /t REG_SZ /d &quot;58&quot; /f
 
+    # Disable Mouse Acceleration (Enhance Pointer Precision)
+    reg.exe add &quot;$defaultUserHive\Control Panel\Mouse&quot; /v MouseSpeed /t REG_SZ /d &quot;0&quot; /f
+    reg.exe add &quot;$defaultUserHive\Control Panel\Mouse&quot; /v MouseThreshold1 /t REG_SZ /d &quot;0&quot; /f
+    reg.exe add &quot;$defaultUserHive\Control Panel\Mouse&quot; /v MouseThreshold2 /t REG_SZ /d &quot;0&quot; /f
+
     # Disable Typing Insights and Tailored Experiences
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Input\TIPC&quot; /v Enabled /t REG_DWORD /d 0 /f
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Privacy&quot; /v TailoredExperiencesWithDiagnosticDataEnabled /t REG_DWORD /d 0 /f
@@ -986,7 +1001,7 @@ Write-Log &quot;User Configuration Completed.&quot;
 
 # Self-Destruct: Cleanup Scripts
 # Wait 5 seconds then delete the script folder
-Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 5 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden
+Start-Process -FilePath &quot;powershell.exe&quot; -ArgumentList &quot;-WindowStyle Hidden -Command `&quot;Start-Sleep -Seconds 5; Remove-Item -Path '$env:SystemRoot\Setup\Scripts' -Recurse -Force`&quot;&quot; -WindowStyle Hidden
 </File>
 
 	</Extensions>

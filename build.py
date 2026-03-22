@@ -163,7 +163,7 @@ def update_autounattend(ssid=None, password=None):
     passes_to_remove = ['offlineServicing', 'generalize', 'auditSystem', 'auditUser']
     for pass_name in passes_to_remove:
         # Match e.g. `<settings pass="offlineServicing"></settings>` on a line and remove it with leading whitespace
-        empty_pass_pattern = r'^[ \t]*<settings pass="' + re.escape(pass_name) + r'"></settings>[\r\n]*'
+        empty_pass_pattern = r'^[ \t]*<settings pass="' + re.escape(pass_name) + r'">[\s]*</settings>[\r\n]*'
         content = re.sub(empty_pass_pattern, '', content, flags=re.MULTILINE)
 
     with open(xml_path, 'w', encoding='utf-8') as f:
