@@ -44,7 +44,10 @@ $packagesToRemove = @(
     'Microsoft.XboxGamingOverlay',
     'Microsoft.XboxIdentityProvider',
     'Microsoft.XboxSpeechToTextOverlay',
-    'Microsoft.Windows.ParentalControls'
+    'Microsoft.Windows.ParentalControls',
+    'Microsoft.BingFinance',
+    'Microsoft.BingSports',
+    'Microsoft.ZuneMusic'
 )
 
 $packagesToKeep = @(

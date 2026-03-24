@@ -248,7 +248,7 @@ if ($mediaRoot) {
         # Check if there are any INF files to avoid pnputil error
         if (Get-ChildItem -Path $driverPath -Filter &quot;*.inf&quot; -Recurse) {
             try {
-                $pnputilArgs = @(&quot;/add-driver&quot;, &quot;$driverPath\*.inf&quot;, &quot;/subdirs&quot;, &quot;/install&quot;)
+                $pnputilArgs = @(&quot;/add-driver&quot;, &quot;`&quot;$driverPath\*.inf`&quot;&quot;, &quot;/subdirs&quot;, &quot;/install&quot;)
                 # Redirect standard output and error to logs for debugging
                 Start-Process -FilePath &quot;pnputil.exe&quot; -ArgumentList $pnputilArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\pnputil_network.log&quot; -RedirectStandardError &quot;$env:TEMP\pnputil_network_err.log&quot;
                 Write-Log &quot;Network driver installation completed.&quot;
@@ -499,7 +499,7 @@ if ($setupPath) {
         if ($setupPath -match '\.msi$') {
             # MSI Installation
             # Note: msiexec requires strict quoting for paths with spaces
-            $msiArgs = @(&quot;/i&quot;, &quot;$setupPath&quot;, &quot;/qn&quot;, &quot;/norestart&quot;)
+            $msiArgs = @(&quot;/i&quot;, &quot;`&quot;$setupPath`&quot;&quot;, &quot;/qn&quot;, &quot;/norestart&quot;)
             Start-Process -FilePath &quot;msiexec.exe&quot; -ArgumentList $msiArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
         } else {
             # EXE Installation
@@ -565,7 +565,10 @@ $packagesToRemove = @(
     'Microsoft.XboxGamingOverlay',
     'Microsoft.XboxIdentityProvider',
     'Microsoft.XboxSpeechToTextOverlay',
-    'Microsoft.Windows.ParentalControls'
+    'Microsoft.Windows.ParentalControls',
+    'Microsoft.BingFinance',
+    'Microsoft.BingSports',
+    'Microsoft.ZuneMusic'
 )
 
 $packagesToKeep = @(
@@ -682,6 +685,13 @@ reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explor
 # Disable Online Tips and Advertising ID
 reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; /v AllowOnlineTips /t REG_DWORD /d 0 /f
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot; /v DisabledByGroupPolicy /t REG_DWORD /d 1 /f
+
+# Disable Location Tracking
+reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location&quot; /v Value /t REG_SZ /d &quot;Deny&quot; /f
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors&quot; /v DisableLocation /t REG_DWORD /d 1 /f
+
+# Disable Delivery Optimization (P2P updates)
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization&quot; /v DODownloadMode /t REG_DWORD /d 0 /f
 
 # Disable Edge First Run and Bloat
 reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v HideFirstRunExperience /t REG_DWORD /d 1 /f
