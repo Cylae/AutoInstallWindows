@@ -84,7 +84,7 @@ try {
     # Run UserOnce on first login (if script exists)
     # We wrap in cmd /c "if exist ..." to prevent errors for subsequent users after self-destruct
     $uScript = "C:\Windows\Setup\Scripts\UserOnce.ps1"
-    $runOnceCmd = "cmd /c `"if exist \`"$uScript\`" powershell.exe -WindowStyle Normal -ExecutionPolicy Unrestricted -NoProfile -File \`"$uScript\`"`""
+    $runOnceCmd = "cmd /c `"if exist \`"$uScript\`" powershell.exe -WindowStyle Hidden -ExecutionPolicy Unrestricted -NoProfile -File \`"$uScript\`"`""
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce" /v "UnattendedSetup" /t REG_SZ /d $runOnceCmd /f
 }
 catch {

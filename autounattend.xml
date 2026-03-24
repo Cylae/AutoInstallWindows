@@ -157,7 +157,7 @@ function Write-Log {
         New-Item -Path $dir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
     }
 
-    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss&quot;
+    $timestamp = Get-Date -Format &quot;yyyy-MM-dd HH:mm:ss.fff&quot;
     $logEntry = &quot;[$timestamp] $Message&quot;
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
 }
@@ -203,7 +203,7 @@ function Download-File {
         return $false
     }
 
-    $downloadRetries = 3
+    $downloadRetries = 5
     $dRetry = 0
     $downloaded = $false
 
@@ -227,7 +227,7 @@ function Download-File {
         } catch {
             $dRetry++
             Write-Log &quot;Failed to download $Name (Attempt $dRetry/$downloadRetries): $_&quot;
-            Start-Sleep -Seconds 2
+            Start-Sleep -Seconds 5
         }
     }
 
@@ -248,7 +248,7 @@ if ($mediaRoot) {
         # Check if there are any INF files to avoid pnputil error
         if (Get-ChildItem -Path $driverPath -Filter &quot;*.inf&quot; -Recurse) {
             try {
-                $pnputilArgs = &quot;/add-driver `&quot;$driverPath\*.inf`&quot; /subdirs /install&quot;
+                $pnputilArgs = @(&quot;/add-driver&quot;, &quot;$driverPath\*.inf&quot;, &quot;/subdirs&quot;, &quot;/install&quot;)
                 # Redirect standard output and error to logs for debugging
                 Start-Process -FilePath &quot;pnputil.exe&quot; -ArgumentList $pnputilArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\pnputil_network.log&quot; -RedirectStandardError &quot;$env:TEMP\pnputil_network_err.log&quot;
                 Write-Log &quot;Network driver installation completed.&quot;
@@ -685,8 +685,8 @@ reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot;
 
 # Disable Edge First Run and Bloat
 reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v HideFirstRunExperience /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge\Recommended&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
+reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
 
 # Disable BitLocker Automatic Device Encryption
 reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\BitLocker&quot; /v &quot;PreventDeviceEncryption&quot; /t REG_DWORD /d 1 /f
@@ -899,7 +899,7 @@ try {
     # Run UserOnce on first login (if script exists)
     # We wrap in cmd /c &quot;if exist ...&quot; to prevent errors for subsequent users after self-destruct
     $uScript = &quot;C:\Windows\Setup\Scripts\UserOnce.ps1&quot;
-    $runOnceCmd = &quot;cmd /c `&quot;if exist \`&quot;$uScript\`&quot; powershell.exe -WindowStyle Normal -ExecutionPolicy Unrestricted -NoProfile -File \`&quot;$uScript\`&quot;`&quot;&quot;
+    $runOnceCmd = &quot;cmd /c `&quot;if exist \`&quot;$uScript\`&quot; powershell.exe -WindowStyle Hidden -ExecutionPolicy Unrestricted -NoProfile -File \`&quot;$uScript\`&quot;`&quot;&quot;
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce&quot; /v &quot;UnattendedSetup&quot; /t REG_SZ /d $runOnceCmd /f
 }
 catch {
@@ -952,7 +952,7 @@ Write-Log &quot;Configuring User Account...&quot;
 if (Get-Command winget -ErrorAction SilentlyContinue) {
     $taskName = &quot;DailySoftwareUpdate&quot;
     $wingetCmd = &quot;winget source update; winget upgrade --all --include-unknown --silent --disable-interactivity --accept-source-agreements --accept-package-agreements&quot;
-    $action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `\&quot;$wingetCmd`\&quot;&quot;
+    $action = New-ScheduledTaskAction -Execute &quot;powershell.exe&quot; -Argument &quot;-WindowStyle Hidden -Command `&quot;$wingetCmd`&quot;&quot;
     $trigger = New-ScheduledTaskTrigger -Daily -At 13:00
     # Attempt 1: Try with Highest RunLevel (Admin)
     $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -Hidden -RunOnlyIfNetworkAvailable
@@ -986,7 +986,7 @@ Write-Log &quot;User Configuration Completed.&quot;
 
 # Self-Destruct: Cleanup Scripts
 # Wait 5 seconds then delete the script folder
-Start-Process -FilePath &quot;cmd.exe&quot; -ArgumentList &quot;/c timeout /t 5 /nobreak &gt; NUL &amp; rmdir /s /q `&quot;$env:SystemRoot\Setup\Scripts`&quot;&quot; -WindowStyle Hidden
+Start-Process -FilePath &quot;powershell.exe&quot; -ArgumentList &quot;-WindowStyle Hidden -Command `&quot;Start-Sleep -Seconds 5; Remove-Item -Path '$env:SystemRoot\Setup\Scripts' -Recurse -Force`&quot;&quot; -WindowStyle Hidden
 </File>
 
 	</Extensions>
