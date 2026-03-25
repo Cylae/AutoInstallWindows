@@ -8,7 +8,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 
 *   **⚡ Zero-Interruption Setup**: All software (Chrome, Drivers, etc.) is installed during the `Specialize` pass, *before* the user logs in. No popups, no waiting at the desktop.
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
-*   **🛡️ Privacy Hardened**: Disables Telemetry, **Recall** (AI Screenshot), Copilot, Bing Search, Cortana, Advertising ID, **Search Highlights**, **Widgets**, **File Explorer Ads**, **Tips/Suggestions**, **Error Reporting**, **Shared Experiences**, and **Typing Insights**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
+*   **🛡️ Privacy Hardened**: Disables Telemetry, **Recall** (AI Screenshot), Copilot, Bing Search, Cortana, Advertising ID, **Search Highlights**, **Widgets**, **File Explorer Ads**, **Tips/Suggestions**, **Error Reporting**, **Location Tracking**, **Delivery Optimization (P2P Updates)**, **Shared Experiences**, and **Typing Insights**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
 *   **🌑 Dark Mode**: Enables Dark Mode for System and Apps by default.
 *   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, **Meet Now** icon, etc.) and unnecessary Windows capabilities. **Preserves Notepad and Paint.**
 *   **💥 Self-Destruct**: Installation scripts automatically delete themselves after the first login to ensure a clean slate.
@@ -16,9 +16,9 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 *   **🚀 System Optimization**:
     *   **High Performance**: Automatically sets the "High Performance" power plan.
     *   **Power User**: Enables "End Task" in Taskbar context menu, shows **Seconds in System Clock**, and Disables Transparency effects.
-    *   **User Experience**: Disables "Finish setting up your device", "Lock Screen Tips", "Welcome Experience", "Sync Provider Notifications", **Widgets (News and Interests)**, **Chat/Teams** icon, and prevents accidental **Accessibility Shortcuts** (Sticky Keys).
+    *   **User Experience**: Disables "Finish setting up your device", "Lock Screen Tips", "Welcome Experience", "Sync Provider Notifications", **Widgets (News and Interests)**, **Chat/Teams** icon, prevents accidental **Accessibility Shortcuts** (Sticky Keys), and disables **Mouse Acceleration**.
     *   **Space Saving**: Disables Hibernation to save disk space (`hiberfil.sys`).
-    *   **Performance**: Disables Last Access Timestamp updates and **App Launch Tracking** to improve disk performance.
+    *   **Performance**: Disables **Fast Startup** to prevent hybrid boot issues, disables Last Access Timestamp updates, and disables **App Launch Tracking** to improve disk performance.
     *   **Gaming**: Disables Game DVR/Bar for better gaming performance.
 *   **🔧 Intelligent Driver Installation**:
     *   **Auto-Detection**: Automatically scans all drives for a `drivers` folder.
@@ -149,7 +149,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 
 *   **⚡ Installation Zéro-Interruption**: Tous les logiciels (Chrome, Pilotes, etc.) sont installés durant la phase `Specialize`, **avant** la connexion de l'utilisateur. Aucun popup, aucune attente sur le bureau.
 *   **🤫 Totalement Silencieux**: Tous les scripts sont optimisés pour masquer les sorties et fenêtres. Vous ne verrez rien avant l'écran "Bienvenue".
-*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, **Recall** (Capture d'écran IA), Copilot, la recherche Bing, Cortana, l'ID publicitaire, **Widgets**, **Publicités Explorateur**, **Astuces**, **Rapports d'erreurs**, **Expériences partagées** et **Insights de saisie**. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
+*   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, **Recall** (Capture d'écran IA), Copilot, la recherche Bing, Cortana, l'ID publicitaire, **Widgets**, **Publicités Explorateur**, **Astuces**, **Rapports d'erreurs**, le **Suivi de localisation**, l'**Optimisation de livraison (Mises à jour P2P)**, **Expériences partagées** et **Insights de saisie**. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
 *   **🌑 Mode Sombre**: Active le mode sombre pour le système et les applications par défaut.
 *   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Jeux**, **YourPhone**, **Meet Now**, etc.) et les fonctionnalités Windows inutiles. **Préserve Notepad et Paint.**
 *   **💥 Auto-destruction**: Les scripts d'installation se suppriment automatiquement après la première connexion pour garantir un état propre.
@@ -157,9 +157,9 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **🚀 Optimisation Système**:
     *   **Haute Performance**: Active automatiquement le plan d'alimentation "Haute Performance".
     *   **Utilisateur Avancé**: Active "Fin de tâche" dans le menu contextuel, affiche les **Secondes dans l'horloge**, et désactive la transparence.
-    *   **Expérience Utilisateur**: Désactive "Terminer la configuration de votre appareil", les astuces de l'écran de verrouillage, l'expérience de bienvenue, **Widgets (Actualités)**, l'icône **Chat/Teams** et empêche l'activation accidentelle des **Raccourcis d'accessibilité** (Touches rémanentes).
+    *   **Expérience Utilisateur**: Désactive "Terminer la configuration de votre appareil", les astuces de l'écran de verrouillage, l'expérience de bienvenue, **Widgets (Actualités)**, l'icône **Chat/Teams**, empêche l'activation accidentelle des **Raccourcis d'accessibilité** (Touches rémanentes), et désactive l'**Accélération de la souris**.
     *   **Gain d'Espace**: Désactive l'hibernation pour économiser de l'espace disque (`hiberfil.sys`).
-    *   **Performance**: Désactive la mise à jour de la date de dernier accès et le **Suivi de lancement d'applications** pour améliorer les performances disque.
+    *   **Performance**: Désactive le **Démarrage rapide** pour éviter les problèmes de démarrage hybride, désactive la mise à jour de la date de dernier accès et le **Suivi de lancement d'applications** pour améliorer les performances disque.
     *   **Jeu**: Désactive Game DVR/Bar pour de meilleures performances en jeu.
 *   **🔧 Installation Intelligente des Pilotes**:
     *   **Auto-Détection**: Scanne tous les lecteurs pour trouver le dossier `drivers`.

@@ -77,6 +77,11 @@ try {
     reg.exe add "$defaultUserHive\Control Panel\Accessibility\Keyboard Response" /v Flags /t REG_SZ /d "122" /f
     reg.exe add "$defaultUserHive\Control Panel\Accessibility\ToggleKeys" /v Flags /t REG_SZ /d "58" /f
 
+    # Disable Mouse Acceleration (Enhance Pointer Precision)
+    reg.exe add "$defaultUserHive\Control Panel\Mouse" /v MouseSpeed /t REG_SZ /d "0" /f
+    reg.exe add "$defaultUserHive\Control Panel\Mouse" /v MouseThreshold1 /t REG_SZ /d "0" /f
+    reg.exe add "$defaultUserHive\Control Panel\Mouse" /v MouseThreshold2 /t REG_SZ /d "0" /f
+
     # Disable Typing Insights and Tailored Experiences
     reg.exe add "$defaultUserHive\Software\Microsoft\Input\TIPC" /v Enabled /t REG_DWORD /d 0 /f
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Privacy" /v TailoredExperiencesWithDiagnosticDataEnabled /t REG_DWORD /d 0 /f

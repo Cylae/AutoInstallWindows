@@ -655,6 +655,12 @@ reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCo
 # Disable Windows Error Reporting
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting&quot; /v Disabled /t REG_DWORD /d 1 /f
 
+# Disable Location Tracking
+reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location&quot; /v Value /t REG_SZ /d &quot;Deny&quot; /f
+
+# Disable Delivery Optimization (P2P Updates)
+reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization&quot; /v DODownloadMode /t REG_DWORD /d 0 /f
+
 # Disable Shared Experiences / Activity History
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v EnableActivityFeed /t REG_DWORD /d 0 /f
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v PublishUserActivities /t REG_DWORD /d 0 /f
@@ -704,7 +710,7 @@ foreach ($service in $services) {
             Stop-Service -Name $service -Force -ErrorAction SilentlyContinue
             Set-ItemProperty -Path &quot;Registry::HKLM\SYSTEM\CurrentControlSet\Services\$service&quot; -Name &quot;Start&quot; -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
         } catch {
-            Write-Log &quot;Failed to disable service $service: $_&quot;
+                Write-Log &quot;Failed to disable service $($service): $_&quot;
         }
     }
 }
@@ -756,6 +762,9 @@ try {
 # 5. Disable App Launch Tracking
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\EdgeUI&quot; /v DisableMFUTracking /t REG_DWORD /d 1 /f
 reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; /v NoInstrumentation /t REG_DWORD /d 1 /f
+
+# 6. Disable Fast Startup
+reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power&quot; /v HiberbootEnabled /t REG_DWORD /d 0 /f
 
 Write-Log &quot;System Optimizations Applied.&quot;
 </File>
@@ -891,6 +900,11 @@ try {
     reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\StickyKeys&quot; /v Flags /t REG_SZ /d &quot;506&quot; /f
     reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\Keyboard Response&quot; /v Flags /t REG_SZ /d &quot;122&quot; /f
     reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\ToggleKeys&quot; /v Flags /t REG_SZ /d &quot;58&quot; /f
+
+    # Disable Mouse Acceleration (Enhance Pointer Precision)
+    reg.exe add &quot;$defaultUserHive\Control Panel\Mouse&quot; /v MouseSpeed /t REG_SZ /d &quot;0&quot; /f
+    reg.exe add &quot;$defaultUserHive\Control Panel\Mouse&quot; /v MouseThreshold1 /t REG_SZ /d &quot;0&quot; /f
+    reg.exe add &quot;$defaultUserHive\Control Panel\Mouse&quot; /v MouseThreshold2 /t REG_SZ /d &quot;0&quot; /f
 
     # Disable Typing Insights and Tailored Experiences
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Input\TIPC&quot; /v Enabled /t REG_DWORD /d 0 /f

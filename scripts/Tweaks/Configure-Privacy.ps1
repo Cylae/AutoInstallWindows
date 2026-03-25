@@ -12,6 +12,12 @@ reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollect
 # Disable Windows Error Reporting
 reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" /v Disabled /t REG_DWORD /d 1 /f
 
+# Disable Location Tracking
+reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" /v Value /t REG_SZ /d "Deny" /f
+
+# Disable Delivery Optimization (P2P Updates)
+reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization" /v DODownloadMode /t REG_DWORD /d 0 /f
+
 # Disable Shared Experiences / Activity History
 reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v EnableActivityFeed /t REG_DWORD /d 0 /f
 reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v PublishUserActivities /t REG_DWORD /d 0 /f
@@ -61,7 +67,7 @@ foreach ($service in $services) {
             Stop-Service -Name $service -Force -ErrorAction SilentlyContinue
             Set-ItemProperty -Path "Registry::HKLM\SYSTEM\CurrentControlSet\Services\$service" -Name "Start" -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
         } catch {
-            Write-Log "Failed to disable service $service: $_"
+                Write-Log "Failed to disable service $($service): $_"
         }
     }
 }
