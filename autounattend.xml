@@ -248,7 +248,7 @@ if ($mediaRoot) {
         # Check if there are any INF files to avoid pnputil error
         if (Get-ChildItem -Path $driverPath -Filter &quot;*.inf&quot; -Recurse) {
             try {
-                $pnputilArgs = @(&quot;/add-driver&quot;, &quot;$driverPath\*.inf&quot;, &quot;/subdirs&quot;, &quot;/install&quot;)
+                $pnputilArgs = @(&quot;/add-driver&quot;, &quot;`&quot;$driverPath\*.inf`&quot;&quot;, &quot;/subdirs&quot;, &quot;/install&quot;)
                 # Redirect standard output and error to logs for debugging
                 Start-Process -FilePath &quot;pnputil.exe&quot; -ArgumentList $pnputilArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\pnputil_network.log&quot; -RedirectStandardError &quot;$env:TEMP\pnputil_network_err.log&quot;
                 Write-Log &quot;Network driver installation completed.&quot;
@@ -297,7 +297,7 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # -s: Silent, -n: No splash, -f: Force, -noreboot: No reboot
-        Start-Process -FilePath $setupPath -ArgumentList @('-s', '-n', '-f', '-noreboot') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\nvidia_install.log&quot;
+        Start-Process -FilePath $setupPath -ArgumentList @('-s', '-n', '-f', '-noreboot') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\nvidia_install.log&quot; -RedirectStandardError &quot;$env:TEMP\nvidia_install_err.log&quot;
         Write-Log &quot;Nvidia driver installation completed.&quot;
     }
     catch {
@@ -335,7 +335,7 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # /S: Silent
-        Start-Process -FilePath $setupPath -ArgumentList &quot;/S&quot;, &quot;-noreboot&quot; -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\amd_install.log&quot;
+        Start-Process -FilePath $setupPath -ArgumentList @(&quot;/S&quot;, &quot;-noreboot&quot;) -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\amd_install.log&quot; -RedirectStandardError &quot;$env:TEMP\amd_install_err.log&quot;
         Write-Log &quot;AMD Chipset driver installation completed.&quot;
     }
     catch {
@@ -373,7 +373,7 @@ if ($setupPath) {
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # /VERYSILENT: No UI, /SUPPRESSMSGBOXES: No popups
-        Start-Process -FilePath $setupPath -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\focusrite_install.log&quot;
+        Start-Process -FilePath $setupPath -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\focusrite_install.log&quot; -RedirectStandardError &quot;$env:TEMP\focusrite_install_err.log&quot;
         Write-Log &quot;Focusrite driver installation completed.&quot;
     }
     catch {
@@ -431,10 +431,10 @@ function Install-Runtime {
         Write-Log &quot;Installing $LogName from $setupPath...&quot;
         try {
             Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
-            Start-Process -FilePath $setupPath -ArgumentList @(&quot;/install&quot;, &quot;/quiet&quot;, &quot;/norestart&quot;) -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\${DestName}_install.log&quot;
+            Start-Process -FilePath $setupPath -ArgumentList @(&quot;/install&quot;, &quot;/quiet&quot;, &quot;/norestart&quot;) -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\${DestName}_install.log&quot; -RedirectStandardError &quot;$env:TEMP\${DestName}_install_err.log&quot;
             Write-Log &quot;$LogName installation completed.&quot;
         } catch {
-            Write-Log &quot;Error installing $LogName: $_&quot;
+            Write-Log &quot;Error installing $($LogName): $_&quot;
         }
     } else {
         Write-Log &quot;$LogName installer not found locally and download failed.&quot;
@@ -499,11 +499,11 @@ if ($setupPath) {
         if ($setupPath -match '\.msi$') {
             # MSI Installation
             # Note: msiexec requires strict quoting for paths with spaces
-            $msiArgs = @(&quot;/i&quot;, &quot;$setupPath&quot;, &quot;/qn&quot;, &quot;/norestart&quot;)
-            Start-Process -FilePath &quot;msiexec.exe&quot; -ArgumentList $msiArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
+            $msiArgs = @(&quot;/i&quot;, &quot;`&quot;$setupPath`&quot;&quot;, &quot;/qn&quot;, &quot;/norestart&quot;)
+            Start-Process -FilePath &quot;msiexec.exe&quot; -ArgumentList $msiArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot; -RedirectStandardError &quot;$env:TEMP\chrome_install_err.log&quot;
         } else {
             # EXE Installation
-            Start-Process -FilePath $setupPath -ArgumentList @('/silent', '/install') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
+            Start-Process -FilePath $setupPath -ArgumentList @('/silent', '/install') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot; -RedirectStandardError &quot;$env:TEMP\chrome_install_err.log&quot;
         }
 
         # Cleanup temp file
@@ -986,7 +986,7 @@ Write-Log &quot;User Configuration Completed.&quot;
 
 # Self-Destruct: Cleanup Scripts
 # Wait 5 seconds then delete the script folder
-Start-Process -FilePath &quot;powershell.exe&quot; -ArgumentList &quot;-WindowStyle Hidden -Command `&quot;Start-Sleep -Seconds 5; Remove-Item -Path '$env:SystemRoot\Setup\Scripts' -Recurse -Force`&quot;&quot; -WindowStyle Hidden
+Start-Process -FilePath &quot;powershell.exe&quot; -ArgumentList @(&quot;-WindowStyle&quot;, &quot;Hidden&quot;, &quot;-Command&quot;, &quot;Start-Sleep -Seconds 5; Remove-Item -Path '$env:SystemRoot\Setup\Scripts' -Recurse -Force&quot;) -WindowStyle Hidden
 </File>
 
 	</Extensions>

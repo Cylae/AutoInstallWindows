@@ -91,7 +91,7 @@ If you encounter issues, check the log file created during setup:
     *   If offline, place the installers in the corresponding `apps` folder on the USB.
 *   **Script errors?**
     *   Review the log file mentioned above for specific error messages (now with millisecond precision!).
-    *   Additional debug logs for drivers (e.g., `pnputil`) are saved in `%TEMP%` during setup.
+    *   Additional debug logs for drivers (e.g., `pnputil`) and app installers (including both standard output and standard error to prevent deadlocks) are saved in `%TEMP%` during setup.
 
 ## 📡 WiFi Configuration
 
@@ -231,7 +231,7 @@ Si vous rencontrez des problèmes, consultez le fichier journal créé lors de l
     *   Si vous êtes hors ligne, placez les installateurs dans le dossier `apps` correspondant sur la clé USB.
 *   **Erreurs de script ?**
     *   Consultez le fichier journal mentionné ci-dessus pour les messages d'erreur spécifiques (maintenant avec une précision à la milliseconde !).
-    *   Des journaux de débogage supplémentaires pour les pilotes (ex: `pnputil`) sont enregistrés dans `%TEMP%` pendant l'installation.
+    *   Des journaux de débogage supplémentaires pour les pilotes (ex: `pnputil`) et les installateurs d'applications (incluant les sorties standard et d'erreur pour éviter les blocages) sont enregistrés dans `%TEMP%` pendant l'installation.
 
 ## 📡 Configuration WiFi
 
