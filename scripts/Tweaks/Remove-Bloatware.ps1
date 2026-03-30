@@ -44,7 +44,10 @@ $packagesToRemove = @(
     'Microsoft.XboxGamingOverlay',
     'Microsoft.XboxIdentityProvider',
     'Microsoft.XboxSpeechToTextOverlay',
-    'Microsoft.Windows.ParentalControls'
+    'Microsoft.Windows.ParentalControls',
+    'Microsoft.ZuneMusic',
+    'Microsoft.BingFinance',
+    'Microsoft.BingSports'
 )
 
 $packagesToKeep = @(
@@ -101,7 +104,7 @@ foreach ($capName in $capabilitiesToRemove) {
         try {
             Remove-WindowsCapability -Online -Name $cap.Name -ErrorAction Continue | Out-Null
         } catch {
-            Write-Log "Failed to remove capability $capName: $_"
+                            Write-Log "Failed to remove capability $($capName): $_"
         }
     }
 }
@@ -113,7 +116,7 @@ foreach ($feature in $featuresToRemove) {
         try {
             Disable-WindowsOptionalFeature -Online -FeatureName $feature -Remove -NoRestart -ErrorAction Continue | Out-Null
         } catch {
-            Write-Log "Failed to disable feature $feature: $_"
+                            Write-Log "Failed to disable feature $($feature): $_"
         }
     }
 }

@@ -1,5 +1,14 @@
 # Change Log
 
+## [Fixes & Enhancements] - 2024-05-26
+
+### 🚀 Enhancements
+*   **System Optimization**: Explicitly disabled Fast Startup (`HiberbootEnabled`) in `Optimize-System.ps1` to ensure consistent boot behavior, especially when Hibernation is disabled.
+*   **Driver Installers**: Updated NVIDIA, AMD, and Focusrite installation scripts to recognize both `.exe` and `.msi` extensions when searching for local installers.
+
+### 🧹 Debloating
+*   **Expanded Removal**: Added `Microsoft.ZuneMusic`, `Microsoft.BingFinance`, and `Microsoft.BingSports` to the bloatware removal list.
+
 ## [Fixes & Enhancements] - 2024-05-25
 
 ### 🚀 Enhancements

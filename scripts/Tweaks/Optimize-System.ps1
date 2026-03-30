@@ -4,12 +4,13 @@ $ErrorActionPreference = 'Stop'
 
 Write-Log "Applying System Optimizations..."
 
-# 1. Disable Hibernation (Saves disk space)
+# 1. Disable Hibernation (Saves disk space) and Fast Startup
 try {
     powercfg -h off
-    Write-Log "Hibernation disabled."
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /v HiberbootEnabled /t REG_DWORD /d 0 /f
+    Write-Log "Hibernation and Fast Startup disabled."
 } catch {
-    Write-Log "Failed to disable hibernation: $_"
+    Write-Log "Failed to disable hibernation and Fast Startup: $_"
 }
 
 # 2. Set High Performance Power Plan

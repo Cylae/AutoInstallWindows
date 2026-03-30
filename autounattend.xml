@@ -281,7 +281,7 @@ $setupPath = $null
 if ($mediaRoot) {
     Write-Log &quot;Checking local storage...&quot;
     $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\nvidia&quot;
-    $setupPath = Get-InstallerFile -Path $driverDir
+    $setupPath = Get-InstallerFile -Path $driverDir -Extensions @(&quot;*.exe&quot;, &quot;*.msi&quot;)
 }
 
 # Try Download (Fallback if URL provided)
@@ -320,7 +320,7 @@ $setupPath = $null
 
 if ($mediaRoot) {
     $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\amd&quot;
-    $setupPath = Get-InstallerFile -Path $driverDir
+    $setupPath = Get-InstallerFile -Path $driverDir -Extensions @(&quot;*.exe&quot;, &quot;*.msi&quot;)
 }
 
 if (-not $setupPath -and $DownloadUrl) {
@@ -358,7 +358,7 @@ $setupPath = $null
 
 if ($mediaRoot) {
     $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\focusrite&quot;
-    $setupPath = Get-InstallerFile -Path $driverDir
+    $setupPath = Get-InstallerFile -Path $driverDir -Extensions @(&quot;*.exe&quot;, &quot;*.msi&quot;)
 }
 
 if (-not $setupPath -and $DownloadUrl) {
@@ -565,7 +565,10 @@ $packagesToRemove = @(
     'Microsoft.XboxGamingOverlay',
     'Microsoft.XboxIdentityProvider',
     'Microsoft.XboxSpeechToTextOverlay',
-    'Microsoft.Windows.ParentalControls'
+    'Microsoft.Windows.ParentalControls',
+    'Microsoft.ZuneMusic',
+    'Microsoft.BingFinance',
+    'Microsoft.BingSports'
 )
 
 $packagesToKeep = @(
@@ -622,7 +625,7 @@ foreach ($capName in $capabilitiesToRemove) {
         try {
             Remove-WindowsCapability -Online -Name $cap.Name -ErrorAction Continue | Out-Null
         } catch {
-            Write-Log &quot;Failed to remove capability $capName: $_&quot;
+                            Write-Log &quot;Failed to remove capability $($capName): $_&quot;
         }
     }
 }
@@ -634,7 +637,7 @@ foreach ($feature in $featuresToRemove) {
         try {
             Disable-WindowsOptionalFeature -Online -FeatureName $feature -Remove -NoRestart -ErrorAction Continue | Out-Null
         } catch {
-            Write-Log &quot;Failed to disable feature $feature: $_&quot;
+                            Write-Log &quot;Failed to disable feature $($feature): $_&quot;
         }
     }
 }
@@ -726,12 +729,13 @@ $ErrorActionPreference = 'Stop'
 
 Write-Log &quot;Applying System Optimizations...&quot;
 
-# 1. Disable Hibernation (Saves disk space)
+# 1. Disable Hibernation (Saves disk space) and Fast Startup
 try {
     powercfg -h off
-    Write-Log &quot;Hibernation disabled.&quot;
+    reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power&quot; /v HiberbootEnabled /t REG_DWORD /d 0 /f
+    Write-Log &quot;Hibernation and Fast Startup disabled.&quot;
 } catch {
-    Write-Log &quot;Failed to disable hibernation: $_&quot;
+    Write-Log &quot;Failed to disable hibernation and Fast Startup: $_&quot;
 }
 
 # 2. Set High Performance Power Plan
