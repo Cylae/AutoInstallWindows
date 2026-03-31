@@ -61,7 +61,7 @@ foreach ($service in $services) {
             Stop-Service -Name $service -Force -ErrorAction SilentlyContinue
             Set-ItemProperty -Path "Registry::HKLM\SYSTEM\CurrentControlSet\Services\$service" -Name "Start" -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
         } catch {
-            Write-Log "Failed to disable service $service: $_"
+            Write-Log "Failed to disable service $($service): $_"
         }
     }
 }

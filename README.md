@@ -16,9 +16,9 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 *   **🚀 System Optimization**:
     *   **High Performance**: Automatically sets the "High Performance" power plan.
     *   **Power User**: Enables "End Task" in Taskbar context menu, shows **Seconds in System Clock**, and Disables Transparency effects.
-    *   **User Experience**: Disables "Finish setting up your device", "Lock Screen Tips", "Welcome Experience", "Sync Provider Notifications", **Widgets (News and Interests)**, **Chat/Teams** icon, and prevents accidental **Accessibility Shortcuts** (Sticky Keys).
+    *   **User Experience**: Disables "Finish setting up your device", "Lock Screen Tips", "Welcome Experience", "Sync Provider Notifications", **Widgets (News and Interests)**, **Chat/Teams** icon, disables **Mouse Acceleration** (Enhance Pointer Precision) for consistent aiming/movement, and prevents accidental **Accessibility Shortcuts** (Sticky Keys).
     *   **Space Saving**: Disables Hibernation to save disk space (`hiberfil.sys`).
-    *   **Performance**: Disables Last Access Timestamp updates and **App Launch Tracking** to improve disk performance.
+    *   **Performance**: Disables **Fast Startup** (HiberbootEnabled), Last Access Timestamp updates, and **App Launch Tracking** to improve disk and system performance.
     *   **Gaming**: Disables Game DVR/Bar for better gaming performance.
 *   **🔧 Intelligent Driver Installation**:
     *   **Auto-Detection**: Automatically scans all drives for a `drivers` folder.
@@ -157,9 +157,9 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **🚀 Optimisation Système**:
     *   **Haute Performance**: Active automatiquement le plan d'alimentation "Haute Performance".
     *   **Utilisateur Avancé**: Active "Fin de tâche" dans le menu contextuel, affiche les **Secondes dans l'horloge**, et désactive la transparence.
-    *   **Expérience Utilisateur**: Désactive "Terminer la configuration de votre appareil", les astuces de l'écran de verrouillage, l'expérience de bienvenue, **Widgets (Actualités)**, l'icône **Chat/Teams** et empêche l'activation accidentelle des **Raccourcis d'accessibilité** (Touches rémanentes).
+    *   **Expérience Utilisateur**: Désactive "Terminer la configuration de votre appareil", les astuces de l'écran de verrouillage, l'expérience de bienvenue, **Widgets (Actualités)**, l'icône **Chat/Teams**, désactive l'**Accélération de la souris** (Améliorer la précision du pointeur), et empêche l'activation accidentelle des **Raccourcis d'accessibilité** (Touches rémanentes).
     *   **Gain d'Espace**: Désactive l'hibernation pour économiser de l'espace disque (`hiberfil.sys`).
-    *   **Performance**: Désactive la mise à jour de la date de dernier accès et le **Suivi de lancement d'applications** pour améliorer les performances disque.
+    *   **Performance**: Désactive le **Démarrage Rapide** (Fast Startup), la mise à jour de la date de dernier accès et le **Suivi de lancement d'applications** pour améliorer les performances.
     *   **Jeu**: Désactive Game DVR/Bar pour de meilleures performances en jeu.
 *   **🔧 Installation Intelligente des Pilotes**:
     *   **Auto-Détection**: Scanne tous les lecteurs pour trouver le dossier `drivers`.

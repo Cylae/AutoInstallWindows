@@ -11,7 +11,7 @@ $setupPath = $null
 
 if ($mediaRoot) {
     $driverDir = Join-Path -Path $mediaRoot -ChildPath "drivers\focusrite"
-    $setupPath = Get-InstallerFile -Path $driverDir
+    $setupPath = Get-InstallerFile -Path $driverDir -Extensions @("*.exe", "*.msi")
 }
 
 if (-not $setupPath -and $DownloadUrl) {

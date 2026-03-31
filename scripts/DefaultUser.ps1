@@ -81,6 +81,11 @@ try {
     reg.exe add "$defaultUserHive\Software\Microsoft\Input\TIPC" /v Enabled /t REG_DWORD /d 0 /f
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Privacy" /v TailoredExperiencesWithDiagnosticDataEnabled /t REG_DWORD /d 0 /f
 
+    # Disable Mouse Acceleration (Enhance Pointer Precision)
+    reg.exe add "$defaultUserHive\Control Panel\Mouse" /v MouseSpeed /t REG_SZ /d "0" /f
+    reg.exe add "$defaultUserHive\Control Panel\Mouse" /v MouseThreshold1 /t REG_SZ /d "0" /f
+    reg.exe add "$defaultUserHive\Control Panel\Mouse" /v MouseThreshold2 /t REG_SZ /d "0" /f
+
     # Run UserOnce on first login (if script exists)
     # We wrap in cmd /c "if exist ..." to prevent errors for subsequent users after self-destruct
     $uScript = "C:\Windows\Setup\Scripts\UserOnce.ps1"

@@ -281,7 +281,7 @@ $setupPath = $null
 if ($mediaRoot) {
     Write-Log &quot;Checking local storage...&quot;
     $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\nvidia&quot;
-    $setupPath = Get-InstallerFile -Path $driverDir
+    $setupPath = Get-InstallerFile -Path $driverDir -Extensions @(&quot;*.exe&quot;, &quot;*.msi&quot;)
 }
 
 # Try Download (Fallback if URL provided)
@@ -320,7 +320,7 @@ $setupPath = $null
 
 if ($mediaRoot) {
     $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\amd&quot;
-    $setupPath = Get-InstallerFile -Path $driverDir
+    $setupPath = Get-InstallerFile -Path $driverDir -Extensions @(&quot;*.exe&quot;, &quot;*.msi&quot;)
 }
 
 if (-not $setupPath -and $DownloadUrl) {
@@ -358,7 +358,7 @@ $setupPath = $null
 
 if ($mediaRoot) {
     $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\focusrite&quot;
-    $setupPath = Get-InstallerFile -Path $driverDir
+    $setupPath = Get-InstallerFile -Path $driverDir -Extensions @(&quot;*.exe&quot;, &quot;*.msi&quot;)
 }
 
 if (-not $setupPath -and $DownloadUrl) {
@@ -434,7 +434,7 @@ function Install-Runtime {
             Start-Process -FilePath $setupPath -ArgumentList @(&quot;/install&quot;, &quot;/quiet&quot;, &quot;/norestart&quot;) -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\${DestName}_install.log&quot;
             Write-Log &quot;$LogName installation completed.&quot;
         } catch {
-            Write-Log &quot;Error installing $LogName: $_&quot;
+            Write-Log &quot;Error installing $($LogName): $_&quot;
         }
     } else {
         Write-Log &quot;$LogName installer not found locally and download failed.&quot;
@@ -499,7 +499,7 @@ if ($setupPath) {
         if ($setupPath -match '\.msi$') {
             # MSI Installation
             # Note: msiexec requires strict quoting for paths with spaces
-            $msiArgs = @(&quot;/i&quot;, &quot;$setupPath&quot;, &quot;/qn&quot;, &quot;/norestart&quot;)
+            $msiArgs = @(&quot;/i&quot;, &quot;`&quot;$setupPath`&quot;&quot;, &quot;/qn&quot;, &quot;/norestart&quot;)
             Start-Process -FilePath &quot;msiexec.exe&quot; -ArgumentList $msiArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\chrome_install.log&quot;
         } else {
             # EXE Installation
@@ -565,7 +565,9 @@ $packagesToRemove = @(
     'Microsoft.XboxGamingOverlay',
     'Microsoft.XboxIdentityProvider',
     'Microsoft.XboxSpeechToTextOverlay',
-    'Microsoft.Windows.ParentalControls'
+    'Microsoft.Windows.ParentalControls',
+    'Microsoft.ZuneMusic',
+    'Microsoft.XboxApp'
 )
 
 $packagesToKeep = @(
@@ -622,7 +624,7 @@ foreach ($capName in $capabilitiesToRemove) {
         try {
             Remove-WindowsCapability -Online -Name $cap.Name -ErrorAction Continue | Out-Null
         } catch {
-            Write-Log &quot;Failed to remove capability $capName: $_&quot;
+            Write-Log &quot;Failed to remove capability $($capName): $_&quot;
         }
     }
 }
@@ -634,7 +636,7 @@ foreach ($feature in $featuresToRemove) {
         try {
             Disable-WindowsOptionalFeature -Online -FeatureName $feature -Remove -NoRestart -ErrorAction Continue | Out-Null
         } catch {
-            Write-Log &quot;Failed to disable feature $feature: $_&quot;
+            Write-Log &quot;Failed to disable feature $($feature): $_&quot;
         }
     }
 }
@@ -704,7 +706,7 @@ foreach ($service in $services) {
             Stop-Service -Name $service -Force -ErrorAction SilentlyContinue
             Set-ItemProperty -Path &quot;Registry::HKLM\SYSTEM\CurrentControlSet\Services\$service&quot; -Name &quot;Start&quot; -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
         } catch {
-            Write-Log &quot;Failed to disable service $service: $_&quot;
+            Write-Log &quot;Failed to disable service $($service): $_&quot;
         }
     }
 }
@@ -757,6 +759,9 @@ try {
 reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\EdgeUI&quot; /v DisableMFUTracking /t REG_DWORD /d 1 /f
 reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; /v NoInstrumentation /t REG_DWORD /d 1 /f
 
+# 6. Disable Fast Startup
+reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power&quot; /v HiberbootEnabled /t REG_DWORD /d 0 /f
+
 Write-Log &quot;System Optimizations Applied.&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\Specialize.ps1">
@@ -784,7 +789,7 @@ foreach ($script in $scripts) {
         try {
             &amp; $script
         } catch {
-            Write-Log &quot;Error executing $script: $_&quot;
+            Write-Log &quot;Error executing $($script): $_&quot;
         }
     } else {
         Write-Log &quot;Script not found: $script&quot;
@@ -895,6 +900,11 @@ try {
     # Disable Typing Insights and Tailored Experiences
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Input\TIPC&quot; /v Enabled /t REG_DWORD /d 0 /f
     reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Privacy&quot; /v TailoredExperiencesWithDiagnosticDataEnabled /t REG_DWORD /d 0 /f
+
+    # Disable Mouse Acceleration (Enhance Pointer Precision)
+    reg.exe add &quot;$defaultUserHive\Control Panel\Mouse&quot; /v MouseSpeed /t REG_SZ /d &quot;0&quot; /f
+    reg.exe add &quot;$defaultUserHive\Control Panel\Mouse&quot; /v MouseThreshold1 /t REG_SZ /d &quot;0&quot; /f
+    reg.exe add &quot;$defaultUserHive\Control Panel\Mouse&quot; /v MouseThreshold2 /t REG_SZ /d &quot;0&quot; /f
 
     # Run UserOnce on first login (if script exists)
     # We wrap in cmd /c &quot;if exist ...&quot; to prevent errors for subsequent users after self-destruct

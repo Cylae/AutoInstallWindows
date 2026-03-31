@@ -13,7 +13,7 @@ $setupPath = $null
 if ($mediaRoot) {
     Write-Log "Checking local storage..."
     $driverDir = Join-Path -Path $mediaRoot -ChildPath "drivers\nvidia"
-    $setupPath = Get-InstallerFile -Path $driverDir
+    $setupPath = Get-InstallerFile -Path $driverDir -Extensions @("*.exe", "*.msi")
 }
 
 # Try Download (Fallback if URL provided)
