@@ -45,6 +45,12 @@ reg.exe add "HKLM\Software\Policies\Microsoft\Edge" /v HideFirstRunExperience /t
 reg.exe add "HKLM\Software\Policies\Microsoft\Edge" /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
 reg.exe add "HKLM\Software\Policies\Microsoft\Edge" /v StartupBoostEnabled /t REG_DWORD /d 0 /f
 
+# Disable Location Tracking
+reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" /v DisableLocation /t REG_DWORD /d 1 /f
+
+# Disable Delivery Optimization
+reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization" /v DODownloadMode /t REG_DWORD /d 0 /f
+
 # Disable BitLocker Automatic Device Encryption
 reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\BitLocker" /v "PreventDeviceEncryption" /t REG_DWORD /d 1 /f
 
@@ -61,7 +67,7 @@ foreach ($service in $services) {
             Stop-Service -Name $service -Force -ErrorAction SilentlyContinue
             Set-ItemProperty -Path "Registry::HKLM\SYSTEM\CurrentControlSet\Services\$service" -Name "Start" -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
         } catch {
-            Write-Log "Failed to disable service $service: $_"
+            Write-Log "Failed to disable service $($service): $_"
         }
     }
 }
