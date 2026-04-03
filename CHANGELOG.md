@@ -1,5 +1,11 @@
 # Change Log
 
+## [Fixes & Enhancements] - Unreleased
+
+### 🚀 Enhancements
+*   **User Experience**: Disabled Mouse Acceleration (Enhance Pointer Precision) by default.
+*   **Privacy & Security**: Disabled Location Tracking and Delivery Optimization via registry tweaks.
+
 ## [Fixes & Enhancements] - 2024-05-25
 
 ### 🚀 Enhancements
