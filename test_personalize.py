@@ -1,15 +1,25 @@
 import pytest
 from pathlib import Path
-from personalize import xml_encode, get_current_value, update_value, apply_personalizations
+from personalize import xml_encode, xml_decode, get_current_value, update_value, apply_personalizations
 
 def test_personalize_xml_encode():
     assert xml_encode(None) == None
     assert xml_encode('') == ''
     assert xml_encode('A & B') == 'A &amp; B'
 
+def test_personalize_xml_decode():
+    assert xml_decode(None) == None
+    assert xml_decode('') == ''
+    assert xml_decode('A &amp; B') == 'A & B'
+    assert xml_decode('&lt;Test&gt;') == '<Test>'
+
 def test_get_current_value():
     content = '<LocalAccount><Name>Admin</Name></LocalAccount>'
     assert get_current_value(content, r'<LocalAccount[^>]*>\s*<Name>([^<]*)</Name>') == 'Admin'
+
+    encoded_content = '<WLANProfile><name>Test&amp;Co</name></WLANProfile>'
+    assert get_current_value(encoded_content, r'<WLANProfile>\s*<name>([^<]*)</name>') == 'Test&Co'
+
     assert get_current_value(content, r'<Missing>([^<]*)</Missing>') == ''
     assert get_current_value(content, r'<Missing>([^<]*)</Missing>', default='Def') == 'Def'
 

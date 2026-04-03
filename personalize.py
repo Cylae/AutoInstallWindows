@@ -6,6 +6,7 @@ import subprocess
 import tkinter as tk
 from tkinter import ttk, messagebox
 from pathlib import Path
+import xml.sax.saxutils
 
 
 def get_windows_timezone():
@@ -39,10 +40,16 @@ def get_windows_wifi():
     return ""
 
 
+def xml_decode(s):
+    if not s:
+        return s
+    return xml.sax.saxutils.unescape(s, {"&apos;": "'", "&quot;": '"'})
+
+
 def get_current_value(content, pattern, default=""):
     match = re.search(pattern, content, re.DOTALL)
     if match:
-        return match.group(1)
+        return xml_decode(match.group(1))
     return default
 
 
