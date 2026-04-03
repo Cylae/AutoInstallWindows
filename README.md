@@ -37,6 +37,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 *   **🛡️ Enhanced Robustness**:
     *   **Secure Downloads**: Supports **TLS 1.2 and 1.3** for secure file downloads.
     *   **Smart Media Detection**: Filters for Fixed and Removable drives to prevent hangs on network/floppy drives.
+    *   **Non-Blocking Network Checks**: Uses fast HTTP endpoints with strict timeouts to verify connectivity, eliminating DNS-related stalls during setup.
     *   **Fail-Safe Execution**: Scripts include existence checks (e.g., RunOnce) to prevent errors on subsequent logins.
     *   **Advanced Error Handling**: Improved logging and registry handling for fail-safe execution.
 
@@ -186,6 +187,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **🛡️ Robustesse Améliorée**:
     *   **Téléchargements Sécurisés**: Supporte **TLS 1.2 et 1.3** pour des téléchargements sécurisés.
     *   **Détection Intelligente**: Filtre les lecteurs Fixes et Amovibles pour éviter les blocages.
+    *   **Vérifications Réseau Non Bloquantes**: Utilise des points de terminaison HTTP rapides avec des délais d'attente stricts pour vérifier la connectivité, éliminant ainsi les blocages liés au DNS lors de l'installation.
     *   **Gestion d'Erreurs Avancée**: Journaux améliorés et gestion robuste du registre pour une exécution sans faille.
 
 ## 📂 Structure des Dossiers

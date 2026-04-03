@@ -182,12 +182,15 @@ function Download-File {
 
     # Wait for network
     while (-not $connected -and $retry -lt $maxRetries) {
-        $testHosts = @(&quot;google.com&quot;, &quot;microsoft.com&quot;, &quot;cloudflare.com&quot;)
-        foreach ($hostName in $testHosts) {
+        $testUrls = @(&quot;http://www.msftconnecttest.com/connecttest.txt&quot;, &quot;http://google.com/generate_204&quot;)
+        foreach ($testUrl in $testUrls) {
             try {
-                $null = [System.Net.Dns]::GetHostEntry($hostName)
-                $connected = $true
-                break
+                # Use Invoke-WebRequest with a short timeout to prevent long hangs
+                $response = Invoke-WebRequest -Uri $testUrl -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
+                if ($response.StatusCode -eq 200 -or $response.StatusCode -eq 204) {
+                    $connected = $true
+                    break
+                }
             } catch {}
         }
 
