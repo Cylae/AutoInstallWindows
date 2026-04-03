@@ -1,7 +1,33 @@
+import os
+import platform
 import re
 import sys
 import subprocess
 from pathlib import Path
+
+
+def get_windows_timezone():
+    if platform.system() != "Windows":
+        return ""
+    try:
+        result = subprocess.run(["powershell", "-Command", "(Get-TimeZone).Id"], capture_output=True, text=True, check=True)
+        return result.stdout.strip()
+    except Exception:
+        return ""
+
+def get_windows_wifi():
+    if platform.system() != "Windows":
+        return ""
+    try:
+        # Get the first connected SSID
+        result = subprocess.run(["netsh", "wlan", "show", "interfaces"], capture_output=True, text=True, check=True)
+        for line in result.stdout.split('\n'):
+            if " SSID " in line:
+                return line.split(":")[1].strip()
+    except Exception:
+        pass
+    return ""
+
 
 def get_current_value(content, pattern, default=""):
     match = re.search(pattern, content, re.DOTALL)
@@ -9,8 +35,18 @@ def get_current_value(content, pattern, default=""):
         return match.group(1)
     return default
 
+def xml_encode(s):
+    if not s:
+        return s
+    s = s.replace("&", "&amp;")
+    s = s.replace("<", "&lt;")
+    s = s.replace(">", "&gt;")
+    s = s.replace('"', "&quot;")
+    return s
+
 def update_value(content, pattern, new_value):
-    return re.sub(pattern, lambda m: m.group(1) + new_value + m.group(3), content, flags=re.DOTALL)
+    encoded_value = xml_encode(new_value)
+    return re.sub(pattern, lambda m: m.group(1) + encoded_value + m.group(3), content, flags=re.DOTALL)
 
 def prompt(label, current_value):
     current_display = current_value if current_value else "EMPTY"
@@ -46,22 +82,39 @@ def main():
         timezone = get_current_value(spec_content, r'<TimeZone>([^<]*)</TimeZone>')
         computer_name = get_current_value(spec_content, r'<ComputerName>([^<]*)</ComputerName>')
 
-    print("--- Autounattend Personalization Tool ---")
-    print("Press Enter to keep the current value. Type 'CLEAR' to empty a field.")
+    print("\n=====================================================================")
+    print(" 🚀 Ultimate Windows Autounattend - Easy Personalization Tool")
+    print("=====================================================================")
+    print("This tool will configure your USB key to automatically install Windows")
+    print("using your preferred settings. Press Enter to accept the detected defaults.\n")
 
-    new_username = prompt("Username", username)
-    new_password = prompt("Password", password)
+    # Auto-detect current machine settings to make reinstalling easier
+    detected_user = os.getlogin() if platform.system() == "Windows" else ""
+    detected_pc_name = platform.node() if platform.node() else ""
+    detected_tz = get_windows_timezone()
+    detected_wifi = get_windows_wifi()
+
+    # Pre-fill defaults, prioritizing the current machine's detected state over XML state if empty
+    default_user = username if username else detected_user
+    default_pc = computer_name if computer_name else detected_pc_name
+    default_tz = timezone if timezone else detected_tz
+
+    new_username = prompt("👤 Username", default_user)
+    new_password = prompt("🔑 Password", password)
+    new_computer_name = prompt("💻 Computer Name", default_pc)
+    new_timezone = prompt("🌍 Time Zone", default_tz)
+
+    print("\n--- Advanced Locale Settings ---")
     new_ui_language = prompt("UI Language (e.g., fr-FR, en-US)", ui_language)
     new_sys_locale = prompt("System Locale (e.g., fr-FR, en-US)", sys_locale)
     new_user_locale = prompt("User Locale (e.g., fr-FR, en-US)", user_locale)
     new_input_locale = prompt("Input Locale (e.g., 040c:0000040c, 0409:00000409)", input_locale)
-    new_timezone = prompt("Time Zone (e.g., Romance Standard Time, Pacific Standard Time)", timezone)
-    new_computer_name = prompt("Computer Name", computer_name)
 
-    new_wifi_ssid = input("WiFi SSID (leave blank to skip): ").strip()
+    print("\n--- WiFi Configuration ---")
+    new_wifi_ssid = prompt("📡 WiFi SSID (leave blank to skip)", detected_wifi)
     new_wifi_pass = ""
     if new_wifi_ssid:
-        new_wifi_pass = input("WiFi Password: ").strip()
+        new_wifi_pass = input("🔐 WiFi Password: ").strip()
 
     # --- XML Modifications ---
 
