@@ -84,6 +84,7 @@ This repository uses a build system to generate `autounattend.xml` from modular 
 *   **Scripts Location**: All PowerShell scripts are located in the `scripts/` directory.
 *   **Modify**: Edit the `.ps1` files in `scripts/` to make changes.
 *   **Build**: Run `python build.py` to regenerate `autounattend.xml` with your changes. (Now uses `pathlib` and `logging` for robust builds).
+*   **Testing**: We use `pytest` for executing unit tests (e.g., `pytest test_build.py test_personalize.py`) and `flake8` for linting Python code. Ensure your code passes all lint checks and tests before contributing.
 
 ## ❓ Troubleshooting
 
@@ -232,6 +233,7 @@ Ce dépôt utilise un système de build pour générer `autounattend.xml` à par
 *   **Emplacement des Scripts**: Tous les scripts PowerShell se trouvent dans le répertoire `scripts/`.
 *   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications.
 *   **Construire**: Exécutez `python build.py` pour régénérer `autounattend.xml` avec vos changements. (Utilise désormais `pathlib` et `logging` pour des builds robustes).
+*   **Tests**: Nous utilisons `pytest` pour l'exécution des tests unitaires (ex. `pytest test_build.py test_personalize.py`) et `flake8` pour l'analyse du code Python. Assurez-vous que votre code passe les tests et validations avant toute contribution.
 
 ## ❓ Dépannage
 
