@@ -46,16 +46,18 @@ def update_autounattend(ssid=None, password=None):
             logger.info(f"Updating {target_path_str}...")
 
             def replacement(match):
-                return match.group(
-                    1) + '\n' + encoded_content.strip() + '\n' + match.group(3)
+                return (f"{match.group(1)}\n{encoded_content.strip()}\n"
+                        f"{match.group(3)}")
 
             content = re.sub(pattern, replacement, content, flags=re.DOTALL)
         else:
             logger.info(
                 f"File path {target_path_str} not found in XML. "
                 "Appending it...")
-            new_file_block = f'<File path="{target_path_str}">\n{
-                encoded_content.strip()}\n</File>'
+            new_file_block = (
+                f'<File path="{target_path_str}">\n'
+                f'{encoded_content.strip()}\n</File>'
+            )
             extensions_close_pattern = r'(</Extensions>)'
             if re.search(extensions_close_pattern, content):
                 content = re.sub(
