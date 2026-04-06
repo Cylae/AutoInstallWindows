@@ -43,16 +43,16 @@ function Install-Runtime {
     }
 
     if ($setupPath) {
-        Write-Log "Installing $LogName from $setupPath..."
+        Write-Log "Installing $($LogName) from $($setupPath)..."
         try {
             Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
             Start-Process -FilePath $setupPath -ArgumentList @("/install", "/quiet", "/norestart") -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\${DestName}_install.log"
-            Write-Log "$LogName installation completed."
+            Write-Log "$($LogName) installation completed."
         } catch {
-            Write-Log "Error installing $LogName: $_"
+            Write-Log "Error installing $($LogName): $_"
         }
     } else {
-        Write-Log "$LogName installer not found locally and download failed."
+        Write-Log "$($LogName) installer not found locally and download failed."
     }
 }
 

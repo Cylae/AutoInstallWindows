@@ -97,11 +97,11 @@ $capabilities = Get-WindowsCapability -Online
 foreach ($capName in $capabilitiesToRemove) {
     $cap = $capabilities | Where-Object { ($_.Name -split '~')[0] -eq $capName -and $_.State -ne 'NotPresent' }
     if ($cap) {
-        Write-Log "Removing capability $capName..."
+        Write-Log "Removing capability $($capName)..."
         try {
             Remove-WindowsCapability -Online -Name $cap.Name -ErrorAction Continue | Out-Null
         } catch {
-            Write-Log "Failed to remove capability $capName: $_"
+            Write-Log "Failed to remove capability $($capName): $_"
         }
     }
 }
@@ -109,11 +109,11 @@ foreach ($capName in $capabilitiesToRemove) {
 # Remove Optional Features
 foreach ($feature in $featuresToRemove) {
     if ((Get-WindowsOptionalFeature -Online -FeatureName $feature -ErrorAction SilentlyContinue).State -eq 'Enabled') {
-        Write-Log "Disabling feature $feature..."
+        Write-Log "Disabling feature $($feature)..."
         try {
             Disable-WindowsOptionalFeature -Online -FeatureName $feature -Remove -NoRestart -ErrorAction Continue | Out-Null
         } catch {
-            Write-Log "Failed to disable feature $feature: $_"
+            Write-Log "Failed to disable feature $($feature): $_"
         }
     }
 }
