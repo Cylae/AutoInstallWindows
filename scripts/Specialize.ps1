@@ -18,24 +18,24 @@ Write-Log "Starting Specialize Pass (Optimized)..."
 
 foreach ($script in $scripts) {
     if (Test-Path $script) {
-        Write-Log "Executing $script..."
+        Write-Log "Executing $($script)..."
         try {
             & $script
         } catch {
-            Write-Log "Error executing $script: $_"
+            Write-Log "Error executing $($script): $_"
         }
     } else {
-        Write-Log "Script not found: $script"
+        Write-Log "Script not found: $($script)"
     }
 }
 
 # Generate SetupComplete.cmd for post-OOBE cleanup
 # This ensures unattend.xml is removed to prevent sensitive data leak (if any)
 # We do NOT remove the Scripts folder here because UserOnce.ps1 (RunOnce) needs it.
-$setupCompleteContent = @"
+$setupCompleteContent = @'
 del /q /f "%WINDIR%\Panther\unattend.xml"
 del /q /f "%WINDIR%\Panther\unattend-original.xml"
-"@
+'@
 
 $setupCompletePath = "$env:SystemRoot\Setup\Scripts\SetupComplete.cmd"
 try {
