@@ -22,6 +22,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Space Saving**: Disables Hibernation to save disk space (`hiberfil.sys`).
     *   **Performance**: Disables Last Access Timestamp updates and **App Launch Tracking** to improve disk performance.
     *   **Gaming**: Disables Game DVR/Bar for better gaming performance.
+*   **🔧 Robustness**: Enhanced registry modifications for robustness using a dedicated helper function.
 *   **🔧 Intelligent Driver Installation**:
     *   **Auto-Detection**: Automatically scans all drives for a `drivers` folder.
     *   **Smart Matching**: Finds installer executables (`*.exe`) automatically—no need to rename files to `setup.exe`.
