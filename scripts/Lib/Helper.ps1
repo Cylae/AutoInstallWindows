@@ -108,3 +108,39 @@ function Download-File {
 
     return $downloaded
 }
+
+function Set-RegistryKey {
+    param(
+        [Parameter(Mandatory=$true)][string]$Path,
+        [Parameter(Mandatory=$true)][string]$Name,
+        [Parameter(Mandatory=$true)]$Value,
+        [Parameter(Mandatory=$true)][string]$PropertyType
+    )
+
+    # Check if we need to convert path formatting for PSDrive
+    $psPath = $Path
+    if ($Path -match '^HKLM\\') {
+        $psPath = "HKLM:\" + $Path.Substring(5)
+    } elseif ($Path -match '^HKCU\\') {
+        $psPath = "HKCU:\" + $Path.Substring(5)
+    } elseif ($Path -match '^HKU\\') {
+        $psPath = "Registry::" + $Path
+    } else {
+        $psPath = "Registry::" + $Path
+    }
+
+    try {
+        if (-not (Test-Path -Path $psPath)) {
+            New-Item -Path $psPath -Force -ErrorAction Stop | Out-Null
+        }
+
+        if ($Name -eq "(default)") {
+            Set-ItemProperty -Path $psPath -Name "(default)" -Value $Value -Type $PropertyType -Force -ErrorAction Stop
+        } else {
+            Set-ItemProperty -Path $psPath -Name $Name -Value $Value -Type $PropertyType -Force -ErrorAction Stop
+        }
+        Write-Log "Successfully set registry key: $Path\$Name = $Value"
+    } catch {
+        Write-Log "Failed to set registry key: $Path\$Name. Error: $_"
+    }
+}
