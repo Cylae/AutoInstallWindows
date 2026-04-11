@@ -291,3 +291,7 @@ Si vous préférez éditer le XML manuellement, ajoutez votre profil réseau dur
     </MSM>
 </WLANProfile>
 ```
+
+## Tests
+
+The Python tests are formatted via autopep8 and validated by flake8 and pytest.
