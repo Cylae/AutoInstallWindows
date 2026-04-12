@@ -291,3 +291,7 @@ Si vous préférez éditer le XML manuellement, ajoutez votre profil réseau dur
     </MSM>
 </WLANProfile>
 ```
+
+## Development
+
+To run the tests, use `pytest`. The code is formatted using `autopep8` and linted with `flake8`.
