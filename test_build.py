@@ -1,5 +1,6 @@
-import pytest
+
 from build import xml_encode
+
 
 def test_xml_encode():
     assert xml_encode('Normal String') == 'Normal String'
