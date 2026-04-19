@@ -39,6 +39,8 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Smart Media Detection**: Filters for Fixed and Removable drives to prevent hangs on network/floppy drives.
     *   **Fail-Safe Execution**: Scripts include existence checks (e.g., RunOnce) to prevent errors on subsequent logins.
     *   **Advanced Error Handling**: Improved logging and registry handling for fail-safe execution.
+    *   **Robust Registry Updates**: Replaced fragile `reg.exe` commands with a custom `Set-RegistryKey` helper for reliable hive modifications.
+    *   **Optimized Default User Tweaks**: Enhanced logic in `DefaultUser.ps1` to prevent errors when loading/unloading hives, safely configuring UI settings, disabling transparency, and Mouse Acceleration.
 
 ## 📂 Folder Structure
 
@@ -187,6 +189,8 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
     *   **Téléchargements Sécurisés**: Supporte **TLS 1.2 et 1.3** pour des téléchargements sécurisés.
     *   **Détection Intelligente**: Filtre les lecteurs Fixes et Amovibles pour éviter les blocages.
     *   **Gestion d'Erreurs Avancée**: Journaux améliorés et gestion robuste du registre pour une exécution sans faille.
+    *   **Mises à jour robustes du registre**: Remplacement des commandes fragiles `reg.exe` par un assistant personnalisé `Set-RegistryKey` pour des modifications fiables des ruches.
+    *   **Ajustements optimisés pour l'utilisateur par défaut**: Logique améliorée dans `DefaultUser.ps1` pour éviter les erreurs lors du chargement/déchargement des ruches, configurer en toute sécurité les paramètres de l'interface utilisateur, désactiver la transparence et l'accélération de la souris.
 
 ## 📂 Structure des Dossiers
 
