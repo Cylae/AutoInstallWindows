@@ -108,3 +108,42 @@ function Download-File {
 
     return $downloaded
 }
+
+function Set-RegistryKey {
+    param(
+        [string]$Path,
+        [string]$Name,
+        [string]$Value,
+        [string]$Type = "String"
+    )
+
+    $drive = $Path.Split('\')[0]
+    $registryPath = $Path
+    if ($drive -in @('HKLM', 'HKCU', 'HKCR', 'HKU', 'HKCC')) {
+        $registryPath = "Registry::$Path"
+    }
+
+    try {
+        if (-not (Test-Path -Path $registryPath)) {
+            # Recursively create parent keys if they don't exist
+            $parts = $registryPath.Split('\')
+            $currentPath = $parts[0]
+            for ($i = 1; $i -lt $parts.Length; $i++) {
+                $currentPath = Join-Path $currentPath $parts[$i]
+                if (-not (Test-Path $currentPath)) {
+                    New-Item -Path $currentPath -Force | Out-Null
+                }
+            }
+        }
+
+        # If the Name is empty string "", it means the default value
+        if ($Name -eq '""' -or $Name -eq "") {
+            Set-Item -Path $registryPath -Value $Value -Force -ErrorAction Stop
+        } else {
+            Set-ItemProperty -Path $registryPath -Name $Name -Value $Value -Type $Type -Force -ErrorAction Stop
+        }
+        Write-Log "Set registry key: $Path\$Name = $Value ($Type)"
+    } catch {
+        Write-Log "Failed to set registry key $Path\$Name: $_"
+    }
+}
