@@ -108,3 +108,27 @@ function Download-File {
 
     return $downloaded
 }
+
+function Set-RegistryKey {
+    param(
+        [string]$Path,
+        [string]$Name,
+        [string]$Value,
+        [string]$Type = "String"
+    )
+
+    # Handle PSDrive conversions
+    $Path = $Path -replace '^HKLM\\', 'Registry::HKEY_LOCAL_MACHINE\'
+    $Path = $Path -replace '^HKCU\\', 'Registry::HKEY_CURRENT_USER\'
+    $Path = $Path -replace '^HKU\\', 'Registry::HKEY_USERS\'
+
+    if (-not (Test-Path -Path $Path)) {
+        New-Item -Path $Path -Force | Out-Null
+    }
+
+    if ([string]::IsNullOrEmpty($Name)) {
+        Set-Item -Path $Path -Value $Value -Type $Type -Force | Out-Null
+    } else {
+        Set-ItemProperty -Path $Path -Name $Name -Value $Value -Type $Type -Force | Out-Null
+    }
+}
