@@ -291,3 +291,8 @@ Si vous préférez éditer le XML manuellement, ajoutez votre profil réseau dur
     </MSM>
 </WLANProfile>
 ```
+
+## 🛠️ Recent Enhancements
+* **Robust Registry Handling:** Replaced `reg.exe` with a custom `Set-RegistryKey` function in PowerShell scripts for better reliability.
+* **Backward Compatibility:** Fixed `build.py` string interpolation to support Python versions older than 3.12.
+* **Decoding Support:** Enhanced `personalize.py` to properly decode XML entities (`xml_decode`).
