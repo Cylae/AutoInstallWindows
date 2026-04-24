@@ -1,4 +1,12 @@
 #!/bin/bash
-# We'll just run autopep8 to quickly fix formatting issues.
-pip install autopep8
-autopep8 --in-place --aggressive --aggressive build.py personalize.py
+# Install testing and formatting dependencies
+pip install autopep8 flake8 pytest
+
+# Format Python files
+autopep8 --in-place --aggressive --aggressive --recursive .
+
+# Check linting
+flake8 .
+
+# Run unit tests
+pytest
