@@ -54,8 +54,9 @@ def update_autounattend(ssid=None, password=None):
             logger.info(
                 f"File path {target_path_str} not found in XML. "
                 "Appending it...")
-            new_file_block = f'<File path="{target_path_str}">\n{
-                encoded_content.strip()}\n</File>'
+            encoded_content_str = encoded_content.strip()
+            new_file_block = (f'<File path="{target_path_str}">\n'
+                              f'{encoded_content_str}\n</File>')
             extensions_close_pattern = r'(</Extensions>)'
             if re.search(extensions_close_pattern, content):
                 content = re.sub(
