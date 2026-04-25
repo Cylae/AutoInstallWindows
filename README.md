@@ -232,6 +232,7 @@ Ce dépôt utilise un système de build pour générer `autounattend.xml` à par
 *   **Emplacement des Scripts**: Tous les scripts PowerShell se trouvent dans le répertoire `scripts/`.
 *   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications.
 *   **Construire**: Exécutez `python build.py` pour régénérer `autounattend.xml` avec vos changements. (Utilise désormais `pathlib` et `logging` pour des builds robustes).
+*   **Tests et Formatage**: Le dépôt inclut des tests unitaires (`test_build.py`, `test_personalize.py`) qui peuvent être exécutés avec `pytest`. Le code Python doit respecter les standards `pep8`. Vous pouvez vérifier le linting avec `flake8` et formater automatiquement avec `autopep8`.
 
 ## ❓ Dépannage
 
