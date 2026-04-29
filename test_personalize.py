@@ -1,17 +1,39 @@
-import pytest
-from pathlib import Path
-from personalize import xml_encode, get_current_value, update_value, apply_personalizations
+from personalize import (
+    xml_encode, xml_decode, get_current_value,
+    update_value, apply_personalizations
+)
+
 
 def test_personalize_xml_encode():
-    assert xml_encode(None) == None
+    assert xml_encode(None) is None
     assert xml_encode('') == ''
     assert xml_encode('A & B') == 'A &amp; B'
 
+
+def test_personalize_xml_decode():
+    assert xml_decode(None) is None
+    assert xml_decode('') == ''
+    assert xml_decode('A &amp; B') == 'A & B'
+    assert xml_decode('&lt;tag&gt;') == '<tag>'
+    assert xml_decode('&quot;quotes&quot;') == '"quotes"'
+    assert xml_decode('&lt;&gt;&amp;&quot;') == '<>&"'
+
+
 def test_get_current_value():
     content = '<LocalAccount><Name>Admin</Name></LocalAccount>'
-    assert get_current_value(content, r'<LocalAccount[^>]*>\s*<Name>([^<]*)</Name>') == 'Admin'
+    assert get_current_value(
+        content, r'<LocalAccount[^>]*>\s*<Name>([^<]*)</Name>') == 'Admin'
     assert get_current_value(content, r'<Missing>([^<]*)</Missing>') == ''
-    assert get_current_value(content, r'<Missing>([^<]*)</Missing>', default='Def') == 'Def'
+    assert get_current_value(
+        content,
+        r'<Missing>([^<]*)</Missing>',
+        default='Def') == 'Def'
+
+    content_encoded = '<LocalAccount><Name>A &amp; B</Name></LocalAccount>'
+    assert get_current_value(
+        content_encoded,
+        r'<LocalAccount[^>]*>\s*<Name>([^<]*)</Name>') == 'A & B'
+
 
 def test_update_value():
     content = '<UILanguage>en-US</UILanguage>'
@@ -23,6 +45,7 @@ def test_update_value():
     # Check that XML encoding is applied
     updated_encoded = update_value(content, pattern, 'a&b')
     assert updated_encoded == '<UILanguage>a&amp;b</UILanguage>'
+
 
 def test_apply_personalizations(tmp_path, monkeypatch):
     # Setup dummy autounattend.xml and build.py in tmp_path

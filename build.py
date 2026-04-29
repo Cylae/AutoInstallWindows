@@ -11,6 +11,9 @@ logger = logging.getLogger(__name__)
 
 
 def xml_encode(s):
+    if s is None:
+        return s
+    s = str(s)
     s = s.replace("&", "&amp;")
     s = s.replace("<", "&lt;")
     s = s.replace(">", "&gt;")
@@ -54,8 +57,8 @@ def update_autounattend(ssid=None, password=None):
             logger.info(
                 f"File path {target_path_str} not found in XML. "
                 "Appending it...")
-            new_file_block = f'<File path="{target_path_str}">\n{
-                encoded_content.strip()}\n</File>'
+            new_file_block = (f'<File path="{target_path_str}">\n'
+                              f'{encoded_content.strip()}\n</File>')
             extensions_close_pattern = r'(</Extensions>)'
             if re.search(extensions_close_pattern, content):
                 content = re.sub(
