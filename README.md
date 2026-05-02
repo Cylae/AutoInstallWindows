@@ -81,9 +81,11 @@ USB_ROOT/
 
 This repository uses a build system to generate `autounattend.xml` from modular PowerShell scripts. `build.py` automatically injects scripts, creates `<File>` blocks if they are missing, and removes empty XML blocks for a cleaner file.
 
+
 *   **Scripts Location**: All PowerShell scripts are located in the `scripts/` directory.
 *   **Modify**: Edit the `.ps1` files in `scripts/` to make changes.
-*   **Build**: Run `python build.py` to regenerate `autounattend.xml` with your changes. (Now uses `pathlib` and `logging` for robust builds).
+*   **Build**: Run `python build.py` to regenerate `autounattend.xml` with your changes. (Now uses `pathlib` and `logging` for robust builds and is compatible with Python 3.8+ by avoiding multiline f-strings).
+*   **Helper Functions**: Use functions like `Set-RegistryKey` in `scripts/Lib/Helper.ps1` for robust registry manipulation across scripts, safely handling PSDrive resolution and parent key creation.
 
 ## ❓ Troubleshooting
 

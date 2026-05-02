@@ -108,3 +108,47 @@ function Download-File {
 
     return $downloaded
 }
+
+function Set-RegistryKey {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$Path,
+        [string]$Name,
+        [string]$Value,
+        [string]$Type = "String"
+    )
+
+    # Convert common paths to PSDrive format
+    if ($Path -match "^HKLM\\") { $Path = $Path -replace "^HKLM\\", "HKLM:\" }
+    elseif ($Path -match "^HKCU\\") { $Path = $Path -replace "^HKCU\\", "HKCU:\" }
+    elseif ($Path -match "^HKU\\") { $Path = "Registry::HKEY_USERS\" + ($Path -replace "^HKU\\", "") }
+    elseif ($Path -match "^HKEY_USERS\\") { $Path = "Registry::$Path" }
+
+    # Recursive directory creation for Registry Provider
+    $pathParts = $Path -split "\\"
+    $currentPath = $pathParts[0]
+    for ($i = 1; $i -lt $pathParts.Count; $i++) {
+        $currentPath = Join-Path $currentPath $pathParts[$i]
+        if (-not (Test-Path $currentPath)) {
+            New-Item -Path $currentPath -Force | Out-Null
+        }
+    }
+
+    # Map reg.exe types to PowerShell RegistryValueKind
+    $psType = $Type
+    if ($Type -eq "REG_DWORD") { $psType = "DWord" }
+    elseif ($Type -eq "REG_SZ") { $psType = "String" }
+    elseif ($Type -eq "REG_QWORD") { $psType = "QWord" }
+    elseif ($Type -eq "REG_MULTI_SZ") { $psType = "MultiString" }
+    elseif ($Type -eq "REG_EXPAND_SZ") { $psType = "ExpandString" }
+    elseif ($Type -eq "REG_BINARY") { $psType = "Binary" }
+
+    if ([string]::IsNullOrEmpty($Name)) {
+        # Using New-ItemProperty with -Name "(default)" actually sets the default key in PowerShell 5+ if used carefully,
+        # but to be safe and cross-version compatible we can set the default value of the path using Set-Item
+        # Set-Item does not support -Type, but the default value type is inherently String.
+        Set-Item -Path $Path -Value $Value -Force | Out-Null
+    } else {
+        Set-ItemProperty -Path $Path -Name $Name -Value $Value -Type $psType -Force | Out-Null
+    }
+}
