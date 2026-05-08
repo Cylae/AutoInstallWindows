@@ -73,6 +73,7 @@ USB_ROOT/
 
 
 5. **Personalize (Optional but Recommended)**: Before copying `autounattend.xml` to your USB drive, you can run the interactive personalization tool to easily set your Username, Password, Language, Computer Name, TimeZone, and WiFi credentials. *If you run this on your current Windows machine, it will automatically detect and suggest your current settings!*
+   *(Note: If running on Linux/Ubuntu, ensure `python3-tk` is installed to use the GUI: `sudo apt-get install python3-tk`)*
    ```bash
    python personalize.py
    ```
@@ -84,6 +85,7 @@ This repository uses a build system to generate `autounattend.xml` from modular 
 *   **Scripts Location**: All PowerShell scripts are located in the `scripts/` directory.
 *   **Modify**: Edit the `.ps1` files in `scripts/` to make changes.
 *   **Build**: Run `python build.py` to regenerate `autounattend.xml` with your changes. (Now uses `pathlib` and `logging` for robust builds).
+*   **Testing & Linting**: Run `pytest` to execute unit tests. Use `flake8 .` to lint Python code and `autopep8 --in-place -r .` for automatic formatting.
 
 ## ❓ Troubleshooting
 
@@ -221,6 +223,7 @@ RACINE_USB/
 
 
 5. **Personnaliser (Optionnel mais Recommandé)**: Avant de copier `autounattend.xml` sur votre clé USB, vous pouvez exécuter l'outil de personnalisation interactif pour définir facilement votre nom d'utilisateur, mot de passe, langue, nom d'ordinateur, fuseau horaire et identifiants WiFi. *Si vous l'exécutez sur votre machine Windows actuelle, il détectera et suggérera automatiquement vos paramètres actuels !*
+   *(Note : Si vous l'exécutez sur Linux/Ubuntu, assurez-vous que `python3-tk` est installé pour utiliser l'interface graphique : `sudo apt-get install python3-tk`)*
    ```bash
    python personalize.py
    ```
@@ -232,6 +235,7 @@ Ce dépôt utilise un système de build pour générer `autounattend.xml` à par
 *   **Emplacement des Scripts**: Tous les scripts PowerShell se trouvent dans le répertoire `scripts/`.
 *   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications.
 *   **Construire**: Exécutez `python build.py` pour régénérer `autounattend.xml` avec vos changements. (Utilise désormais `pathlib` et `logging` pour des builds robustes).
+*   **Tests et Linting**: Exécutez `pytest` pour lancer les tests unitaires. Utilisez `flake8 .` pour linter le code Python et `autopep8 --in-place -r .` pour le formatage automatique.
 
 ## ❓ Dépannage
 
