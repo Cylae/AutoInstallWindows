@@ -186,7 +186,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **🛡️ Robustesse Améliorée**:
     *   **Téléchargements Sécurisés**: Supporte **TLS 1.2 et 1.3** pour des téléchargements sécurisés.
     *   **Détection Intelligente**: Filtre les lecteurs Fixes et Amovibles pour éviter les blocages.
-    *   **Gestion d'Erreurs Avancée**: Journaux améliorés et gestion robuste du registre pour une exécution sans faille.
+    *   **Gestion d'Erreurs Avancée**: Journaux améliorés et gestion robuste du registre (via `Set-RegistryKey`) pour une exécution sans faille.
 
 ## 📂 Structure des Dossiers
 
