@@ -108,3 +108,38 @@ function Download-File {
 
     return $downloaded
 }
+
+function Set-RegistryKey {
+    param(
+        [string]$Path,
+        [string]$Name,
+        [string]$Value,
+        [string]$Type = "String"
+    )
+
+    # Handle standard DOS path to PowerShell path conversion
+    $Path = $Path -replace "^HKLM\", "HKLM:\" -replace "^HKCU\", "HKCU:\" -replace "^HKU\", "Registry::HKU\" -replace "^HKCR\", "HKCR:\" -replace "^HKCC\", "HKCC:\"
+
+    if (-not (Test-Path $Path)) {
+        $parentPath = Split-Path -Path $Path -Parent
+        if (-not (Test-Path $parentPath)) {
+            # Recursively create missing parent keys
+            $pathParts = $Path -split "\\"
+            $currentPath = $pathParts[0]
+            for ($i = 1; $i -lt $pathParts.Length; $i++) {
+                $currentPath = Join-Path $currentPath $pathParts[$i]
+                if (-not (Test-Path $currentPath)) {
+                    New-Item -Path $currentPath -Force | Out-Null
+                }
+            }
+        } else {
+            New-Item -Path $Path -Force | Out-Null
+        }
+    }
+
+    if ([string]::IsNullOrEmpty($Name)) {
+        Set-Item -Path $Path -Value $Value -Force
+    } else {
+        Set-ItemProperty -Path $Path -Name $Name -Value $Value -Type $Type -Force
+    }
+}
