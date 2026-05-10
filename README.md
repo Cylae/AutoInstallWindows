@@ -79,7 +79,7 @@ USB_ROOT/
 
 ## 🛠️ For Developers
 
-This repository uses a build system to generate `autounattend.xml` from modular PowerShell scripts. `build.py` automatically injects scripts, creates `<File>` blocks if they are missing, and removes empty XML blocks for a cleaner file.
+This repository uses a build system to generate `autounattend.xml` from modular PowerShell scripts. `build.py` automatically injects scripts, creates `<File>` blocks if they are missing, and removes empty XML blocks for a cleaner file. (It has been updated to avoid multiline f-strings for better backwards-compatibility).
 
 *   **Scripts Location**: All PowerShell scripts are located in the `scripts/` directory.
 *   **Modify**: Edit the `.ps1` files in `scripts/` to make changes.
@@ -227,7 +227,7 @@ RACINE_USB/
 
 ## 🛠️ Pour les Développeurs
 
-Ce dépôt utilise un système de build pour générer `autounattend.xml` à partir de scripts PowerShell modulaires. `build.py` injecte automatiquement les scripts, crée des blocs `<File>` s'ils sont manquants et supprime les blocs XML vides pour un fichier plus propre.
+Ce dépôt utilise un système de build pour générer `autounattend.xml` à partir de scripts PowerShell modulaires. `build.py` injecte automatiquement les scripts, crée des blocs `<File>` s'ils sont manquants et supprime les blocs XML vides pour un fichier plus propre. (Il a été mis à jour pour éviter les f-strings multilignes pour une meilleure compatibilité ascendante).
 
 *   **Emplacement des Scripts**: Tous les scripts PowerShell se trouvent dans le répertoire `scripts/`.
 *   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications.
