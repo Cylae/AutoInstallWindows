@@ -84,6 +84,8 @@ This repository uses a build system to generate `autounattend.xml` from modular 
 *   **Scripts Location**: All PowerShell scripts are located in the `scripts/` directory.
 *   **Modify**: Edit the `.ps1` files in `scripts/` to make changes.
 *   **Build**: Run `python build.py` to regenerate `autounattend.xml` with your changes. (Now uses `pathlib` and `logging` for robust builds).
+*   **Linting and Testing**: Use `flake8` for linting the Python scripts (`build.py` and `personalize.py`) and use `pytest` for executing the unit tests (`test_build.py` and `test_personalize.py`). You may also use `autopep8` for formatting Python code.
+*   **Dependencies**: If you are working in a Linux/Ubuntu environment and wish to run the `personalize.py` interactive GUI, make sure the `python3-tk` package is installed (e.g., `sudo apt-get install python3-tk`) to prevent `ModuleNotFoundError` for `tkinter`.
 
 ## ❓ Troubleshooting
 
@@ -232,6 +234,8 @@ Ce dépôt utilise un système de build pour générer `autounattend.xml` à par
 *   **Emplacement des Scripts**: Tous les scripts PowerShell se trouvent dans le répertoire `scripts/`.
 *   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications.
 *   **Construire**: Exécutez `python build.py` pour régénérer `autounattend.xml` avec vos changements. (Utilise désormais `pathlib` et `logging` pour des builds robustes).
+*   **Linting et Tests**: Utilisez `flake8` pour linter les scripts Python (`build.py` et `personalize.py`) et utilisez `pytest` pour exécuter les tests unitaires (`test_build.py` et `test_personalize.py`). Vous pouvez également utiliser `autopep8` pour formater le code Python.
+*   **Dépendances**: Si vous travaillez dans un environnement Linux/Ubuntu et que vous souhaitez exécuter l'interface graphique interactive `personalize.py`, assurez-vous que le paquet `python3-tk` est installé (par exemple, `sudo apt-get install python3-tk`) pour éviter `ModuleNotFoundError` pour `tkinter`.
 
 ## ❓ Dépannage
 
