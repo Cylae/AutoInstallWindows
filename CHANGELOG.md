@@ -45,3 +45,8 @@
 
 ### 🎨 Visual Feedback
 *   Retained `Write-Progress` but with clearer messages during the installation process.
+
+## [Fixes & Enhancements] - Code Quality Updates
+### 🚀 Enhancements
+*   **Code Quality**: Fixed `flake8` and `autopep8` issues across Python scripts (`personalize.py`, `test_build.py`, `test_personalize.py`).
+*   **Cleanup**: Removed unused utility scripts `fix_flake8.sh` and `fix_personalize.py`.
