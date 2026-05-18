@@ -13,6 +13,9 @@ def test_get_current_value():
     assert get_current_value(content, r'<Missing>([^<]*)</Missing>') == ''
     assert get_current_value(content, r'<Missing>([^<]*)</Missing>', default='Def') == 'Def'
 
+    encoded_content = '<ComputerName>User&amp;PC</ComputerName>'
+    assert get_current_value(encoded_content, r'<ComputerName>([^<]*)</ComputerName>') == 'User&PC'
+
 def test_update_value():
     content = '<UILanguage>en-US</UILanguage>'
     pattern = r'(<UILanguage>)([^<]*)(</UILanguage>)'

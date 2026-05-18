@@ -3,6 +3,7 @@ import platform
 import re
 import sys
 import subprocess
+import xml.sax.saxutils
 import tkinter as tk
 from tkinter import ttk, messagebox
 from pathlib import Path
@@ -39,10 +40,16 @@ def get_windows_wifi():
     return ""
 
 
+def xml_decode(s):
+    if not s:
+        return s
+    return xml.sax.saxutils.unescape(s)
+
+
 def get_current_value(content, pattern, default=""):
     match = re.search(pattern, content, re.DOTALL)
     if match:
-        return match.group(1)
+        return xml_decode(match.group(1))
     return default
 
 
