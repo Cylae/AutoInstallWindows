@@ -77,13 +77,15 @@ USB_ROOT/
    python personalize.py
    ```
 
+
 ## 🛠️ For Developers
 
-This repository uses a build system to generate `autounattend.xml` from modular PowerShell scripts. `build.py` automatically injects scripts, creates `<File>` blocks if they are missing, and removes empty XML blocks for a cleaner file.
+This repository uses a build system to generate `autounattend.xml` from modular PowerShell scripts. `build.py` automatically injects scripts, creates `<File>` blocks if missing, and removes empty XML blocks for a cleaner file.
 
-*   **Scripts Location**: All PowerShell scripts are located in the `scripts/` directory.
+*   **Script Location**: All PowerShell scripts are located in the `scripts/` directory.
 *   **Modify**: Edit the `.ps1` files in `scripts/` to make changes.
 *   **Build**: Run `python build.py` to regenerate `autounattend.xml` with your changes. (Now uses `pathlib` and `logging` for robust builds).
+*   **Testing & Linting**: Use `pytest` for unit tests, `flake8` for linting (enforcing a 79-character line limit), and `autopep8` for code formatting.
 
 ## ❓ Troubleshooting
 
@@ -225,6 +227,7 @@ RACINE_USB/
    python personalize.py
    ```
 
+
 ## 🛠️ Pour les Développeurs
 
 Ce dépôt utilise un système de build pour générer `autounattend.xml` à partir de scripts PowerShell modulaires. `build.py` injecte automatiquement les scripts, crée des blocs `<File>` s'ils sont manquants et supprime les blocs XML vides pour un fichier plus propre.
@@ -232,6 +235,7 @@ Ce dépôt utilise un système de build pour générer `autounattend.xml` à par
 *   **Emplacement des Scripts**: Tous les scripts PowerShell se trouvent dans le répertoire `scripts/`.
 *   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications.
 *   **Construire**: Exécutez `python build.py` pour régénérer `autounattend.xml` avec vos changements. (Utilise désormais `pathlib` et `logging` pour des builds robustes).
+*   **Test et Linting**: Utilisez `pytest` pour les tests unitaires, `flake8` pour le linting (imposant une limite de 79 caractères par ligne) et `autopep8` pour le formatage du code.
 
 ## ❓ Dépannage
 
