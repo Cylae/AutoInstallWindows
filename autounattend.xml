@@ -799,10 +799,10 @@ foreach ($script in $scripts) {
 # Generate SetupComplete.cmd for post-OOBE cleanup
 # This ensures unattend.xml is removed to prevent sensitive data leak (if any)
 # We do NOT remove the Scripts folder here because UserOnce.ps1 (RunOnce) needs it.
-$setupCompleteContent = @&quot;
+$setupCompleteContent = @'
 del /q /f &quot;%WINDIR%\Panther\unattend.xml&quot;
 del /q /f &quot;%WINDIR%\Panther\unattend-original.xml&quot;
-&quot;@
+'@
 
 $setupCompletePath = &quot;$env:SystemRoot\Setup\Scripts\SetupComplete.cmd&quot;
 try {
