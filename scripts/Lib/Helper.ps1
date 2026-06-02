@@ -108,3 +108,37 @@ function Download-File {
 
     return $downloaded
 }
+
+function Set-RegistryKey {
+    param (
+        [string]$Path,
+        [string]$Name,
+        [string]$Value,
+        [string]$Type = "String"
+    )
+
+    # Handle path conversions
+    $psPath = $Path -replace "^HKLM\\", "HKLM:\"
+    $psPath = $psPath -replace "^HKCU\\", "HKCU:\"
+    $psPath = $psPath -replace "^HKU\\", "Registry::HKEY_USERS\"
+    $psPath = $psPath -replace "^HKCR\\", "Registry::HKEY_CLASSES_ROOT\"
+
+    # Recursively create missing parent paths
+    if (-not (Test-Path -Path $psPath)) {
+        $pathParts = $psPath -split "\\"
+        $currentPath = $pathParts[0]
+        for ($i = 1; $i -lt $pathParts.Length; $i++) {
+            $currentPath = Join-Path $currentPath $pathParts[$i]
+            if (-not (Test-Path -Path $currentPath)) {
+                New-Item -Path $currentPath -Force | Out-Null
+            }
+        }
+    }
+
+    # Safely apply values
+    if ($Name -eq "(default)" -or $Name -eq "") {
+        Set-Item -Path $psPath -Value $Value -Force | Out-Null
+    } else {
+        Set-ItemProperty -Path $psPath -Name $Name -Value $Value -Type $Type -Force | Out-Null
+    }
+}
