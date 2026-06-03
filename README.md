@@ -20,7 +20,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Power User**: Enables "End Task" in Taskbar context menu, shows **Seconds in System Clock**, and Disables Transparency effects.
     *   **User Experience**: Disables "Finish setting up your device", "Lock Screen Tips", "Welcome Experience", "Sync Provider Notifications", **Widgets (News and Interests)**, **Chat/Teams** icon, **Mouse Acceleration** (Enhance Pointer Precision), and prevents accidental **Accessibility Shortcuts** (Sticky Keys).
     *   **Space Saving**: Disables Hibernation to save disk space (`hiberfil.sys`).
-    *   **Performance**: Disables Last Access Timestamp updates and **App Launch Tracking** to improve disk performance.
+    *   **Performance**: Disables Fast Startup via `HiberbootEnabled`, disables Last Access Timestamp updates, and disables **App Launch Tracking** to improve disk performance.
     *   **Gaming**: Disables Game DVR/Bar for better gaming performance.
 *   **🔧 Intelligent Driver Installation**:
     *   **Auto-Detection**: Automatically scans all drives for a `drivers` folder.
@@ -169,7 +169,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
     *   **Utilisateur Avancé**: Active "Fin de tâche" dans le menu contextuel, affiche les **Secondes dans l'horloge**, et désactive la transparence.
     *   **Expérience Utilisateur**: Désactive "Terminer la configuration de votre appareil", les astuces de l'écran de verrouillage, l'expérience de bienvenue, **Widgets (Actualités)**, l'icône **Chat/Teams**, l'**Accélération de la souris** (Améliorer la précision du pointeur) et empêche l'activation accidentelle des **Raccourcis d'accessibilité** (Touches rémanentes).
     *   **Gain d'Espace**: Désactive l'hibernation pour économiser de l'espace disque (`hiberfil.sys`).
-    *   **Performance**: Désactive la mise à jour de la date de dernier accès et le **Suivi de lancement d'applications** pour améliorer les performances disque.
+    *   **Performance**: Désactive le démarrage rapide via `HiberbootEnabled`, la mise à jour de la date de dernier accès et le **Suivi de lancement d'applications** pour améliorer les performances disque.
     *   **Jeu**: Désactive Game DVR/Bar pour de meilleures performances en jeu.
 *   **🔧 Installation Intelligente des Pilotes**:
     *   **Auto-Détection**: Scanne tous les lecteurs pour trouver le dossier `drivers`.

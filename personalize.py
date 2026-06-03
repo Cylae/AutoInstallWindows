@@ -431,12 +431,28 @@ def main():
         app.mainloop()
     except (tk.TclError, ImportError) as e:
         print(f"GUI not available ({e}). Falling back to CLI mode...")
-        try:
-            cli_main(xml_path, content, defaults)
-        except EOFError:
-            print("Error: Interactive input required, but EOF reached. "
-                  "Please run this tool in an interactive terminal.")
-            sys.exit(1)
+        if not sys.stdin.isatty():
+            print("Non-interactive terminal detected. Applying defaults "
+                  "without prompting...")
+            # We construct `data` with defaults directly
+            data = defaults.copy()
+            # To avoid unhandled None in password if not present
+            data['wifi_pass'] = ""
+            try:
+                apply_personalizations(xml_path, content, data)
+                print("\n[+] Personalization complete! The autounattend.xml "
+                      "is ready for your USB key.")
+            except subprocess.CalledProcessError as err:
+                err_msg = err.stderr if err.stderr else "Unknown error"
+                print("\n[-] Error running build.py:\n" + err_msg)
+                sys.exit(1)
+        else:
+            try:
+                cli_main(xml_path, content, defaults)
+            except EOFError:
+                print("Error: Interactive input required, but EOF reached. "
+                      "Please run this tool in an interactive terminal.")
+                sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -1,17 +1,27 @@
-import pytest
-from pathlib import Path
-from personalize import xml_encode, get_current_value, update_value, apply_personalizations
+from personalize import (
+    xml_encode,
+    get_current_value,
+    update_value,
+    apply_personalizations
+)
+
 
 def test_personalize_xml_encode():
-    assert xml_encode(None) == None
+    assert xml_encode(None) is None
     assert xml_encode('') == ''
     assert xml_encode('A & B') == 'A &amp; B'
 
+
 def test_get_current_value():
     content = '<LocalAccount><Name>Admin</Name></LocalAccount>'
-    assert get_current_value(content, r'<LocalAccount[^>]*>\s*<Name>([^<]*)</Name>') == 'Admin'
+    assert get_current_value(
+        content, r'<LocalAccount[^>]*>\s*<Name>([^<]*)</Name>') == 'Admin'
     assert get_current_value(content, r'<Missing>([^<]*)</Missing>') == ''
-    assert get_current_value(content, r'<Missing>([^<]*)</Missing>', default='Def') == 'Def'
+    assert get_current_value(
+        content,
+        r'<Missing>([^<]*)</Missing>',
+        default='Def') == 'Def'
+
 
 def test_update_value():
     content = '<UILanguage>en-US</UILanguage>'
@@ -24,11 +34,13 @@ def test_update_value():
     updated_encoded = update_value(content, pattern, 'a&b')
     assert updated_encoded == '<UILanguage>a&amp;b</UILanguage>'
 
+
 def test_apply_personalizations(tmp_path, monkeypatch):
     # Setup dummy autounattend.xml and build.py in tmp_path
     dummy_xml = """<root>
     <LocalAccount><Name>OldUser</Name></LocalAccount>
-    <AutoLogon><Username>OldUser</Username><Password><Value>oldpass</Value></Password></AutoLogon>
+    <AutoLogon><Username>OldUser</Username><Password><Value>oldpass</Value>\
+    </Password></AutoLogon>
     <UILanguage>en-US</UILanguage>
     <SystemLocale>en-US</SystemLocale>
     <UserLocale>en-US</UserLocale>

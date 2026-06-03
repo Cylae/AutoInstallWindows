@@ -108,3 +108,67 @@ function Download-File {
 
     return $downloaded
 }
+
+function Set-RegistryKey {
+    param (
+        [Parameter(Mandatory=$true)][string]$Path,
+        [string]$Name,
+        [Parameter(Mandatory=$true)]$Value,
+        [string]$Type = "String"
+    )
+
+    # Convert paths like HKLM\Software to Registry::HKEY_LOCAL_MACHINE\Software
+    # This prevents provider errors if we are not currently in the Registry provider
+    if ($Path -match "^HKLM\\") {
+        $Path = $Path -replace "^HKLM\\", "Registry::HKEY_LOCAL_MACHINE\"
+    } elseif ($Path -match "^HKCU\\") {
+        $Path = $Path -replace "^HKCU\\", "Registry::HKEY_CURRENT_USER\"
+    } elseif ($Path -match "^HKU\\") {
+        $Path = $Path -replace "^HKU\\", "Registry::HKEY_USERS\"
+    } elseif ($Path -match "^HKCR\\") {
+        $Path = $Path -replace "^HKCR\\", "Registry::HKEY_CLASSES_ROOT\"
+    }
+
+    # Extract the base registry path and the keys to create
+    $providerPrefix = ""
+    $relativePath = ""
+
+    if ($Path -match "^(Registry::[^\\]+)\\(.*)") {
+        $providerPrefix = $matches[1]
+        $relativePath = $matches[2]
+    } else {
+        # Fallback if no specific provider format found
+        $providerPrefix = "Registry::HKEY_LOCAL_MACHINE"
+        $relativePath = $Path
+    }
+
+    # Split the path into segments and build recursively
+    $segments = $relativePath -split "\\"
+    $currentPath = $providerPrefix
+
+    foreach ($segment in $segments) {
+        if (-not [string]::IsNullOrEmpty($segment)) {
+            $currentPath = "$currentPath\$segment"
+            if (-not (Test-Path -Path $currentPath)) {
+                try {
+                    New-Item -Path $currentPath -ItemType Directory -Force -ErrorAction Stop | Out-Null
+                } catch {
+                    Write-Log "Failed to create registry key '$currentPath': $_"
+                    return
+                }
+            }
+        }
+    }
+
+    # Set the value
+    try {
+        if ([string]::IsNullOrEmpty($Name)) {
+            # (default) value
+            Set-Item -Path $Path -Value $Value -Force -ErrorAction Stop
+        } else {
+            Set-ItemProperty -Path $Path -Name $Name -Value $Value -Type $Type -Force -ErrorAction Stop
+        }
+    } catch {
+        Write-Log "Failed to set registry value '$Name' at '$Path': $_"
+    }
+}
