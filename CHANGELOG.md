@@ -3,6 +3,9 @@
 ## [Fixes & Enhancements] - Unreleased
 
 ### 🚀 Enhancements
+*   **Registry Tweaks**: Replaced `reg.exe` calls with robust `Set-RegistryKey` helper function in `Configure-Privacy.ps1`, `DefaultUser.ps1`, and `Optimize-System.ps1`.
+
+### 🚀 Enhancements
 *   **User Experience**: Disabled Mouse Acceleration (Enhance Pointer Precision) by default.
 *   **Privacy & Security**: Disabled Location Tracking and Delivery Optimization via registry tweaks.
 
