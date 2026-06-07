@@ -6,6 +6,7 @@ import subprocess
 import tkinter as tk
 from tkinter import ttk, messagebox
 from pathlib import Path
+from xml.sax.saxutils import unescape
 
 
 def get_windows_timezone():
@@ -42,7 +43,7 @@ def get_windows_wifi():
 def get_current_value(content, pattern, default=""):
     match = re.search(pattern, content, re.DOTALL)
     if match:
-        return match.group(1)
+        return unescape(match.group(1))
     return default
 
 
@@ -431,6 +432,19 @@ def main():
         app.mainloop()
     except (tk.TclError, ImportError) as e:
         print(f"GUI not available ({e}). Falling back to CLI mode...")
+        if not sys.stdin.isatty():
+            print("Non-interactive terminal detected. Applying default values "
+                  "without prompting.")
+            try:
+                apply_personalizations(xml_path, content, defaults)
+                print("\n[+] Personalization complete! The autounattend.xml "
+                      "is ready.")
+            except subprocess.CalledProcessError as err:
+                err_msg = err.stderr if err.stderr else "Unknown error"
+                print("\n[-] Error running build.py:\n" + err_msg)
+                sys.exit(1)
+            return
+
         try:
             cli_main(xml_path, content, defaults)
         except EOFError:
