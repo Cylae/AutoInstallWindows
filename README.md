@@ -79,6 +79,11 @@ USB_ROOT/
 
 ## 🛠️ For Developers
 
+### Tests and Linting
+
+We use `pytest` for executing unit tests, `flake8` for linting (enforcing a 79-character maximum line length), and `autopep8` for formatting Python code.
+
+
 This repository uses a build system to generate `autounattend.xml` from modular PowerShell scripts. `build.py` automatically injects scripts, creates `<File>` blocks if they are missing, and removes empty XML blocks for a cleaner file.
 
 *   **Scripts Location**: All PowerShell scripts are located in the `scripts/` directory.
@@ -226,6 +231,11 @@ RACINE_USB/
    ```
 
 ## 🛠️ Pour les Développeurs
+
+### Tests et Linting
+
+Nous utilisons `pytest` pour exécuter les tests unitaires, `flake8` pour le linting (imposant une longueur maximale de ligne de 79 caractères), et `autopep8` pour formater le code Python.
+
 
 Ce dépôt utilise un système de build pour générer `autounattend.xml` à partir de scripts PowerShell modulaires. `build.py` injecte automatiquement les scripts, crée des blocs `<File>` s'ils sont manquants et supprime les blocs XML vides pour un fichier plus propre.
 
