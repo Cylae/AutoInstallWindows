@@ -6,6 +6,7 @@ import subprocess
 import tkinter as tk
 from tkinter import ttk, messagebox
 from pathlib import Path
+import xml.sax.saxutils
 
 
 def get_windows_timezone():
@@ -42,8 +43,14 @@ def get_windows_wifi():
 def get_current_value(content, pattern, default=""):
     match = re.search(pattern, content, re.DOTALL)
     if match:
-        return match.group(1)
+        return xml_decode(match.group(1))
     return default
+
+
+def xml_decode(s):
+    if not s:
+        return s
+    return xml.sax.saxutils.unescape(s)
 
 
 def xml_encode(s):
@@ -315,6 +322,20 @@ def cli_main(xml_path, content, defaults):
     print("\n===============================================================")
     print(" 🚀 Ultimate Windows Autounattend - Easy Personalization Tool")
     print("===============================================================")
+
+    if not sys.stdin.isatty():
+        print("Non-interactive environment detected. Applying defaults "
+              "automatically.\n")
+        try:
+            apply_personalizations(xml_path, content, defaults)
+            print("\n[+] Personalization complete! The autounattend.xml "
+                  "is ready for your USB key.")
+        except subprocess.CalledProcessError as e:
+            err_msg = e.stderr if e.stderr else "Unknown error"
+            print("\n[-] Error running build.py:\n" + err_msg)
+            sys.exit(1)
+        return
+
     print("This tool will configure your USB key to automatically "
           "install Windows")
     print("using your preferred settings. Press Enter to accept "
