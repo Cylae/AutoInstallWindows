@@ -6,6 +6,13 @@ import subprocess
 import tkinter as tk
 from tkinter import ttk, messagebox
 from pathlib import Path
+from xml.sax.saxutils import unescape
+
+
+def xml_decode(s):
+    if not s:
+        return s
+    return unescape(s, {"&quot;": '"'})
 
 
 def get_windows_timezone():
@@ -42,7 +49,7 @@ def get_windows_wifi():
 def get_current_value(content, pattern, default=""):
     match = re.search(pattern, content, re.DOTALL)
     if match:
-        return match.group(1)
+        return xml_decode(match.group(1))
     return default
 
 
@@ -312,49 +319,68 @@ def prompt_cli(label, current_value):
 
 
 def cli_main(xml_path, content, defaults):
-    print("\n===============================================================")
-    print(" 🚀 Ultimate Windows Autounattend - Easy Personalization Tool")
-    print("===============================================================")
-    print("This tool will configure your USB key to automatically "
-          "install Windows")
-    print("using your preferred settings. Press Enter to accept "
-          "the detected defaults.\n")
+    if not sys.stdin.isatty():
+        print("\n===========================================================")
+        print(" 🚀 Ultimate Windows Autounattend - Non-Interactive Mode")
+        print("===========================================================")
+        print("Non-interactive environment detected (e.g., CI/CD).")
+        print("Automatically applying defaults without prompting.")
+        data = {
+            'username': defaults.get('username', ''),
+            'password': defaults.get('password', ''),
+            'computer_name': defaults.get('computer_name', ''),
+            'timezone': defaults.get('timezone', ''),
+            'ui_language': defaults.get('ui_language', ''),
+            'sys_locale': defaults.get('sys_locale', ''),
+            'user_locale': defaults.get('user_locale', ''),
+            'input_locale': defaults.get('input_locale', ''),
+            'wifi_ssid': defaults.get('wifi_ssid', ''),
+            'wifi_pass': defaults.get('wifi_pass', '')
+        }
+    else:
+        print("\n===========================================================")
+        print(" 🚀 Ultimate Windows Autounattend - Easy Personalization Tool")
+        print("===========================================================")
+        print("This tool configures your USB key to automatically "
+              "install Windows")
+        print("using your preferred settings. Press Enter to accept "
+              "the defaults.\n")
 
-    new_username = prompt_cli("👤 Username", defaults.get('username'))
-    new_password = prompt_cli("🔑 Password", defaults.get('password'))
-    new_computer_name = prompt_cli(
-        "💻 Computer Name", defaults.get('computer_name'))
-    new_timezone = prompt_cli("🌍 Time Zone", defaults.get('timezone'))
+        new_username = prompt_cli("👤 Username", defaults.get('username'))
+        new_password = prompt_cli("🔑 Password", defaults.get('password'))
+        new_computer_name = prompt_cli(
+            "💻 Computer Name", defaults.get('computer_name'))
+        new_timezone = prompt_cli("🌍 Time Zone", defaults.get('timezone'))
 
-    print("\n--- Advanced Locale Settings ---")
-    new_ui_language = prompt_cli(
-        "UI Language (e.g., fr-FR, en-US)", defaults.get('ui_language'))
-    new_sys_locale = prompt_cli(
-        "System Locale (e.g., fr-FR, en-US)", defaults.get('sys_locale'))
-    new_user_locale = prompt_cli(
-        "User Locale (e.g., fr-FR, en-US)", defaults.get('user_locale'))
-    new_input_locale = prompt_cli(
-        "Input Locale (e.g., 040c:0000040c)", defaults.get('input_locale'))
+        print("\n--- Advanced Locale Settings ---")
+        new_ui_language = prompt_cli(
+            "UI Language (e.g., fr-FR, en-US)", defaults.get('ui_language'))
+        new_sys_locale = prompt_cli(
+            "System Locale (e.g., fr-FR, en-US)", defaults.get('sys_locale'))
+        new_user_locale = prompt_cli(
+            "User Locale (e.g., fr-FR, en-US)", defaults.get('user_locale'))
+        new_input_locale = prompt_cli(
+            "Input Locale (e.g., 040c:0000040c)", defaults.get('input_locale'))
 
-    print("\n--- WiFi Configuration ---")
-    new_wifi_ssid = prompt_cli(
-        "📡 WiFi SSID (leave blank to skip)", defaults.get('wifi_ssid'))
-    new_wifi_pass = ""
-    if new_wifi_ssid:
-        new_wifi_pass = input("🔐 WiFi Password: ").strip()
+        print("\n--- WiFi Configuration ---")
+        new_wifi_ssid = prompt_cli(
+            "📡 WiFi SSID (leave blank to skip)", defaults.get('wifi_ssid'))
+        new_wifi_pass = ""
+        if new_wifi_ssid:
+            new_wifi_pass = input("🔐 WiFi Password: ").strip()
 
-    data = {
-        'username': new_username,
-        'password': new_password,
-        'computer_name': new_computer_name,
-        'timezone': new_timezone,
-        'ui_language': new_ui_language,
-        'sys_locale': new_sys_locale,
-        'user_locale': new_user_locale,
-        'input_locale': new_input_locale,
-        'wifi_ssid': new_wifi_ssid,
-        'wifi_pass': new_wifi_pass
-    }
+        data = {
+            'username': new_username,
+            'password': new_password,
+            'computer_name': new_computer_name,
+            'timezone': new_timezone,
+            'ui_language': new_ui_language,
+            'sys_locale': new_sys_locale,
+            'user_locale': new_user_locale,
+            'input_locale': new_input_locale,
+            'wifi_ssid': new_wifi_ssid,
+            'wifi_pass': new_wifi_pass
+        }
 
     try:
         apply_personalizations(xml_path, content, data)
