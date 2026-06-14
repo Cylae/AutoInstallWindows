@@ -82,9 +82,9 @@ USB_ROOT/
 This repository uses a build system to generate `autounattend.xml` from modular PowerShell scripts. `build.py` automatically injects scripts, creates `<File>` blocks if they are missing, and removes empty XML blocks for a cleaner file.
 
 *   **Scripts Location**: All PowerShell scripts are located in the `scripts/` directory.
+*   **Helper Methods**: The `scripts/Lib/Helper.ps1` file contains utilities like `Set-RegistryKey` to safely modify registry values (automatically handling PSDrive conversions and missing parent keys) and `Download-File` with robust retry logic. Use these to ensure consistency.
 *   **Modify**: Edit the `.ps1` files in `scripts/` to make changes.
 *   **Build**: Run `python build.py` to regenerate `autounattend.xml` with your changes. (Now uses `pathlib` and `logging` for robust builds).
-
 ## ❓ Troubleshooting
 
 If you encounter issues, check the log file created during setup:
@@ -230,9 +230,9 @@ RACINE_USB/
 Ce dépôt utilise un système de build pour générer `autounattend.xml` à partir de scripts PowerShell modulaires. `build.py` injecte automatiquement les scripts, crée des blocs `<File>` s'ils sont manquants et supprime les blocs XML vides pour un fichier plus propre.
 
 *   **Emplacement des Scripts**: Tous les scripts PowerShell se trouvent dans le répertoire `scripts/`.
+*   **Méthodes Auxiliaires**: Le fichier `scripts/Lib/Helper.ps1` contient des utilitaires tels que `Set-RegistryKey` pour modifier en toute sécurité les valeurs du registre (en gérant automatiquement les conversions de PSDrive et les clés parentes manquantes) et `Download-File` avec une logique de réessai robuste. Utilisez-les pour garantir la cohérence.
 *   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications.
 *   **Construire**: Exécutez `python build.py` pour régénérer `autounattend.xml` avec vos changements. (Utilise désormais `pathlib` et `logging` pour des builds robustes).
-
 ## ❓ Dépannage
 
 Si vous rencontrez des problèmes, consultez le fichier journal créé lors de l'installation :
