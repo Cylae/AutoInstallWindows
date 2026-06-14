@@ -108,3 +108,49 @@ function Download-File {
 
     return $downloaded
 }
+
+function Set-RegistryKey {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$Path,
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+        [Parameter(Mandatory=$true)]
+        $Value,
+        [Parameter(Mandatory=$true)]
+        [string]$Type
+    )
+
+    # Convert common registry roots to PowerShell drive format
+    $psPath = $Path -replace "^HKLM\\", "HKLM:\" -replace "^HKCU\\", "HKCU:\" -replace "^(HKU|HKEY_USERS)\\", "Registry::HKEY_USERS\"
+
+    # Attempt to create the path iteratively if it doesn't exist
+    if (-not (Test-Path $psPath)) {
+        # Split path and rebuild to ensure parent keys exist
+        if ($psPath -match "^(HKLM:\\|HKCU:\\|Registry::HKEY_USERS\\)(.*)") {
+            $root = $matches[1]
+            $subPath = $matches[2]
+
+            $currentPath = $root
+            $subPath -split "\\" | ForEach-Object {
+                if ($_ -ne "") {
+                    $currentPath = Join-Path -Path $currentPath -ChildPath $_
+                    if (-not (Test-Path -Path $currentPath)) {
+                        New-Item -Path $currentPath -Force -ErrorAction SilentlyContinue | Out-Null
+                    }
+                }
+            }
+        }
+    }
+
+    try {
+        if ($Name -eq "(default)" -or $Name -eq "") {
+            Set-Item -Path $psPath -Value $Value -Force -ErrorAction Stop
+        } else {
+            Set-ItemProperty -Path $psPath -Name $Name -Value $Value -Type $Type -Force -ErrorAction Stop
+        }
+        Write-Log "Successfully set registry value: $Path\$Name"
+    } catch {
+        Write-Log "Failed to set registry value: $Path\$Name. Error: $_"
+    }
+}
