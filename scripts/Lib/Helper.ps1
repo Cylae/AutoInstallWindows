@@ -1,3 +1,39 @@
+function Set-RegistryKey {
+    param (
+        [Parameter(Mandatory=$true)][string]$Path,
+        [string]$Name = "",
+        [string]$Value = "",
+        [string]$Type = "String"
+    )
+
+    $psPath = $Path
+    if ($psPath -match "^HKLM\\") {
+        $psPath = $psPath -replace "^HKLM\\", "HKLM:\"
+    } elseif ($psPath -match "^HKCU\\") {
+        $psPath = $psPath -replace "^HKCU\\", "HKCU:\"
+    } elseif ($psPath -match "^HKU\\") {
+        $psPath = $psPath -replace "^HKU\\", "Registry::HKEY_USERS\"
+    } elseif ($psPath -match "^HKCR\\") {
+        $psPath = $psPath -replace "^HKCR\\", "Registry::HKEY_CLASSES_ROOT\"
+    }
+
+    $pathParts = $psPath -split "\\"
+    $currentPath = $pathParts[0]
+
+    for ($i = 1; $i -lt $pathParts.Length; $i++) {
+        $currentPath = "$currentPath\$($pathParts[$i])"
+        if (-not (Test-Path -Path $currentPath)) {
+            New-Item -Path $currentPath -Force -ErrorAction SilentlyContinue | Out-Null
+        }
+    }
+
+    if ($Name -eq '""' -or $Name -eq "") {
+        Set-Item -Path $currentPath -Value $Value -ErrorAction SilentlyContinue
+    } else {
+        Set-ItemProperty -Path $currentPath -Name $Name -Value $Value -Type $Type -Force -ErrorAction SilentlyContinue
+    }
+}
+
 function Get-InstallMedia {
     # Use .NET DriveInfo to correctly identify Fixed/Removable drives and avoid network/floppy hangs
     $drives = [System.IO.DriveInfo]::GetDrives() | Where-Object { $_.DriveType -in 'Fixed', 'Removable' -and $_.IsReady }

@@ -3,6 +3,9 @@
 ## [Fixes & Enhancements] - Unreleased
 
 ### 🚀 Enhancements
+*   **Robustness**: Replaced `reg.exe` with `Set-RegistryKey` helper function for more robust registry tweaks and error handling.
+
+### 🚀 Enhancements
 *   **User Experience**: Disabled Mouse Acceleration (Enhance Pointer Precision) by default.
 *   **Privacy & Security**: Disabled Location Tracking and Delivery Optimization via registry tweaks.
 
