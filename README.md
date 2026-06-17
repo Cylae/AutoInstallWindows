@@ -1,6 +1,6 @@
 # 🚀 Ultimate Windows Autounattend
 
-**New! Easy Personalization GUI:** We now include a user-friendly graphical tool (`personalize.py`) so you can easily adapt the `autounattend.xml` to your needs before copying it to your USB. Just run `python personalize.py` to open the GUI and configure your Username, Password, Time Zone, Computer Name, Language, and WiFi!
+**New! Easy Personalization GUI:** We now include a user-friendly graphical tool (`personalize.py`) so you can easily adapt the `autounattend.xml` to your needs before copying it to your USB. This tool also supports completely automated configuration suitable for CI/CD environments. Just run `python personalize.py` to open the GUI and configure your Username, Password, Time Zone, Computer Name, Language, and WiFi!
 
 This repository contains a highly optimized, modular `autounattend.xml` designed for a **silent**, **clean**, and **robust** Windows installation.
 
@@ -12,7 +12,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
 *   **🛡️ Privacy Hardened**: Disables Telemetry, **Recall** (AI Screenshot), Copilot, Bing Search, Cortana, Advertising ID, **Search Highlights**, **Widgets**, **File Explorer Ads**, **Tips/Suggestions**, **Error Reporting**, **Shared Experiences**, **Location Tracking**, **Delivery Optimization**, and **Typing Insights**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
 *   **🌑 Dark Mode**: Enables Dark Mode for System and Apps by default.
-*   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, **Meet Now** icon, etc.) and unnecessary Windows capabilities. **Preserves Notepad and Paint.**
+*   **🧹 Deep Debloating**: Aggressively removes bloatware (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Gaming Overlays**, **YourPhone**, **Bing Finance**, **Bing Sports**, **Zune Music**, **Meet Now** icon, etc.) and unnecessary Windows capabilities. **Preserves Notepad and Paint.**
 *   **💥 Self-Destruct**: Installation scripts automatically delete themselves after the first login to ensure a clean slate.
 *   **📜 Log Persistence**: Setup logs are preserved in `C:\Windows\Panther\Autounattend_Log.txt` for troubleshooting.
 *   **🚀 System Optimization**:
@@ -149,7 +149,7 @@ If you prefer to edit the XML manually, add your network profile inside the `<sp
 
 # 🇫🇷 Ultimate Windows Autounattend (Français)
 
-**Nouveau ! Interface de Personnalisation Facile :** Nous incluons désormais un outil graphique convivial (`personalize.py`) pour vous permettre d'adapter facilement le fichier `autounattend.xml` à vos besoins avant de le copier sur votre clé USB. Exécutez simplement `python personalize.py` pour ouvrir l'interface et configurer votre Nom d'utilisateur, Mot de passe, Fuseau horaire, Nom de l'ordinateur, Langue et WiFi !
+**Nouveau ! Interface de Personnalisation Facile :** Nous incluons désormais un outil graphique convivial (`personalize.py`) pour vous permettre d'adapter facilement le fichier `autounattend.xml` à vos besoins avant de le copier sur votre clé USB. Cet outil prend également en charge la configuration entièrement automatisée adaptée aux environnements CI/CD. Exécutez simplement `python personalize.py` pour ouvrir l'interface et configurer votre Nom d'utilisateur, Mot de passe, Fuseau horaire, Nom de l'ordinateur, Langue et WiFi !
 
 Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulaire, conçu pour une installation Windows **silencieuse**, **propre** et **robuste**.
 
@@ -161,7 +161,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **🤫 Totalement Silencieux**: Tous les scripts sont optimisés pour masquer les sorties et fenêtres. Vous ne verrez rien avant l'écran "Bienvenue".
 *   **🛡️ Confidentialité Renforcée**: Désactive la télémétrie, **Recall** (Capture d'écran IA), Copilot, la recherche Bing, Cortana, l'ID publicitaire, **Widgets**, **Publicités Explorateur**, **Astuces**, **Rapports d'erreurs**, **Expériences partagées**, **Suivi de localisation**, **Optimisation de la distribution** et **Insights de saisie**. **Restaure le menu contextuel classique** (Windows 11) et affiche les extensions de fichiers.
 *   **🌑 Mode Sombre**: Active le mode sombre pour le système et les applications par défaut.
-*   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Jeux**, **YourPhone**, **Meet Now**, etc.) et les fonctionnalités Windows inutiles. **Préserve Notepad et Paint.**
+*   **🧹 Nettoyage en Profondeur**: Supprime agressivement les bloatwares (Candy Crush, Clipchamp, **Widgets**, **Cortana**, **Xbox/Jeux**, **YourPhone**, **Bing Finance**, **Bing Sports**, **Zune Music**, **Meet Now**, etc.) et les fonctionnalités Windows inutiles. **Préserve Notepad et Paint.**
 *   **💥 Auto-destruction**: Les scripts d'installation se suppriment automatiquement après la première connexion pour garantir un état propre.
 *   **📜 Journaux**: Les journaux d'installation sont conservés dans `C:\Windows\Panther\Autounattend_Log.txt` pour le dépannage.
 *   **🚀 Optimisation Système**:

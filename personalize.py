@@ -3,6 +3,7 @@ import platform
 import re
 import sys
 import subprocess
+import xml.sax.saxutils
 import tkinter as tk
 from tkinter import ttk, messagebox
 from pathlib import Path
@@ -42,8 +43,14 @@ def get_windows_wifi():
 def get_current_value(content, pattern, default=""):
     match = re.search(pattern, content, re.DOTALL)
     if match:
-        return match.group(1)
+        return xml_decode(match.group(1))
     return default
+
+
+def xml_decode(s):
+    if not s:
+        return s
+    return xml.sax.saxutils.unescape(s)
 
 
 def xml_encode(s):
@@ -427,9 +434,27 @@ def main():
         if not os.environ.get('DISPLAY') and platform.system() != "Windows":
             raise tk.TclError("No display available")
 
+        # Also check if it's an automated environment
+        if not sys.stdin.isatty():
+            print(
+                "Non-interactive environment. Auto-applying defaults...")
+            apply_personalizations(xml_path, content, defaults)
+            return
+
         app = PersonalizationApp(xml_path, content, defaults)
         app.mainloop()
     except (tk.TclError, ImportError) as e:
+        if not sys.stdin.isatty():
+            print(
+                "Non-interactive environment. Auto-applying defaults...")
+            try:
+                apply_personalizations(xml_path, content, defaults)
+                print("Defaults applied successfully.")
+            except Exception as e:
+                print(f"Error applying defaults: {e}")
+                sys.exit(1)
+            return
+
         print(f"GUI not available ({e}). Falling back to CLI mode...")
         try:
             cli_main(xml_path, content, defaults)
