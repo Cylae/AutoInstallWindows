@@ -8,6 +8,8 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 
 ## ✨ Features
 
+*   **🔧 Fixes & Enhancements**: Fixed PowerShell string interpolation errors in several scripts and resolved unused imports and code formatting issues in Python files.
+
 *   **⚡ Zero-Interruption Setup**: All software (Chrome, Drivers, etc.) is installed during the `Specialize` pass, *before* the user logs in. No popups, no waiting at the desktop.
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
 *   **🛡️ Privacy Hardened**: Disables Telemetry, **Recall** (AI Screenshot), Copilot, Bing Search, Cortana, Advertising ID, **Search Highlights**, **Widgets**, **File Explorer Ads**, **Tips/Suggestions**, **Error Reporting**, **Shared Experiences**, **Location Tracking**, **Delivery Optimization**, and **Typing Insights**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
