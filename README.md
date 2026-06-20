@@ -76,6 +76,7 @@ USB_ROOT/
    ```bash
    python personalize.py
    ```
+   *Note: In headless or CI/CD environments (without a display), `personalize.py` safely skips the GUI and automatically applies default configurations without prompting.*
 
 ## 🛠️ For Developers
 
@@ -224,6 +225,7 @@ RACINE_USB/
    ```bash
    python personalize.py
    ```
+   *Remarque : Dans les environnements headless ou CI/CD (sans affichage), `personalize.py` ignore l'interface graphique et applique automatiquement les configurations par défaut sans invite de commande.*
 
 ## 🛠️ Pour les Développeurs
 
