@@ -1,15 +1,26 @@
 import pytest
 from pathlib import Path
-from personalize import xml_encode, get_current_value, update_value, apply_personalizations
+from personalize import xml_encode, get_current_value, update_value, apply_personalizations, xml_decode
 
 def test_personalize_xml_encode():
     assert xml_encode(None) == None
     assert xml_encode('') == ''
     assert xml_encode('A & B') == 'A &amp; B'
 
+def test_personalize_xml_decode():
+    assert xml_decode(None) == None
+    assert xml_decode('') == ''
+    assert xml_decode('A &amp; B') == 'A & B'
+    assert xml_decode('&lt;tag&gt;') == '<tag>'
+    assert xml_decode('&quot;quotes&quot;') == '"quotes"'
+
 def test_get_current_value():
     content = '<LocalAccount><Name>Admin</Name></LocalAccount>'
     assert get_current_value(content, r'<LocalAccount[^>]*>\s*<Name>([^<]*)</Name>') == 'Admin'
+
+    encoded_content = '<LocalAccount><Name>A &amp; B</Name></LocalAccount>'
+    assert get_current_value(encoded_content, r'<LocalAccount[^>]*>\s*<Name>([^<]*)</Name>') == 'A & B'
+
     assert get_current_value(content, r'<Missing>([^<]*)</Missing>') == ''
     assert get_current_value(content, r'<Missing>([^<]*)</Missing>', default='Def') == 'Def'
 

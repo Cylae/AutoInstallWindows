@@ -3,9 +3,19 @@ import platform
 import re
 import sys
 import subprocess
-import tkinter as tk
-from tkinter import ttk, messagebox
 from pathlib import Path
+import xml.sax.saxutils
+
+try:
+    import tkinter as tk
+    from tkinter import ttk, messagebox
+    TclError = tk.TclError
+except ImportError:
+    tk = None
+    ttk = None
+    messagebox = None
+    class TclError(Exception):
+        pass
 
 
 def get_windows_timezone():
@@ -39,10 +49,16 @@ def get_windows_wifi():
     return ""
 
 
+def xml_decode(s):
+    if not s:
+        return s
+    return xml.sax.saxutils.unescape(s, {"&quot;": '"'})
+
+
 def get_current_value(content, pattern, default=""):
     match = re.search(pattern, content, re.DOTALL)
     if match:
-        return match.group(1)
+        return xml_decode(match.group(1))
     return default
 
 
@@ -315,6 +331,20 @@ def cli_main(xml_path, content, defaults):
     print("\n===============================================================")
     print(" 🚀 Ultimate Windows Autounattend - Easy Personalization Tool")
     print("===============================================================")
+
+    if not sys.stdin.isatty():
+        print(
+            "Non-interactive mode detected. Applying default configurations automatically.")
+        try:
+            apply_personalizations(xml_path, content, defaults)
+            print("\n[+] Personalization complete! The autounattend.xml "
+                  "is ready for your USB key.")
+        except subprocess.CalledProcessError as e:
+            err_msg = e.stderr if e.stderr else "Unknown error"
+            print("\n[-] Error running build.py:\n" + err_msg)
+            sys.exit(1)
+        return
+
     print("This tool will configure your USB key to automatically "
           "install Windows")
     print("using your preferred settings. Press Enter to accept "
@@ -422,14 +452,16 @@ def main():
     }
 
     try:
+        if tk is None:
+            raise ImportError("tkinter is not installed")
         # Check if we are running in an environment without a display
         # e.g., SSH without X11. This is a common failure point for Tkinter
         if not os.environ.get('DISPLAY') and platform.system() != "Windows":
-            raise tk.TclError("No display available")
+            raise TclError("No display available")
 
         app = PersonalizationApp(xml_path, content, defaults)
         app.mainloop()
-    except (tk.TclError, ImportError) as e:
+    except (TclError, ImportError) as e:
         print(f"GUI not available ({e}). Falling back to CLI mode...")
         try:
             cli_main(xml_path, content, defaults)
