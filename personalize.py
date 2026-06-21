@@ -3,9 +3,19 @@ import platform
 import re
 import sys
 import subprocess
-import tkinter as tk
-from tkinter import ttk, messagebox
 from pathlib import Path
+
+try:
+    import tkinter as tk
+    from tkinter import ttk, messagebox
+    TclError = tk.TclError
+except ImportError:
+    tk = None
+    ttk = None
+    messagebox = None
+
+    class TclError(Exception):
+        pass
 
 
 def get_windows_timezone():
@@ -205,7 +215,7 @@ def apply_personalizations(xml_path, content, data):
         build_cmd, check=True, capture_output=True, text=True)
 
 
-class PersonalizationApp(tk.Tk):
+class PersonalizationApp(tk.Tk if tk else object):
     def __init__(self, xml_path, content, defaults):
         super().__init__()
 
