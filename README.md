@@ -72,7 +72,8 @@ USB_ROOT/
 4.  **Relax**: The system will install Windows, drivers, and apps, and clean itself up automatically. When you see the desktop, it's ready.
 
 
-5. **Personalize (Optional but Recommended)**: Before copying `autounattend.xml` to your USB drive, you can run the interactive personalization tool to easily set your Username, Password, Language, Computer Name, TimeZone, and WiFi credentials. *If you run this on your current Windows machine, it will automatically detect and suggest your current settings!*
+5. **Personalize (Optional but Recommended)**: Before copying `autounattend.xml` to your USB drive, you can run the interactive personalization tool to easily set your Username, Password, Language, Computer Name, Time Zone, and WiFi credentials. *If you run this on your current Windows machine, it will automatically detect and suggest your current settings!*
+   *Note: If your environment does not have a GUI (or Tkinter), the script will automatically fall back to an easy-to-use Command Line Interface (CLI).*
    ```bash
    python personalize.py
    ```
@@ -221,6 +222,7 @@ RACINE_USB/
 
 
 5. **Personnaliser (Optionnel mais Recommandé)**: Avant de copier `autounattend.xml` sur votre clé USB, vous pouvez exécuter l'outil de personnalisation interactif pour définir facilement votre nom d'utilisateur, mot de passe, langue, nom d'ordinateur, fuseau horaire et identifiants WiFi. *Si vous l'exécutez sur votre machine Windows actuelle, il détectera et suggérera automatiquement vos paramètres actuels !*
+   *Note : Si votre environnement ne dispose pas d'interface graphique (ou de Tkinter), le script basculera automatiquement vers une interface en ligne de commande (CLI) facile à utiliser.*
    ```bash
    python personalize.py
    ```
