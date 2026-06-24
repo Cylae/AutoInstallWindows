@@ -108,3 +108,47 @@ function Download-File {
 
     return $downloaded
 }
+
+function Set-RegistryKey {
+    param (
+        [string]$Path,
+        [string]$Name,
+        [string]$Value,
+        [string]$Type = "String"
+    )
+    # Convert HKLM\ to HKLM:\ and HKU\ to Registry::HKEY_USERS\
+    if ($Path -match "^HKLM\\") {
+        $psPath = $Path -replace "^HKLM\\", "HKLM:\"
+    } elseif ($Path -match "^HKCU\\") {
+        $psPath = $Path -replace "^HKCU\\", "HKCU:\"
+    } elseif ($Path -match "^HKU\\") {
+        $psPath = $Path -replace "^HKU\\", "Registry::HKEY_USERS\"
+    } else {
+        $psPath = $Path
+    }
+
+    # Extract drive and subpath to recursively create
+    if ($psPath -match "^(HKLM:|HKCU:|Registry::HKEY_USERS)\\(.*)") {
+        $drive = $matches[1]
+        $subPath = $matches[2]
+
+        $currentPath = $drive
+        $parts = $subPath -split "\\"
+        foreach ($part in $parts) {
+            $currentPath = Join-Path $currentPath $part
+            if (-not (Test-Path $currentPath)) {
+                New-Item -Path $currentPath -Force | Out-Null
+            }
+        }
+    } else {
+        if (-not (Test-Path $psPath)) {
+            New-Item -Path $psPath -Force | Out-Null
+        }
+    }
+
+    if ($Name -eq "(default)" -or $Name -eq "") {
+        Set-Item -Path $psPath -Value $Value
+    } else {
+        Set-ItemProperty -Path $psPath -Name $Name -Value $Value -Type $Type
+    }
+}
