@@ -14,18 +14,18 @@ $scripts = @(
     "$PSScriptRoot\Tweaks\SetStartPins.ps1"
 )
 
-Write-Log "Starting Specialize Pass (Optimized)..."
+Write-SetupLog "Starting Specialize Pass (Optimized)..."
 
 foreach ($script in $scripts) {
     if (Test-Path $script) {
-        Write-Log "Executing $script..."
+        Write-SetupLog "Executing $script..."
         try {
             & $script
         } catch {
-            Write-Log "Error executing $script: $_"
+            Write-SetupLog "Error executing $($script): $_"
         }
     } else {
-        Write-Log "Script not found: $script"
+        Write-SetupLog "Script not found: $script"
     }
 }
 
@@ -44,9 +44,9 @@ try {
         New-Item -Path $setupDir -ItemType Directory -Force | Out-Null
     }
     Set-Content -Path $setupCompletePath -Value $setupCompleteContent -Force
-    Write-Log "Generated SetupComplete.cmd for cleanup."
+    Write-SetupLog "Generated SetupComplete.cmd for cleanup."
 } catch {
-    Write-Log "Error creating SetupComplete.cmd: $_"
+    Write-SetupLog "Error creating SetupComplete.cmd: $_"
 }
 
-Write-Log "Specialize Pass Completed."
+Write-SetupLog "Specialize Pass Completed."

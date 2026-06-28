@@ -5,6 +5,8 @@
 ### 🚀 Enhancements
 *   **User Experience**: Disabled Mouse Acceleration (Enhance Pointer Precision) by default.
 *   **Privacy & Security**: Disabled Location Tracking and Delivery Optimization via registry tweaks.
+*   **Robustness**: Fixed PowerShell script analysis warnings and parse errors (replaced invalid variable references, renamed cmdlets to use approved verbs, and resolved empty catch block warnings).
+*   **Code Quality**: Fixed Python linting errors via flake8.
 
 ## [Fixes & Enhancements] - 2024-05-25
 
