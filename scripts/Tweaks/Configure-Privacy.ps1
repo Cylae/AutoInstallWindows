@@ -2,7 +2,7 @@
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\Lib\Helper.ps1"
 
-Write-Log "Applying Privacy and Registry Tweaks..."
+Write-SetupLog "Applying Privacy and Registry Tweaks..."
 
 # Disable Telemetry and Data Collection
 reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v AllowTelemetry /t REG_DWORD /d 0 /f
@@ -62,14 +62,14 @@ reg.exe add "HKLM\System\CurrentControlSet\Control\DeviceGuard\Scenarios\Hypervi
 $services = @('DiagTrack', 'dmwappushservice', 'MapsBroker', 'lfsvc')
 foreach ($service in $services) {
     if (Get-Service -Name $service -ErrorAction SilentlyContinue) {
-        Write-Log "Disabling service $service..."
+        Write-SetupLog "Disabling service $service..."
         try {
             Stop-Service -Name $service -Force -ErrorAction SilentlyContinue
             Set-ItemProperty -Path "Registry::HKLM\SYSTEM\CurrentControlSet\Services\$service" -Name "Start" -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
         } catch {
-            Write-Log "Failed to disable service $($service): $_"
+            Write-SetupLog "Failed to disable service $($service): $_"
         }
     }
 }
 
-Write-Log "Privacy Tweaks Applied."
+Write-SetupLog "Privacy Tweaks Applied."
