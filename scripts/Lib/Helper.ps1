@@ -108,3 +108,39 @@ function Download-File {
 
     return $downloaded
 }
+
+function Set-RegistryKey {
+    param(
+        [string]$Path,
+        [string]$Name,
+        [string]$Value,
+        [string]$Type = "String"
+    )
+
+    # Handle reg.exe style hives
+    $psPath = $Path -replace "^HKLM\\", "HKLM:\" `
+                    -replace "^HKCU\\", "HKCU:\" `
+                    -replace "^HKU\\", "Registry::HKEY_USERS\" `
+                    -replace "^HKEY_USERS\\", "Registry::HKEY_USERS\" `
+                    -replace "^HKCR\\", "HKCR:\" `
+                    -replace "^HKCC\\", "HKCC:\"
+
+    # Create parent keys if they don't exist
+    if (-not (Test-Path -Path $psPath)) {
+        $pathParts = $psPath -split "\\"
+        $currentPath = $pathParts[0]
+        for ($i = 1; $i -lt $pathParts.Count; $i++) {
+            $currentPath = Join-Path -Path $currentPath -ChildPath $pathParts[$i]
+            if (-not (Test-Path -Path $currentPath)) {
+                New-Item -Path $currentPath -Force -ErrorAction SilentlyContinue | Out-Null
+            }
+        }
+    }
+
+    # Set value
+    if ([string]::IsNullOrEmpty($Name) -or $Name -eq "(default)") {
+        Set-Item -Path $psPath -Value $Value -Force -ErrorAction SilentlyContinue | Out-Null
+    } else {
+        Set-ItemProperty -Path $psPath -Name $Name -Value $Value -Type $Type -Force -ErrorAction SilentlyContinue | Out-Null
+    }
+}
