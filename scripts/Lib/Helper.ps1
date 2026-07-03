@@ -108,3 +108,61 @@ function Download-File {
 
     return $downloaded
 }
+
+function Set-RegistryKey {
+    param(
+        [string]$Path,
+        [string]$Name,
+        [string]$Value,
+        [string]$Type = "String"
+    )
+
+    # Normalize hive
+    $Path = $Path -replace '^HKLM\\', 'HKLM:\'
+    $Path = $Path -replace '^HKU\\', 'Registry::HKEY_USERS\'
+    $Path = $Path -replace '^HKEY_USERS\\', 'Registry::HKEY_USERS\'
+
+    # Create path recursively if it doesn't exist
+    if (-not (Test-Path -Path $Path)) {
+        $parentPath = ""
+        $parts = $Path -split "\\"
+
+        # Handle the root drive correctly
+        if ($parts[0] -match ":$" -or $parts[0] -match "^Registry::") {
+            $parentPath = $parts[0]
+            $startIdx = 1
+        } else {
+            # This shouldn't happen based on our normalization, but fallback
+            $parentPath = $parts[0] + ":\"
+            $startIdx = 1
+        }
+
+        for ($i = $startIdx; $i -lt $parts.Length; $i++) {
+            if ([string]::IsNullOrEmpty($parts[$i])) { continue }
+
+            # Form the current path segment
+            if ($parentPath -match "\\$") {
+                $currentPath = "$parentPath$($parts[$i])"
+            } else {
+                $currentPath = "$parentPath\$($parts[$i])"
+            }
+
+            if (-not (Test-Path -Path $currentPath)) {
+                New-Item -Path $currentPath -Force -ErrorAction SilentlyContinue | Out-Null
+            }
+            $parentPath = $currentPath
+        }
+    }
+
+    try {
+        if ([string]::IsNullOrEmpty($Name)) {
+            # (default) value
+            Set-Item -Path $Path -Value $Value -Force -ErrorAction Stop
+        } else {
+            # Regular value
+            Set-ItemProperty -Path $Path -Name $Name -Value $Value -Type $Type -Force -ErrorAction Stop
+        }
+    } catch {
+        Write-Log "Failed to set registry key: $Path\$Name to $Value. Error: $_"
+    }
+}

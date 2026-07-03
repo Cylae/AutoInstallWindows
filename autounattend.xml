@@ -232,6 +232,64 @@ function Download-File {
 
     return $downloaded
 }
+
+function Set-RegistryKey {
+    param(
+        [string]$Path,
+        [string]$Name,
+        [string]$Value,
+        [string]$Type = &quot;String&quot;
+    )
+
+    # Normalize hive
+    $Path = $Path -replace '^HKLM\\', 'HKLM:\'
+    $Path = $Path -replace '^HKU\\', 'Registry::HKEY_USERS\'
+    $Path = $Path -replace '^HKEY_USERS\\', 'Registry::HKEY_USERS\'
+
+    # Create path recursively if it doesn't exist
+    if (-not (Test-Path -Path $Path)) {
+        $parentPath = &quot;&quot;
+        $parts = $Path -split &quot;\\&quot;
+
+        # Handle the root drive correctly
+        if ($parts[0] -match &quot;:$&quot; -or $parts[0] -match &quot;^Registry::&quot;) {
+            $parentPath = $parts[0]
+            $startIdx = 1
+        } else {
+            # This shouldn't happen based on our normalization, but fallback
+            $parentPath = $parts[0] + &quot;:\&quot;
+            $startIdx = 1
+        }
+
+        for ($i = $startIdx; $i -lt $parts.Length; $i++) {
+            if ([string]::IsNullOrEmpty($parts[$i])) { continue }
+
+            # Form the current path segment
+            if ($parentPath -match &quot;\\$&quot;) {
+                $currentPath = &quot;$parentPath$($parts[$i])&quot;
+            } else {
+                $currentPath = &quot;$parentPath\$($parts[$i])&quot;
+            }
+
+            if (-not (Test-Path -Path $currentPath)) {
+                New-Item -Path $currentPath -Force -ErrorAction SilentlyContinue | Out-Null
+            }
+            $parentPath = $currentPath
+        }
+    }
+
+    try {
+        if ([string]::IsNullOrEmpty($Name)) {
+            # (default) value
+            Set-Item -Path $Path -Value $Value -Force -ErrorAction Stop
+        } else {
+            # Regular value
+            Set-ItemProperty -Path $Path -Name $Name -Value $Value -Type $Type -Force -ErrorAction Stop
+        }
+    } catch {
+        Write-Log &quot;Failed to set registry key: $Path\$Name to $Value. Error: $_&quot;
+    }
+}
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Network.ps1">
 $ErrorActionPreference = 'Stop'
@@ -647,58 +705,58 @@ $ErrorActionPreference = 'Stop'
 Write-Log &quot;Applying Privacy and Registry Tweaks...&quot;
 
 # Disable Telemetry and Data Collection
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; /v AllowTelemetry /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; /v DoNotShowFeedbackNotifications /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection&quot; /v AllowTelemetry /t REG_DWORD /d 0 /f
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; -Name &quot;AllowTelemetry&quot; -Value &quot;0&quot; -Type DWord
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; -Name &quot;DoNotShowFeedbackNotifications&quot; -Value &quot;1&quot; -Type DWord
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection&quot; -Name &quot;AllowTelemetry&quot; -Value &quot;0&quot; -Type DWord
 
 # Disable Windows Error Reporting
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting&quot; /v Disabled /t REG_DWORD /d 1 /f
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting&quot; -Name &quot;Disabled&quot; -Value &quot;1&quot; -Type DWord
 
 # Disable Shared Experiences / Activity History
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v EnableActivityFeed /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v PublishUserActivities /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v UploadUserActivities /t REG_DWORD /d 0 /f
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; -Name &quot;EnableActivityFeed&quot; -Value &quot;0&quot; -Type DWord
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; -Name &quot;PublishUserActivities&quot; -Value &quot;0&quot; -Type DWord
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; -Name &quot;UploadUserActivities&quot; -Value &quot;0&quot; -Type DWord
 
 # Disable Consumer Features (Auto-installed apps)
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent&quot; /v DisableWindowsConsumerFeatures /t REG_DWORD /d 1 /f
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent&quot; -Name &quot;DisableWindowsConsumerFeatures&quot; -Value &quot;1&quot; -Type DWord
 
 # Disable Bing Search, Cortana, and Search Highlights
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v AllowCortana /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v DisableWebSearch /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v ConnectedSearchUseWeb /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v AllowCloudSearch /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v EnableDynamicContentInWS /t REG_DWORD /d 0 /f
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; -Name &quot;AllowCortana&quot; -Value &quot;0&quot; -Type DWord
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; -Name &quot;DisableWebSearch&quot; -Value &quot;1&quot; -Type DWord
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; -Name &quot;ConnectedSearchUseWeb&quot; -Value &quot;0&quot; -Type DWord
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; -Name &quot;AllowCloudSearch&quot; -Value &quot;0&quot; -Type DWord
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; -Name &quot;EnableDynamicContentInWS&quot; -Value &quot;0&quot; -Type DWord
 
 # Disable Copilot and Recall (AI Screenshot)
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot&quot; /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI&quot; /v DisableAIDataAnalysis /t REG_DWORD /d 1 /f
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot&quot; -Name &quot;TurnOffWindowsCopilot&quot; -Value &quot;1&quot; -Type DWord
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI&quot; -Name &quot;DisableAIDataAnalysis&quot; -Value &quot;1&quot; -Type DWord
 
 # Disable News and Interests (Widgets), Search Highlights, and Meet Now
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Dsh&quot; /v AllowNewsAndInterests /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v EnableSearchHighlights /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; /v HideSCAMeetNow /t REG_DWORD /d 1 /f
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Dsh&quot; -Name &quot;AllowNewsAndInterests&quot; -Value &quot;0&quot; -Type DWord
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; -Name &quot;EnableSearchHighlights&quot; -Value &quot;0&quot; -Type DWord
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; -Name &quot;HideSCAMeetNow&quot; -Value &quot;1&quot; -Type DWord
 
 # Disable Online Tips and Advertising ID
-reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; /v AllowOnlineTips /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot; /v DisabledByGroupPolicy /t REG_DWORD /d 1 /f
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; -Name &quot;AllowOnlineTips&quot; -Value &quot;0&quot; -Type DWord
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot; -Name &quot;DisabledByGroupPolicy&quot; -Value &quot;1&quot; -Type DWord
 
 # Disable Edge First Run and Bloat
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v HideFirstRunExperience /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+Set-RegistryKey -Path &quot;HKLM\Software\Policies\Microsoft\Edge&quot; -Name &quot;HideFirstRunExperience&quot; -Value &quot;1&quot; -Type DWord
+Set-RegistryKey -Path &quot;HKLM\Software\Policies\Microsoft\Edge&quot; -Name &quot;BackgroundModeEnabled&quot; -Value &quot;0&quot; -Type DWord
+Set-RegistryKey -Path &quot;HKLM\Software\Policies\Microsoft\Edge&quot; -Name &quot;StartupBoostEnabled&quot; -Value &quot;0&quot; -Type DWord
 
 # Disable Location Tracking
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors&quot; /v DisableLocation /t REG_DWORD /d 1 /f
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors&quot; -Name &quot;DisableLocation&quot; -Value &quot;1&quot; -Type DWord
 
 # Disable Delivery Optimization
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization&quot; /v DODownloadMode /t REG_DWORD /d 0 /f
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization&quot; -Name &quot;DODownloadMode&quot; -Value &quot;0&quot; -Type DWord
 
 # Disable BitLocker Automatic Device Encryption
-reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\BitLocker&quot; /v &quot;PreventDeviceEncryption&quot; /t REG_DWORD /d 1 /f
+Set-RegistryKey -Path &quot;HKLM\SYSTEM\CurrentControlSet\Control\BitLocker&quot; -Name &quot;PreventDeviceEncryption&quot; -Value &quot;1&quot; -Type DWord
 
 # Disable VBS/HVCI (Performance)
-reg.exe add &quot;HKLM\System\CurrentControlSet\Control\DeviceGuard&quot; /v &quot;EnableVirtualizationBasedSecurity&quot; /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\System\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity&quot; /v &quot;Enabled&quot; /t REG_DWORD /d 0 /f
+Set-RegistryKey -Path &quot;HKLM\System\CurrentControlSet\Control\DeviceGuard&quot; -Name &quot;EnableVirtualizationBasedSecurity&quot; -Value &quot;0&quot; -Type DWord
+Set-RegistryKey -Path &quot;HKLM\System\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity&quot; -Name &quot;Enabled&quot; -Value &quot;0&quot; -Type DWord
 
 # Disable Telemetry and Maps Services
 $services = @('DiagTrack', 'dmwappushservice', 'MapsBroker', 'lfsvc')
@@ -748,7 +806,7 @@ try {
 }
 
 # 3. Disable Game DVR (Background recording)
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR&quot; /v AllowGameDVR /t REG_DWORD /d 0 /f
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR&quot; -Name &quot;AllowGameDVR&quot; -Value &quot;0&quot; -Type DWord
 
 # 4. Disable Last Access Timestamp (Reduces disk I/O)
 try {
@@ -759,8 +817,8 @@ try {
 }
 
 # 5. Disable App Launch Tracking
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\EdgeUI&quot; /v DisableMFUTracking /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; /v NoInstrumentation /t REG_DWORD /d 1 /f
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\EdgeUI&quot; -Name &quot;DisableMFUTracking&quot; -Value &quot;1&quot; -Type DWord
+Set-RegistryKey -Path &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; -Name &quot;NoInstrumentation&quot; -Value &quot;1&quot; -Type DWord
 
 Write-Log &quot;System Optimizations Applied.&quot;
 </File>
@@ -849,68 +907,68 @@ if (-not (Test-Path &quot;Registry::$defaultUserHive&quot;)) {
 
 try {
     # Taskbar and Explorer settings
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v ShowTaskViewButton /t REG_DWORD /d 0 /f
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v TaskbarAl /t REG_DWORD /d 0 /f # Left align taskbar
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v LaunchTo /t REG_DWORD /d 1 /f # Open This PC
-    reg.exe add &quot;$defaultUserHive\Software\Policies\Microsoft\Windows\Explorer&quot; /v DisableSearchBoxSuggestions /t REG_DWORD /d 1 /f
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Search&quot; /v SearchboxTaskbarMode /t REG_DWORD /d 3 /f # Icon only
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v TaskbarDa /t REG_DWORD /d 0 /f # Disable Widgets
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v TaskbarMn /t REG_DWORD /d 0 /f # Disable Chat
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name &quot;ShowTaskViewButton&quot; -Value &quot;0&quot; -Type DWord
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name &quot;TaskbarAl&quot; -Value &quot;0&quot; -Type DWord # Left align taskbar
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name &quot;LaunchTo&quot; -Value &quot;1&quot; -Type DWord # Open This PC
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Policies\Microsoft\Windows\Explorer&quot; -Name &quot;DisableSearchBoxSuggestions&quot; -Value &quot;1&quot; -Type DWord
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Search&quot; -Name &quot;SearchboxTaskbarMode&quot; -Value &quot;3&quot; -Type DWord # Icon only
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name &quot;TaskbarDa&quot; -Value &quot;0&quot; -Type DWord # Disable Widgets
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name &quot;TaskbarMn&quot; -Value &quot;0&quot; -Type DWord # Disable Chat
 
     # Show File Extensions
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v HideFileExt /t REG_DWORD /d 0 /f
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name &quot;HideFileExt&quot; -Value &quot;0&quot; -Type DWord
 
     # Show &quot;This PC&quot; Icon on Desktop
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel&quot; /v &quot;{20D04FE0-3AEA-1069-A2D8-08002B30309D}&quot; /t REG_DWORD /d 0 /f
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel&quot; -Name &quot;{20D04FE0-3AEA-1069-A2D8-08002B30309D}&quot; -Value &quot;0&quot; -Type DWord
 
     # Disable Sync Provider Notifications (Ads in File Explorer)
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v ShowSyncProviderNotifications /t REG_DWORD /d 0 /f
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name &quot;ShowSyncProviderNotifications&quot; -Value &quot;0&quot; -Type DWord
 
     # Enable Dark Mode (System and Apps)
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize&quot; /v AppsUseLightTheme /t REG_DWORD /d 0 /f
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize&quot; /v SystemUsesLightTheme /t REG_DWORD /d 0 /f
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize&quot; /v EnableTransparency /t REG_DWORD /d 0 /f
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize&quot; -Name &quot;AppsUseLightTheme&quot; -Value &quot;0&quot; -Type DWord
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize&quot; -Name &quot;SystemUsesLightTheme&quot; -Value &quot;0&quot; -Type DWord
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize&quot; -Name &quot;EnableTransparency&quot; -Value &quot;0&quot; -Type DWord
 
     # Classic Context Menu (Windows 11)
-    reg.exe add &quot;$defaultUserHive\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32&quot; /ve /t REG_SZ /d &quot;&quot; /f
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32&quot; -Name &quot;&quot; -Value &quot;&quot; -Type String
 
     # Disable Lock Screen Tips, Tips and Suggestions, and Welcome Experience
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; /v RotatingLockScreenEnabled /t REG_DWORD /d 0 /f
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; /v SubscribedContent-338387Enabled /t REG_DWORD /d 0 /f
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; /v SoftLandingEnabled /t REG_DWORD /d 0 /f
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; /v SubscribedContent-310093Enabled /t REG_DWORD /d 0 /f
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; -Name &quot;RotatingLockScreenEnabled&quot; -Value &quot;0&quot; -Type DWord
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; -Name &quot;SubscribedContent-338387Enabled&quot; -Value &quot;0&quot; -Type DWord
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; -Name &quot;SoftLandingEnabled&quot; -Value &quot;0&quot; -Type DWord
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; -Name &quot;SubscribedContent-310093Enabled&quot; -Value &quot;0&quot; -Type DWord
 
     # Disable Copilot for Default User
-    reg.exe add &quot;$defaultUserHive\Software\Policies\Microsoft\Windows\WindowsCopilot&quot; /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Policies\Microsoft\Windows\WindowsCopilot&quot; -Name &quot;TurnOffWindowsCopilot&quot; -Value &quot;1&quot; -Type DWord
 
     # Enable End Task in Taskbar (Developer/Power User feature)
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v TaskbarEndTask /t REG_DWORD /d 1 /f
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name &quot;TaskbarEndTask&quot; -Value &quot;1&quot; -Type DWord
 
     # Show Seconds in System Clock (Windows 11)
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v ShowSecondsInSystemClock /t REG_DWORD /d 1 /f
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name &quot;ShowSecondsInSystemClock&quot; -Value &quot;1&quot; -Type DWord
 
     # Disable &quot;Finish setting up your device&quot;
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement&quot; /v ScoobeSystemSettingEnabled /t REG_DWORD /d 0 /f
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement&quot; -Name &quot;ScoobeSystemSettingEnabled&quot; -Value &quot;0&quot; -Type DWord
 
     # Disable Accessibility Shortcuts (Sticky Keys, Filter Keys, Toggle Keys)
-    reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\StickyKeys&quot; /v Flags /t REG_SZ /d &quot;506&quot; /f
-    reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\Keyboard Response&quot; /v Flags /t REG_SZ /d &quot;122&quot; /f
-    reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\ToggleKeys&quot; /v Flags /t REG_SZ /d &quot;58&quot; /f
+    Set-RegistryKey -Path &quot;$defaultUserHive\Control Panel\Accessibility\StickyKeys&quot; -Name &quot;Flags&quot; -Value &quot;506&quot; -Type String
+    Set-RegistryKey -Path &quot;$defaultUserHive\Control Panel\Accessibility\Keyboard Response&quot; -Name &quot;Flags&quot; -Value &quot;122&quot; -Type String
+    Set-RegistryKey -Path &quot;$defaultUserHive\Control Panel\Accessibility\ToggleKeys&quot; -Name &quot;Flags&quot; -Value &quot;58&quot; -Type String
 
     # Disable Mouse Acceleration (Enhance Pointer Precision)
-    reg.exe add &quot;$defaultUserHive\Control Panel\Mouse&quot; /v MouseSpeed /t REG_SZ /d &quot;0&quot; /f
-    reg.exe add &quot;$defaultUserHive\Control Panel\Mouse&quot; /v MouseThreshold1 /t REG_SZ /d &quot;0&quot; /f
-    reg.exe add &quot;$defaultUserHive\Control Panel\Mouse&quot; /v MouseThreshold2 /t REG_SZ /d &quot;0&quot; /f
+    Set-RegistryKey -Path &quot;$defaultUserHive\Control Panel\Mouse&quot; -Name &quot;MouseSpeed&quot; -Value &quot;0&quot; -Type String
+    Set-RegistryKey -Path &quot;$defaultUserHive\Control Panel\Mouse&quot; -Name &quot;MouseThreshold1&quot; -Value &quot;0&quot; -Type String
+    Set-RegistryKey -Path &quot;$defaultUserHive\Control Panel\Mouse&quot; -Name &quot;MouseThreshold2&quot; -Value &quot;0&quot; -Type String
 
     # Disable Typing Insights and Tailored Experiences
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Input\TIPC&quot; /v Enabled /t REG_DWORD /d 0 /f
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Privacy&quot; /v TailoredExperiencesWithDiagnosticDataEnabled /t REG_DWORD /d 0 /f
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Input\TIPC&quot; -Name &quot;Enabled&quot; -Value &quot;0&quot; -Type DWord
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Privacy&quot; -Name &quot;TailoredExperiencesWithDiagnosticDataEnabled&quot; -Value &quot;0&quot; -Type DWord
 
     # Run UserOnce on first login (if script exists)
     # We wrap in cmd /c &quot;if exist ...&quot; to prevent errors for subsequent users after self-destruct
     $uScript = &quot;C:\Windows\Setup\Scripts\UserOnce.ps1&quot;
     $runOnceCmd = &quot;cmd /c `&quot;if exist \`&quot;$uScript\`&quot; powershell.exe -WindowStyle Hidden -ExecutionPolicy Unrestricted -NoProfile -File \`&quot;$uScript\`&quot;`&quot;&quot;
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce&quot; /v &quot;UnattendedSetup&quot; /t REG_SZ /d $runOnceCmd /f
+    Set-RegistryKey -Path &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce&quot; -Name &quot;UnattendedSetup&quot; -Value &quot;$runOnceCmd&quot; -Type String
 }
 catch {
     Write-Log &quot;Error applying Default User tweaks: $_&quot;
