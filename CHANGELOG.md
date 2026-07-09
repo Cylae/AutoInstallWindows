@@ -6,6 +6,10 @@
 *   **User Experience**: Disabled Mouse Acceleration (Enhance Pointer Precision) by default.
 *   **Privacy & Security**: Disabled Location Tracking and Delivery Optimization via registry tweaks.
 
+### 🐛 Bug Fixes
+*   **PowerShell Scripts**: Fixed invalid variable reference errors in interpolated strings across multiple scripts (`Specialize.ps1`, `Install-Runtimes.ps1`, `Remove-Bloatware.ps1`, `Helper.ps1`) by using strict `$()` evaluation syntax.
+*   **Python Scripts**: Cleaned up test files (`test_build.py`, `test_personalize.py`) and development scripts to fully comply with `flake8` and `autopep8` formatting standards.
+
 ## [Fixes & Enhancements] - 2024-05-25
 
 ### 🚀 Enhancements

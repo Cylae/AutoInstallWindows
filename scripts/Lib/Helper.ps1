@@ -101,7 +101,7 @@ function Download-File {
             }
         } catch {
             $dRetry++
-            Write-Log "Failed to download $Name (Attempt $dRetry/$downloadRetries): $_"
+            Write-Log "Failed to download $($Name) (Attempt $($dRetry)/$($downloadRetries)): $_"
             Start-Sleep -Seconds 5
         }
     }

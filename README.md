@@ -230,8 +230,9 @@ RACINE_USB/
 Ce dépôt utilise un système de build pour générer `autounattend.xml` à partir de scripts PowerShell modulaires. `build.py` injecte automatiquement les scripts, crée des blocs `<File>` s'ils sont manquants et supprime les blocs XML vides pour un fichier plus propre.
 
 *   **Emplacement des Scripts**: Tous les scripts PowerShell se trouvent dans le répertoire `scripts/`.
-*   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications.
+*   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications. Assurez-vous d'utiliser la syntaxe d'évaluation stricte `$()` pour les variables interpolées dans les chaînes afin d'éviter les erreurs de syntaxe (par exemple, `$($script)` au lieu de `$script:`).
 *   **Construire**: Exécutez `python build.py` pour régénérer `autounattend.xml` avec vos changements. (Utilise désormais `pathlib` et `logging` pour des builds robustes).
+*   **Tester & Formater**: Utilisez `pytest` pour exécuter les tests unitaires, `flake8` pour vérifier le style du code (limite de 79 caractères par ligne) et `autopep8` pour formater automatiquement le code Python.
 
 ## ❓ Dépannage
 

@@ -49,7 +49,7 @@ function Install-Runtime {
             Start-Process -FilePath $setupPath -ArgumentList @("/install", "/quiet", "/norestart") -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\${DestName}_install.log"
             Write-Log "$LogName installation completed."
         } catch {
-            Write-Log "Error installing $LogName: $_"
+            Write-Log "Error installing $($LogName): $_"
         }
     } else {
         Write-Log "$LogName installer not found locally and download failed."
