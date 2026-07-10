@@ -39,6 +39,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Smart Media Detection**: Filters for Fixed and Removable drives to prevent hangs on network/floppy drives.
     *   **Fail-Safe Execution**: Scripts include existence checks (e.g., RunOnce) to prevent errors on subsequent logins.
     *   **Advanced Error Handling**: Improved logging and registry handling for fail-safe execution.
+    *   **Registry Handling**: Uses robust `Set-RegistryKey` helper for recursive key creation and safe modifications.
 
 ## 📂 Folder Structure
 

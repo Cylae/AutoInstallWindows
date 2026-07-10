@@ -145,7 +145,7 @@ function Get-InstallerFile {
     return $null
 }
 
-function Write-Log {
+function Write-SetupLog {
     param(
         [string]$Message,
         [string]$Path = &quot;$env:SystemRoot\Panther\Autounattend_Log.txt&quot;
@@ -161,7 +161,7 @@ function Write-Log {
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
 }
 
-function Download-File {
+function Get-RemoteFile {
     param(
         [string]$Url,
         [string]$Destination,
@@ -173,7 +173,7 @@ function Download-File {
 
     if ([string]::IsNullOrWhiteSpace($Url)) { return $false }
 
-    Write-Log &quot;Attempting to download $Name from $Url...&quot;
+    Write-SetupLog &quot;Attempting to download $Name from $Url...&quot;
 
     # Increase timeout to ~5 minutes (150 * 2s) to handle slow network initialization
     $maxRetries = 150
@@ -198,7 +198,7 @@ function Download-File {
     }
 
     if (-not $connected) {
-        Write-Log &quot;No network connectivity to download $Name.&quot;
+        Write-SetupLog &quot;No network connectivity to download $Name.&quot;
         return $false
     }
 
@@ -217,52 +217,93 @@ function Download-File {
 
             # Verify file size &gt; 1KB (1024 bytes) to ensure valid download
             if (Test-Path -Path $Destination -And (Get-Item $Destination).Length -gt 1024) {
-                Write-Log &quot;Download of $Name successful.&quot;
+                Write-SetupLog &quot;Download of $Name successful.&quot;
                 $downloaded = $true
             } else {
-                Write-Log &quot;Download of $Name failed (file too small or empty).&quot;
+                Write-SetupLog &quot;Download of $Name failed (file too small or empty).&quot;
                 throw &quot;File too small&quot;
             }
         } catch {
             $dRetry++
-            Write-Log &quot;Failed to download $Name (Attempt $dRetry/$downloadRetries): $_&quot;
+            Write-SetupLog &quot;Failed to download $Name (Attempt $dRetry/$downloadRetries): $_&quot;
             Start-Sleep -Seconds 5
         }
     }
 
     return $downloaded
 }
+
+function Set-RegistryKey {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Path,
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+        [Parameter(Mandatory=$true)]
+        $Value,
+        [string]$Type = &quot;String&quot;
+    )
+
+    # Handle Registry:: path conversion
+    $cleanPath = $Path
+    if ($cleanPath -match &quot;^(Registry::)?HKU\\&quot;) {
+        $cleanPath = $cleanPath -replace &quot;^(Registry::)?HKU\\&quot;, &quot;Registry::HKEY_USERS\&quot;
+    } elseif ($cleanPath -match &quot;^HKEY_USERS\\&quot;) {
+        $cleanPath = $cleanPath -replace &quot;^HKEY_USERS\\&quot;, &quot;Registry::HKEY_USERS\&quot;
+    }
+
+    # Ensure parent path exists
+    if (-not (Test-Path $cleanPath)) {
+        $parts = $cleanPath -split &quot;\\&quot;
+        $currentPath = $parts[0]
+
+        # Determine the correct root for missing parent path creation
+        if ($parts[0] -match &quot;^(HKLM:|HKCU:|Registry::.*)$&quot;) {
+            $currentPath = $parts[0]
+        } else {
+             $currentPath = $parts[0] + &quot;:&quot;
+        }
+
+        for ($i = 1; $i -lt $parts.Length; $i++) {
+            $currentPath = Join-Path $currentPath $parts[$i]
+            if (-not (Test-Path $currentPath)) {
+                New-Item -Path $currentPath -Force -ErrorAction SilentlyContinue | Out-Null
+            }
+        }
+    }
+    Set-ItemProperty -Path $cleanPath -Name $Name -Value $Value -Type $Type -Force -ErrorAction SilentlyContinue | Out-Null
+}
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Network.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
-Write-Log &quot;Starting Network Driver Installation...&quot;
+Write-SetupLog &quot;Starting Network Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
 
 if ($mediaRoot) {
     $driverPath = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\network&quot;
     if (Test-Path -Path $driverPath) {
-        Write-Log &quot;Found network drivers path at $driverPath&quot;
+        Write-SetupLog &quot;Found network drivers path at $driverPath&quot;
         # Check if there are any INF files to avoid pnputil error
         if (Get-ChildItem -Path $driverPath -Filter &quot;*.inf&quot; -Recurse) {
             try {
                 $pnputilArgs = @(&quot;/add-driver&quot;, &quot;$driverPath\*.inf&quot;, &quot;/subdirs&quot;, &quot;/install&quot;)
                 # Redirect standard output and error to logs for debugging
                 Start-Process -FilePath &quot;pnputil.exe&quot; -ArgumentList $pnputilArgs -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\pnputil_network.log&quot; -RedirectStandardError &quot;$env:TEMP\pnputil_network_err.log&quot;
-                Write-Log &quot;Network driver installation completed.&quot;
+                Write-SetupLog &quot;Network driver installation completed.&quot;
             }
             catch {
-                Write-Log &quot;Error installing network drivers: $_&quot;
+                Write-SetupLog &quot;Error installing network drivers: $_&quot;
             }
         } else {
-            Write-Log &quot;No INF files found in $driverPath&quot;
+            Write-SetupLog &quot;No INF files found in $driverPath&quot;
         }
     } else {
-        Write-Log &quot;No network drivers folder found at $driverPath&quot;
+        Write-SetupLog &quot;No network drivers folder found at $driverPath&quot;
     }
 } else {
-    Write-Log &quot;Install media not found.&quot;
+    Write-SetupLog &quot;Install media not found.&quot;
 }
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Nvidia.ps1">
@@ -272,13 +313,13 @@ $ErrorActionPreference = 'Stop'
 # OPTIONAL: Set a direct download URL for the Nvidia Driver here.
 $DownloadUrl = &quot;&quot;
 
-Write-Log &quot;Starting Nvidia Driver Installation...&quot;
+Write-SetupLog &quot;Starting Nvidia Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
 $setupPath = $null
 
 # Try Local (Primary)
 if ($mediaRoot) {
-    Write-Log &quot;Checking local storage...&quot;
+    Write-SetupLog &quot;Checking local storage...&quot;
     $driverDir = Join-Path -Path $mediaRoot -ChildPath &quot;drivers\nvidia&quot;
     $setupPath = Get-InstallerFile -Path $driverDir
 }
@@ -286,24 +327,24 @@ if ($mediaRoot) {
 # Try Download (Fallback if URL provided)
 if (-not $setupPath -and $DownloadUrl) {
     $dest = &quot;$env:TEMP\nvidia_driver.exe&quot;
-    if (Download-File -Url $DownloadUrl -Destination $dest -Name &quot;Nvidia Driver&quot;) {
+    if (Get-RemoteFile -Url $DownloadUrl -Destination $dest -Name &quot;Nvidia Driver&quot;) {
         $setupPath = $dest
     }
 }
 
 if ($setupPath) {
-    Write-Log &quot;Installing Nvidia driver from $setupPath...&quot;
+    Write-SetupLog &quot;Installing Nvidia driver from $setupPath...&quot;
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # -s: Silent, -n: No splash, -f: Force, -noreboot: No reboot
         Start-Process -FilePath $setupPath -ArgumentList @('-s', '-n', '-f', '-noreboot') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\nvidia_install.log&quot;
-        Write-Log &quot;Nvidia driver installation completed.&quot;
+        Write-SetupLog &quot;Nvidia driver installation completed.&quot;
     }
     catch {
-        Write-Log &quot;Error installing Nvidia drivers: $_&quot;
+        Write-SetupLog &quot;Error installing Nvidia drivers: $_&quot;
     }
 } else {
-    Write-Log &quot;Nvidia installer not found locally.&quot;
+    Write-SetupLog &quot;Nvidia installer not found locally.&quot;
 }
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-AMD.ps1">
@@ -313,7 +354,7 @@ $ErrorActionPreference = 'Stop'
 # OPTIONAL: Set a direct download URL for the AMD Chipset Driver here.
 $DownloadUrl = &quot;&quot;
 
-Write-Log &quot;Starting AMD Chipset Driver Installation...&quot;
+Write-SetupLog &quot;Starting AMD Chipset Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
 $setupPath = $null
 
@@ -324,24 +365,24 @@ if ($mediaRoot) {
 
 if (-not $setupPath -and $DownloadUrl) {
     $dest = &quot;$env:TEMP\amd_chipset.exe&quot;
-    if (Download-File -Url $DownloadUrl -Destination $dest -Name &quot;AMD Chipset&quot;) {
+    if (Get-RemoteFile -Url $DownloadUrl -Destination $dest -Name &quot;AMD Chipset&quot;) {
         $setupPath = $dest
     }
 }
 
 if ($setupPath) {
-    Write-Log &quot;Installing AMD driver from $setupPath...&quot;
+    Write-SetupLog &quot;Installing AMD driver from $setupPath...&quot;
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # /S: Silent
         Start-Process -FilePath $setupPath -ArgumentList &quot;/S&quot;, &quot;-noreboot&quot; -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\amd_install.log&quot;
-        Write-Log &quot;AMD Chipset driver installation completed.&quot;
+        Write-SetupLog &quot;AMD Chipset driver installation completed.&quot;
     }
     catch {
-        Write-Log &quot;Error installing AMD Chipset drivers: $_&quot;
+        Write-SetupLog &quot;Error installing AMD Chipset drivers: $_&quot;
     }
 } else {
-    Write-Log &quot;AMD installer not found locally and no download URL provided.&quot;
+    Write-SetupLog &quot;AMD installer not found locally and no download URL provided.&quot;
 }
 </File>
 		<File path="C:\Windows\Setup\Scripts\Drivers\Install-Focusrite.ps1">
@@ -351,7 +392,7 @@ $ErrorActionPreference = 'Stop'
 # OPTIONAL: Set a direct download URL for the Focusrite Driver here.
 $DownloadUrl = &quot;&quot;
 
-Write-Log &quot;Starting Focusrite Driver Installation...&quot;
+Write-SetupLog &quot;Starting Focusrite Driver Installation...&quot;
 $mediaRoot = Get-InstallMedia
 $setupPath = $null
 
@@ -362,31 +403,31 @@ if ($mediaRoot) {
 
 if (-not $setupPath -and $DownloadUrl) {
     $dest = &quot;$env:TEMP\focusrite_driver.exe&quot;
-    if (Download-File -Url $DownloadUrl -Destination $dest -Name &quot;Focusrite Driver&quot;) {
+    if (Get-RemoteFile -Url $DownloadUrl -Destination $dest -Name &quot;Focusrite Driver&quot;) {
         $setupPath = $dest
     }
 }
 
 if ($setupPath) {
-    Write-Log &quot;Installing Focusrite driver from $setupPath...&quot;
+    Write-SetupLog &quot;Installing Focusrite driver from $setupPath...&quot;
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
         # /VERYSILENT: No UI, /SUPPRESSMSGBOXES: No popups
         Start-Process -FilePath $setupPath -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-') -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\focusrite_install.log&quot;
-        Write-Log &quot;Focusrite driver installation completed.&quot;
+        Write-SetupLog &quot;Focusrite driver installation completed.&quot;
     }
     catch {
-        Write-Log &quot;Error installing Focusrite drivers: $_&quot;
+        Write-SetupLog &quot;Error installing Focusrite drivers: $_&quot;
     }
 } else {
-    Write-Log &quot;Focusrite installer not found locally and no download URL provided.&quot;
+    Write-SetupLog &quot;Focusrite installer not found locally and no download URL provided.&quot;
 }
 </File>
 		<File path="C:\Windows\Setup\Scripts\Apps\Install-Runtimes.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
-Write-Log &quot;Starting Visual C++ Runtimes Installation...&quot;
+Write-SetupLog &quot;Starting Visual C++ Runtimes Installation...&quot;
 
 $mediaRoot = Get-InstallMedia
 
@@ -402,13 +443,13 @@ function Install-Runtime {
     $dest = &quot;$env:TEMP\$DestName&quot;
 
     # 1. Try Download (Online First)
-    if (Download-File -Url $Url -Destination $dest -Name $LogName) {
+    if (Get-RemoteFile -Url $Url -Destination $dest -Name $LogName) {
         $setupPath = $dest
     }
 
     # 2. Try Local (Fallback)
     if (-not $setupPath -and $mediaRoot) {
-        Write-Log &quot;Download of $LogName failed. Checking local storage...&quot;
+        Write-SetupLog &quot;Download of $LogName failed. Checking local storage...&quot;
         $possiblePaths = @(
             (Join-Path $mediaRoot &quot;apps\$LocalFolder&quot;),
             (Join-Path $mediaRoot &quot;drivers\apps\$LocalFolder&quot;),
@@ -427,16 +468,16 @@ function Install-Runtime {
     }
 
     if ($setupPath) {
-        Write-Log &quot;Installing $LogName from $setupPath...&quot;
+        Write-SetupLog &quot;Installing $LogName from $setupPath...&quot;
         try {
             Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
             Start-Process -FilePath $setupPath -ArgumentList @(&quot;/install&quot;, &quot;/quiet&quot;, &quot;/norestart&quot;) -Wait -NoNewWindow -RedirectStandardOutput &quot;$env:TEMP\${DestName}_install.log&quot;
-            Write-Log &quot;$LogName installation completed.&quot;
+            Write-SetupLog &quot;$LogName installation completed.&quot;
         } catch {
-            Write-Log &quot;Error installing $LogName: $_&quot;
+            Write-SetupLog &quot;Error installing $($LogName): $_&quot;
         }
     } else {
-        Write-Log &quot;$LogName installer not found locally and download failed.&quot;
+        Write-SetupLog &quot;$LogName installer not found locally and download failed.&quot;
     }
 }
 
@@ -451,11 +492,11 @@ Install-Runtime -Url $url86 -DestName &quot;vc_redist.x86.exe&quot; -LogName &qu
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
-Write-Log &quot;Starting Chrome Installation...&quot;
+Write-SetupLog &quot;Starting Chrome Installation...&quot;
 
 # Check if Chrome is already installed
 if ((Test-Path &quot;$env:ProgramFiles\Google\Chrome\Application\chrome.exe&quot;) -or (Test-Path &quot;${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe&quot;)) {
-    Write-Log &quot;Chrome is already installed. Skipping.&quot;
+    Write-SetupLog &quot;Chrome is already installed. Skipping.&quot;
     return
 }
 
@@ -465,13 +506,13 @@ $setupPath = $null
 # 1. Try Download (Online First) - Prefer Enterprise MSI
 $url = 'https://dl.google.com/chrome/install/googlechromestandaloneenterprise64.msi'
 $dest = &quot;$env:TEMP\chrome.msi&quot;
-if (Download-File -Url $url -Destination $dest -Name &quot;Chrome Enterprise MSI&quot;) {
+if (Get-RemoteFile -Url $url -Destination $dest -Name &quot;Chrome Enterprise MSI&quot;) {
     $setupPath = $dest
 }
 
 # 2. Try Local (Fallback)
 if (-not $setupPath -and $mediaRoot) {
-    Write-Log &quot;Download failed. Checking local storage...&quot;
+    Write-SetupLog &quot;Download failed. Checking local storage...&quot;
     $possiblePaths = @(
         (Join-Path $mediaRoot &quot;apps\chrome&quot;),
         (Join-Path $mediaRoot &quot;drivers\apps\chrome&quot;),
@@ -491,7 +532,7 @@ if (-not $setupPath -and $mediaRoot) {
 }
 
 if ($setupPath) {
-    Write-Log &quot;Installing Chrome from $setupPath...&quot;
+    Write-SetupLog &quot;Installing Chrome from $setupPath...&quot;
     try {
         Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
 
@@ -509,12 +550,12 @@ if ($setupPath) {
         if ($setupPath -match &quot;$env:TEMP\\chrome\.(msi|exe)&quot;) {
             Remove-Item -Path $setupPath -Force -ErrorAction SilentlyContinue
         }
-        Write-Log &quot;Chrome installation completed.&quot;
+        Write-SetupLog &quot;Chrome installation completed.&quot;
     } catch {
-        Write-Log &quot;Error installing Chrome: $_&quot;
+        Write-SetupLog &quot;Error installing Chrome: $_&quot;
     }
 } else {
-    Write-Log &quot;Chrome installer not found locally and download failed.&quot;
+    Write-SetupLog &quot;Chrome installer not found locally and download failed.&quot;
 }
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Remove-Bloatware.ps1">
@@ -590,7 +631,7 @@ $featuresToRemove = @(
     'Recall'
 )
 
-Write-Log &quot;Starting Debloating Process...&quot;
+Write-SetupLog &quot;Starting Debloating Process...&quot;
 
 # Remove Appx Provisioned Packages
 $provisioned = Get-AppxProvisionedPackage -Online
@@ -599,14 +640,14 @@ foreach ($package in $packagesToRemove) {
     if ($found) {
         foreach ($item in $found) {
             if ($packagesToKeep -contains $item.DisplayName) {
-                Write-Log &quot;Skipping preserved package $($item.DisplayName)...&quot;
+                Write-SetupLog &quot;Skipping preserved package $($item.DisplayName)...&quot;
                 continue
             }
-            Write-Log &quot;Removing $($item.DisplayName) ($($item.PackageName))...&quot;
+            Write-SetupLog &quot;Removing $($item.DisplayName) ($($item.PackageName))...&quot;
             try {
                 Remove-AppxProvisionedPackage -Online -PackageName $item.PackageName -ErrorAction Continue | Out-Null
             } catch {
-                Write-Log &quot;Failed to remove $($item.PackageName): $_&quot;
+                Write-SetupLog &quot;Failed to remove $($item.PackageName): $_&quot;
             }
         }
     }
@@ -617,11 +658,11 @@ $capabilities = Get-WindowsCapability -Online
 foreach ($capName in $capabilitiesToRemove) {
     $cap = $capabilities | Where-Object { ($_.Name -split '~')[0] -eq $capName -and $_.State -ne 'NotPresent' }
     if ($cap) {
-        Write-Log &quot;Removing capability $capName...&quot;
+        Write-SetupLog &quot;Removing capability $capName...&quot;
         try {
             Remove-WindowsCapability -Online -Name $cap.Name -ErrorAction Continue | Out-Null
         } catch {
-            Write-Log &quot;Failed to remove capability $capName: $_&quot;
+            Write-SetupLog &quot;Failed to remove capability $($capName): $_&quot;
         }
     }
 }
@@ -629,92 +670,92 @@ foreach ($capName in $capabilitiesToRemove) {
 # Remove Optional Features
 foreach ($feature in $featuresToRemove) {
     if ((Get-WindowsOptionalFeature -Online -FeatureName $feature -ErrorAction SilentlyContinue).State -eq 'Enabled') {
-        Write-Log &quot;Disabling feature $feature...&quot;
+        Write-SetupLog &quot;Disabling feature $feature...&quot;
         try {
             Disable-WindowsOptionalFeature -Online -FeatureName $feature -Remove -NoRestart -ErrorAction Continue | Out-Null
         } catch {
-            Write-Log &quot;Failed to disable feature $feature: $_&quot;
+            Write-SetupLog &quot;Failed to disable feature $($feature): $_&quot;
         }
     }
 }
 
-Write-Log &quot;Debloating Process Completed.&quot;
+Write-SetupLog &quot;Debloating Process Completed.&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\Configure-Privacy.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
-Write-Log &quot;Applying Privacy and Registry Tweaks...&quot;
+Write-SetupLog &quot;Applying Privacy and Registry Tweaks...&quot;
 
 # Disable Telemetry and Data Collection
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; /v AllowTelemetry /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; /v DoNotShowFeedbackNotifications /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection&quot; /v AllowTelemetry /t REG_DWORD /d 0 /f
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; -Name AllowTelemetry -Value 0 -Type &quot;DWord&quot;
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection&quot; -Name DoNotShowFeedbackNotifications -Value 1 -Type &quot;DWord&quot;
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection&quot; -Name AllowTelemetry -Value 0 -Type &quot;DWord&quot;
 
 # Disable Windows Error Reporting
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting&quot; /v Disabled /t REG_DWORD /d 1 /f
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting&quot; -Name Disabled -Value 1 -Type &quot;DWord&quot;
 
 # Disable Shared Experiences / Activity History
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v EnableActivityFeed /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v PublishUserActivities /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\System&quot; /v UploadUserActivities /t REG_DWORD /d 0 /f
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\System&quot; -Name EnableActivityFeed -Value 0 -Type &quot;DWord&quot;
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\System&quot; -Name PublishUserActivities -Value 0 -Type &quot;DWord&quot;
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\System&quot; -Name UploadUserActivities -Value 0 -Type &quot;DWord&quot;
 
 # Disable Consumer Features (Auto-installed apps)
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent&quot; /v DisableWindowsConsumerFeatures /t REG_DWORD /d 1 /f
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent&quot; -Name DisableWindowsConsumerFeatures -Value 1 -Type &quot;DWord&quot;
 
 # Disable Bing Search, Cortana, and Search Highlights
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v AllowCortana /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v DisableWebSearch /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v ConnectedSearchUseWeb /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v AllowCloudSearch /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v EnableDynamicContentInWS /t REG_DWORD /d 0 /f
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; -Name AllowCortana -Value 0 -Type &quot;DWord&quot;
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; -Name DisableWebSearch -Value 1 -Type &quot;DWord&quot;
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; -Name ConnectedSearchUseWeb -Value 0 -Type &quot;DWord&quot;
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; -Name AllowCloudSearch -Value 0 -Type &quot;DWord&quot;
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; -Name EnableDynamicContentInWS -Value 0 -Type &quot;DWord&quot;
 
 # Disable Copilot and Recall (AI Screenshot)
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot&quot; /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI&quot; /v DisableAIDataAnalysis /t REG_DWORD /d 1 /f
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot&quot; -Name TurnOffWindowsCopilot -Value 1 -Type &quot;DWord&quot;
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsAI&quot; -Name DisableAIDataAnalysis -Value 1 -Type &quot;DWord&quot;
 
 # Disable News and Interests (Widgets), Search Highlights, and Meet Now
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Dsh&quot; /v AllowNewsAndInterests /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; /v EnableSearchHighlights /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; /v HideSCAMeetNow /t REG_DWORD /d 1 /f
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Dsh&quot; -Name AllowNewsAndInterests -Value 0 -Type &quot;DWord&quot;
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search&quot; -Name EnableSearchHighlights -Value 0 -Type &quot;DWord&quot;
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; -Name HideSCAMeetNow -Value 1 -Type &quot;DWord&quot;
 
 # Disable Online Tips and Advertising ID
-reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; /v AllowOnlineTips /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot; /v DisabledByGroupPolicy /t REG_DWORD /d 1 /f
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; -Name AllowOnlineTips -Value 0 -Type &quot;DWord&quot;
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo&quot; -Name DisabledByGroupPolicy -Value 1 -Type &quot;DWord&quot;
 
 # Disable Edge First Run and Bloat
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v HideFirstRunExperience /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\Software\Policies\Microsoft\Edge&quot; /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+Set-RegistryKey -Path &quot;HKLM:\Software\Policies\Microsoft\Edge&quot; -Name HideFirstRunExperience -Value 1 -Type &quot;DWord&quot;
+Set-RegistryKey -Path &quot;HKLM:\Software\Policies\Microsoft\Edge&quot; -Name BackgroundModeEnabled -Value 0 -Type &quot;DWord&quot;
+Set-RegistryKey -Path &quot;HKLM:\Software\Policies\Microsoft\Edge&quot; -Name StartupBoostEnabled -Value 0 -Type &quot;DWord&quot;
 
 # Disable Location Tracking
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors&quot; /v DisableLocation /t REG_DWORD /d 1 /f
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors&quot; -Name DisableLocation -Value 1 -Type &quot;DWord&quot;
 
 # Disable Delivery Optimization
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization&quot; /v DODownloadMode /t REG_DWORD /d 0 /f
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization&quot; -Name DODownloadMode -Value 0 -Type &quot;DWord&quot;
 
 # Disable BitLocker Automatic Device Encryption
-reg.exe add &quot;HKLM\SYSTEM\CurrentControlSet\Control\BitLocker&quot; /v &quot;PreventDeviceEncryption&quot; /t REG_DWORD /d 1 /f
+Set-RegistryKey -Path &quot;HKLM:\SYSTEM\CurrentControlSet\Control\BitLocker&quot; -Name &quot;PreventDeviceEncryption&quot; -Value 1 -Type &quot;DWord&quot;
 
 # Disable VBS/HVCI (Performance)
-reg.exe add &quot;HKLM\System\CurrentControlSet\Control\DeviceGuard&quot; /v &quot;EnableVirtualizationBasedSecurity&quot; /t REG_DWORD /d 0 /f
-reg.exe add &quot;HKLM\System\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity&quot; /v &quot;Enabled&quot; /t REG_DWORD /d 0 /f
+Set-RegistryKey -Path &quot;HKLM:\System\CurrentControlSet\Control\DeviceGuard&quot; -Name &quot;EnableVirtualizationBasedSecurity&quot; -Value 0 -Type &quot;DWord&quot;
+Set-RegistryKey -Path &quot;HKLM:\System\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity&quot; -Name &quot;Enabled&quot; -Value 0 -Type &quot;DWord&quot;
 
 # Disable Telemetry and Maps Services
 $services = @('DiagTrack', 'dmwappushservice', 'MapsBroker', 'lfsvc')
 foreach ($service in $services) {
     if (Get-Service -Name $service -ErrorAction SilentlyContinue) {
-        Write-Log &quot;Disabling service $service...&quot;
+        Write-SetupLog &quot;Disabling service $service...&quot;
         try {
             Stop-Service -Name $service -Force -ErrorAction SilentlyContinue
             Set-ItemProperty -Path &quot;Registry::HKLM\SYSTEM\CurrentControlSet\Services\$service&quot; -Name &quot;Start&quot; -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
         } catch {
-            Write-Log &quot;Failed to disable service $($service): $_&quot;
+            Write-SetupLog &quot;Failed to disable service $($service): $_&quot;
         }
     }
 }
 
-Write-Log &quot;Privacy Tweaks Applied.&quot;
+Write-SetupLog &quot;Privacy Tweaks Applied.&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\Tweaks\SetStartPins.ps1">
 $json = '{&quot;pinnedList&quot;:[]}';
@@ -729,40 +770,40 @@ Set-ItemProperty -LiteralPath $key -Name 'ConfigureStartPins' -Value $json -Type
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
-Write-Log &quot;Applying System Optimizations...&quot;
+Write-SetupLog &quot;Applying System Optimizations...&quot;
 
 # 1. Disable Hibernation (Saves disk space)
 try {
     powercfg -h off
-    Write-Log &quot;Hibernation disabled.&quot;
+    Write-SetupLog &quot;Hibernation disabled.&quot;
 } catch {
-    Write-Log &quot;Failed to disable hibernation: $_&quot;
+    Write-SetupLog &quot;Failed to disable hibernation: $_&quot;
 }
 
 # 2. Set High Performance Power Plan
 try {
     powercfg -setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c
-    Write-Log &quot;Power plan set to High Performance.&quot;
+    Write-SetupLog &quot;Power plan set to High Performance.&quot;
 } catch {
-    Write-Log &quot;Failed to set power plan: $_&quot;
+    Write-SetupLog &quot;Failed to set power plan: $_&quot;
 }
 
 # 3. Disable Game DVR (Background recording)
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR&quot; /v AllowGameDVR /t REG_DWORD /d 0 /f
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR&quot; -Name AllowGameDVR -Value 0 -Type &quot;DWord&quot;
 
 # 4. Disable Last Access Timestamp (Reduces disk I/O)
 try {
     fsutil behavior set disablelastaccess 1
-    Write-Log &quot;Last Access Timestamp disabled.&quot;
+    Write-SetupLog &quot;Last Access Timestamp disabled.&quot;
 } catch {
-    Write-Log &quot;Failed to disable Last Access Timestamp: $_&quot;
+    Write-SetupLog &quot;Failed to disable Last Access Timestamp: $_&quot;
 }
 
 # 5. Disable App Launch Tracking
-reg.exe add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows\EdgeUI&quot; /v DisableMFUTracking /t REG_DWORD /d 1 /f
-reg.exe add &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; /v NoInstrumentation /t REG_DWORD /d 1 /f
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Policies\Microsoft\Windows\EdgeUI&quot; -Name DisableMFUTracking -Value 1 -Type &quot;DWord&quot;
+Set-RegistryKey -Path &quot;HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer&quot; -Name NoInstrumentation -Value 1 -Type &quot;DWord&quot;
 
-Write-Log &quot;System Optimizations Applied.&quot;
+Write-SetupLog &quot;System Optimizations Applied.&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\Specialize.ps1">
 $ErrorActionPreference = 'Stop'
@@ -781,18 +822,18 @@ $scripts = @(
     &quot;$PSScriptRoot\Tweaks\SetStartPins.ps1&quot;
 )
 
-Write-Log &quot;Starting Specialize Pass (Optimized)...&quot;
+Write-SetupLog &quot;Starting Specialize Pass (Optimized)...&quot;
 
 foreach ($script in $scripts) {
     if (Test-Path $script) {
-        Write-Log &quot;Executing $script...&quot;
+        Write-SetupLog &quot;Executing $script...&quot;
         try {
             &amp; $script
         } catch {
-            Write-Log &quot;Error executing $script: $_&quot;
+            Write-SetupLog &quot;Error executing $($script): $_&quot;
         }
     } else {
-        Write-Log &quot;Script not found: $script&quot;
+        Write-SetupLog &quot;Script not found: $script&quot;
     }
 }
 
@@ -811,18 +852,18 @@ try {
         New-Item -Path $setupDir -ItemType Directory -Force | Out-Null
     }
     Set-Content -Path $setupCompletePath -Value $setupCompleteContent -Force
-    Write-Log &quot;Generated SetupComplete.cmd for cleanup.&quot;
+    Write-SetupLog &quot;Generated SetupComplete.cmd for cleanup.&quot;
 } catch {
-    Write-Log &quot;Error creating SetupComplete.cmd: $_&quot;
+    Write-SetupLog &quot;Error creating SetupComplete.cmd: $_&quot;
 }
 
-Write-Log &quot;Specialize Pass Completed.&quot;
+Write-SetupLog &quot;Specialize Pass Completed.&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\DefaultUser.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
-Write-Log &quot;Configuring Default User...&quot;
+Write-SetupLog &quot;Configuring Default User...&quot;
 
 # Load Default User Hive
 $defaultUserHive = &quot;HKU\DefaultUser&quot;
@@ -830,95 +871,95 @@ $weLoadedIt = $false
 
 # Robustly load hive: Check if already loaded first
 if (-not (Test-Path &quot;Registry::$defaultUserHive&quot;)) {
-    Write-Log &quot;Loading Default User hive...&quot;
+    Write-SetupLog &quot;Loading Default User hive...&quot;
     try {
         $result = reg.exe load $defaultUserHive &quot;C:\Users\Default\NTUSER.DAT&quot; 2&gt;&amp;1
         if ($LASTEXITCODE -eq 0) {
             $weLoadedIt = $true
         } else {
-            Write-Log &quot;Failed to load Default User hive: $result&quot;
+            Write-SetupLog &quot;Failed to load Default User hive: $result&quot;
             return
         }
     } catch {
-        Write-Log &quot;Exception loading Default User hive: $_&quot;
+        Write-SetupLog &quot;Exception loading Default User hive: $_&quot;
         return
     }
 } else {
-    Write-Log &quot;Default User hive already loaded.&quot;
+    Write-SetupLog &quot;Default User hive already loaded.&quot;
 }
 
 try {
     # Taskbar and Explorer settings
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v ShowTaskViewButton /t REG_DWORD /d 0 /f
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v TaskbarAl /t REG_DWORD /d 0 /f # Left align taskbar
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v LaunchTo /t REG_DWORD /d 1 /f # Open This PC
-    reg.exe add &quot;$defaultUserHive\Software\Policies\Microsoft\Windows\Explorer&quot; /v DisableSearchBoxSuggestions /t REG_DWORD /d 1 /f
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Search&quot; /v SearchboxTaskbarMode /t REG_DWORD /d 3 /f # Icon only
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v TaskbarDa /t REG_DWORD /d 0 /f # Disable Widgets
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v TaskbarMn /t REG_DWORD /d 0 /f # Disable Chat
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name ShowTaskViewButton -Value 0 -Type &quot;DWord&quot;
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name TaskbarAl -Value 0 -Type &quot;DWord&quot; # Left align taskbar
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name LaunchTo -Value 1 -Type &quot;DWord&quot; # Open This PC
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Policies\Microsoft\Windows\Explorer&quot; -Name DisableSearchBoxSuggestions -Value 1 -Type &quot;DWord&quot;
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\Search&quot; -Name SearchboxTaskbarMode -Value 3 -Type &quot;DWord&quot; # Icon only
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name TaskbarDa -Value 0 -Type &quot;DWord&quot; # Disable Widgets
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name TaskbarMn -Value 0 -Type &quot;DWord&quot; # Disable Chat
 
     # Show File Extensions
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v HideFileExt /t REG_DWORD /d 0 /f
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name HideFileExt -Value 0 -Type &quot;DWord&quot;
 
     # Show &quot;This PC&quot; Icon on Desktop
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel&quot; /v &quot;{20D04FE0-3AEA-1069-A2D8-08002B30309D}&quot; /t REG_DWORD /d 0 /f
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel&quot; -Name &quot;{20D04FE0-3AEA-1069-A2D8-08002B30309D}&quot; -Value 0 -Type &quot;DWord&quot;
 
     # Disable Sync Provider Notifications (Ads in File Explorer)
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v ShowSyncProviderNotifications /t REG_DWORD /d 0 /f
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name ShowSyncProviderNotifications -Value 0 -Type &quot;DWord&quot;
 
     # Enable Dark Mode (System and Apps)
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize&quot; /v AppsUseLightTheme /t REG_DWORD /d 0 /f
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize&quot; /v SystemUsesLightTheme /t REG_DWORD /d 0 /f
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize&quot; /v EnableTransparency /t REG_DWORD /d 0 /f
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize&quot; -Name AppsUseLightTheme -Value 0 -Type &quot;DWord&quot;
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize&quot; -Name SystemUsesLightTheme -Value 0 -Type &quot;DWord&quot;
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize&quot; -Name EnableTransparency -Value 0 -Type &quot;DWord&quot;
 
     # Classic Context Menu (Windows 11)
-    reg.exe add &quot;$defaultUserHive\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32&quot; /ve /t REG_SZ /d &quot;&quot; /f
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32&quot; -Name &quot;Dummy&quot; -Value &quot;Dummy&quot;; Remove-ItemProperty -Path &quot;Registry::$defaultUserHive\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32&quot; -Name &quot;Dummy&quot; -ErrorAction SilentlyContinue; Set-Item -Path &quot;Registry::$defaultUserHive\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32&quot; -Value &quot;&quot;
 
     # Disable Lock Screen Tips, Tips and Suggestions, and Welcome Experience
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; /v RotatingLockScreenEnabled /t REG_DWORD /d 0 /f
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; /v SubscribedContent-338387Enabled /t REG_DWORD /d 0 /f
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; /v SoftLandingEnabled /t REG_DWORD /d 0 /f
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; /v SubscribedContent-310093Enabled /t REG_DWORD /d 0 /f
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; -Name RotatingLockScreenEnabled -Value 0 -Type &quot;DWord&quot;
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; -Name SubscribedContent-338387Enabled -Value 0 -Type &quot;DWord&quot;
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; -Name SoftLandingEnabled -Value 0 -Type &quot;DWord&quot;
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager&quot; -Name SubscribedContent-310093Enabled -Value 0 -Type &quot;DWord&quot;
 
     # Disable Copilot for Default User
-    reg.exe add &quot;$defaultUserHive\Software\Policies\Microsoft\Windows\WindowsCopilot&quot; /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Policies\Microsoft\Windows\WindowsCopilot&quot; -Name TurnOffWindowsCopilot -Value 1 -Type &quot;DWord&quot;
 
     # Enable End Task in Taskbar (Developer/Power User feature)
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v TaskbarEndTask /t REG_DWORD /d 1 /f
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name TaskbarEndTask -Value 1 -Type &quot;DWord&quot;
 
     # Show Seconds in System Clock (Windows 11)
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; /v ShowSecondsInSystemClock /t REG_DWORD /d 1 /f
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced&quot; -Name ShowSecondsInSystemClock -Value 1 -Type &quot;DWord&quot;
 
     # Disable &quot;Finish setting up your device&quot;
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement&quot; /v ScoobeSystemSettingEnabled /t REG_DWORD /d 0 /f
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement&quot; -Name ScoobeSystemSettingEnabled -Value 0 -Type &quot;DWord&quot;
 
     # Disable Accessibility Shortcuts (Sticky Keys, Filter Keys, Toggle Keys)
-    reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\StickyKeys&quot; /v Flags /t REG_SZ /d &quot;506&quot; /f
-    reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\Keyboard Response&quot; /v Flags /t REG_SZ /d &quot;122&quot; /f
-    reg.exe add &quot;$defaultUserHive\Control Panel\Accessibility\ToggleKeys&quot; /v Flags /t REG_SZ /d &quot;58&quot; /f
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Control Panel\Accessibility\StickyKeys&quot; -Name Flags -Value &quot;506&quot; -Type &quot;String&quot;
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Control Panel\Accessibility\Keyboard Response&quot; -Name Flags -Value &quot;122&quot; -Type &quot;String&quot;
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Control Panel\Accessibility\ToggleKeys&quot; -Name Flags -Value &quot;58&quot; -Type &quot;String&quot;
 
     # Disable Mouse Acceleration (Enhance Pointer Precision)
-    reg.exe add &quot;$defaultUserHive\Control Panel\Mouse&quot; /v MouseSpeed /t REG_SZ /d &quot;0&quot; /f
-    reg.exe add &quot;$defaultUserHive\Control Panel\Mouse&quot; /v MouseThreshold1 /t REG_SZ /d &quot;0&quot; /f
-    reg.exe add &quot;$defaultUserHive\Control Panel\Mouse&quot; /v MouseThreshold2 /t REG_SZ /d &quot;0&quot; /f
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Control Panel\Mouse&quot; -Name MouseSpeed -Value &quot;0&quot; -Type &quot;String&quot;
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Control Panel\Mouse&quot; -Name MouseThreshold1 -Value &quot;0&quot; -Type &quot;String&quot;
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Control Panel\Mouse&quot; -Name MouseThreshold2 -Value &quot;0&quot; -Type &quot;String&quot;
 
     # Disable Typing Insights and Tailored Experiences
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Input\TIPC&quot; /v Enabled /t REG_DWORD /d 0 /f
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\Privacy&quot; /v TailoredExperiencesWithDiagnosticDataEnabled /t REG_DWORD /d 0 /f
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Input\TIPC&quot; -Name Enabled -Value 0 -Type &quot;DWord&quot;
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\Privacy&quot; -Name TailoredExperiencesWithDiagnosticDataEnabled -Value 0 -Type &quot;DWord&quot;
 
     # Run UserOnce on first login (if script exists)
     # We wrap in cmd /c &quot;if exist ...&quot; to prevent errors for subsequent users after self-destruct
     $uScript = &quot;C:\Windows\Setup\Scripts\UserOnce.ps1&quot;
     $runOnceCmd = &quot;cmd /c `&quot;if exist \`&quot;$uScript\`&quot; powershell.exe -WindowStyle Hidden -ExecutionPolicy Unrestricted -NoProfile -File \`&quot;$uScript\`&quot;`&quot;&quot;
-    reg.exe add &quot;$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce&quot; /v &quot;UnattendedSetup&quot; /t REG_SZ /d $runOnceCmd /f
+    Set-RegistryKey -Path &quot;${defaultUserHive}\Software\Microsoft\Windows\CurrentVersion\RunOnce&quot; -Name &quot;UnattendedSetup&quot; -Value $runOnceCmd -Type &quot;String&quot;
 }
 catch {
-    Write-Log &quot;Error applying Default User tweaks: $_&quot;
+    Write-SetupLog &quot;Error applying Default User tweaks: $_&quot;
 }
 finally {
     # Only unload if we loaded it to avoid disrupting other processes
     if ($weLoadedIt) {
-        Write-Log &quot;Unloading Default User hive...&quot;
+        Write-SetupLog &quot;Unloading Default User hive...&quot;
         [GC]::Collect() # Force GC to release handles
 
         $maxRetries = 5
@@ -930,33 +971,33 @@ finally {
                 $result = reg.exe unload $defaultUserHive 2&gt;&amp;1
                 if ($LASTEXITCODE -eq 0) {
                     $unloaded = $true
-                    Write-Log &quot;Default User hive unloaded successfully.&quot;
+                    Write-SetupLog &quot;Default User hive unloaded successfully.&quot;
                 } else {
-                    Write-Log &quot;Failed to unload Default User hive (Attempt $($retry+1)): $result&quot;
+                    Write-SetupLog &quot;Failed to unload Default User hive (Attempt $($retry+1)): $result&quot;
                     Start-Sleep -Seconds 2
                     [GC]::Collect()
                     $retry++
                 }
             } catch {
-                Write-Log &quot;Exception unloading Default User hive (Attempt $($retry+1)): $_&quot;
+                Write-SetupLog &quot;Exception unloading Default User hive (Attempt $($retry+1)): $_&quot;
                 Start-Sleep -Seconds 2
                 $retry++
             }
         }
 
         if (-not $unloaded) {
-            Write-Log &quot;CRITICAL: Could not unload Default User hive after $maxRetries attempts.&quot;
+            Write-SetupLog &quot;CRITICAL: Could not unload Default User hive after $maxRetries attempts.&quot;
         }
     }
 }
 
-Write-Log &quot;Default User Configuration Completed.&quot;
+Write-SetupLog &quot;Default User Configuration Completed.&quot;
 </File>
 		<File path="C:\Windows\Setup\Scripts\UserOnce.ps1">
 $ErrorActionPreference = 'Stop'
 . &quot;$PSScriptRoot\Lib\Helper.ps1&quot;
 
-Write-Log &quot;Configuring User Account...&quot;
+Write-SetupLog &quot;Configuring User Account...&quot;
 
 # Register Daily Winget Auto-Update Task (Transparent)
 if (Get-Command winget -ErrorAction SilentlyContinue) {
@@ -969,30 +1010,30 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
 
     $registered = $false
     try {
-        Write-Log &quot;Attempting to register Winget task with Highest privileges...&quot;
+        Write-SetupLog &quot;Attempting to register Winget task with Highest privileges...&quot;
         Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Highest -Force -ErrorAction Stop | Out-Null
         $registered = $true
-        Write-Log &quot;Registered Daily Winget Auto-Update Task (Highest).&quot;
+        Write-SetupLog &quot;Registered Daily Winget Auto-Update Task (Highest).&quot;
     } catch {
-        Write-Log &quot;Failed to register Winget task with Highest privileges: $_&quot;
+        Write-SetupLog &quot;Failed to register Winget task with Highest privileges: $_&quot;
     }
 
     # Attempt 2: Try with Limited (User) privileges if Admin failed (e.g., UAC issue)
     if (-not $registered) {
         try {
-            Write-Log &quot;Attempting to register Winget task with Limited privileges...&quot;
+            Write-SetupLog &quot;Attempting to register Winget task with Limited privileges...&quot;
             Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description &quot;Automatically updates all software via Winget silently.&quot; -RunLevel Limited -Force -ErrorAction Stop | Out-Null
             $registered = $true
-            Write-Log &quot;Registered Daily Winget Auto-Update Task (Limited).&quot;
+            Write-SetupLog &quot;Registered Daily Winget Auto-Update Task (Limited).&quot;
         } catch {
-            Write-Log &quot;Failed to register Winget task (Limited): $_&quot;
+            Write-SetupLog &quot;Failed to register Winget task (Limited): $_&quot;
         }
     }
 } else {
-    Write-Log &quot;Winget not found. Skipping auto-update task registration.&quot;
+    Write-SetupLog &quot;Winget not found. Skipping auto-update task registration.&quot;
 }
 
-Write-Log &quot;User Configuration Completed.&quot;
+Write-SetupLog &quot;User Configuration Completed.&quot;
 
 # Self-Destruct: Cleanup Scripts
 # Wait 5 seconds then delete the script folder
