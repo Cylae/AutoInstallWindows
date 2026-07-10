@@ -21,7 +21,7 @@ function Get-InstallerFile {
     return $null
 }
 
-function Write-Log {
+function Write-SetupLog {
     param(
         [string]$Message,
         [string]$Path = "$env:SystemRoot\Panther\Autounattend_Log.txt"
@@ -37,7 +37,7 @@ function Write-Log {
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
 }
 
-function Download-File {
+function Get-RemoteFile {
     param(
         [string]$Url,
         [string]$Destination,
@@ -49,7 +49,7 @@ function Download-File {
 
     if ([string]::IsNullOrWhiteSpace($Url)) { return $false }
 
-    Write-Log "Attempting to download $Name from $Url..."
+    Write-SetupLog "Attempting to download $Name from $Url..."
 
     # Increase timeout to ~5 minutes (150 * 2s) to handle slow network initialization
     $maxRetries = 150
@@ -74,7 +74,7 @@ function Download-File {
     }
 
     if (-not $connected) {
-        Write-Log "No network connectivity to download $Name."
+        Write-SetupLog "No network connectivity to download $Name."
         return $false
     }
 
@@ -93,18 +93,59 @@ function Download-File {
 
             # Verify file size > 1KB (1024 bytes) to ensure valid download
             if (Test-Path -Path $Destination -And (Get-Item $Destination).Length -gt 1024) {
-                Write-Log "Download of $Name successful."
+                Write-SetupLog "Download of $Name successful."
                 $downloaded = $true
             } else {
-                Write-Log "Download of $Name failed (file too small or empty)."
+                Write-SetupLog "Download of $Name failed (file too small or empty)."
                 throw "File too small"
             }
         } catch {
             $dRetry++
-            Write-Log "Failed to download $Name (Attempt $dRetry/$downloadRetries): $_"
+            Write-SetupLog "Failed to download $Name (Attempt $dRetry/$downloadRetries): $_"
             Start-Sleep -Seconds 5
         }
     }
 
     return $downloaded
+}
+
+function Set-RegistryKey {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Path,
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+        [Parameter(Mandatory=$true)]
+        $Value,
+        [string]$Type = "String"
+    )
+
+    # Handle Registry:: path conversion
+    $cleanPath = $Path
+    if ($cleanPath -match "^(Registry::)?HKU\\") {
+        $cleanPath = $cleanPath -replace "^(Registry::)?HKU\\", "Registry::HKEY_USERS\"
+    } elseif ($cleanPath -match "^HKEY_USERS\\") {
+        $cleanPath = $cleanPath -replace "^HKEY_USERS\\", "Registry::HKEY_USERS\"
+    }
+
+    # Ensure parent path exists
+    if (-not (Test-Path $cleanPath)) {
+        $parts = $cleanPath -split "\\"
+        $currentPath = $parts[0]
+
+        # Determine the correct root for missing parent path creation
+        if ($parts[0] -match "^(HKLM:|HKCU:|Registry::.*)$") {
+            $currentPath = $parts[0]
+        } else {
+             $currentPath = $parts[0] + ":"
+        }
+
+        for ($i = 1; $i -lt $parts.Length; $i++) {
+            $currentPath = Join-Path $currentPath $parts[$i]
+            if (-not (Test-Path $currentPath)) {
+                New-Item -Path $currentPath -Force -ErrorAction SilentlyContinue | Out-Null
+            }
+        }
+    }
+    Set-ItemProperty -Path $cleanPath -Name $Name -Value $Value -Type $Type -Force -ErrorAction SilentlyContinue | Out-Null
 }

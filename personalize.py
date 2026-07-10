@@ -3,8 +3,17 @@ import platform
 import re
 import sys
 import subprocess
-import tkinter as tk
-from tkinter import ttk, messagebox
+try:
+    import tkinter as tk
+    from tkinter import ttk, messagebox
+    TclError = tk.TclError
+except ImportError:
+    tk = None
+    ttk = None
+    messagebox = None
+
+    class TclError(Exception):
+        pass
 from pathlib import Path
 
 
@@ -205,8 +214,10 @@ def apply_personalizations(xml_path, content, data):
         build_cmd, check=True, capture_output=True, text=True)
 
 
-class PersonalizationApp(tk.Tk):
+class PersonalizationApp(tk.Tk if tk else object):
     def __init__(self, xml_path, content, defaults):
+        if tk is None:
+            raise ImportError("Tkinter is not available")
         super().__init__()
 
         self.title("Ultimate Windows Autounattend - Personalization Tool")
@@ -425,11 +436,14 @@ def main():
         # Check if we are running in an environment without a display
         # e.g., SSH without X11. This is a common failure point for Tkinter
         if not os.environ.get('DISPLAY') and platform.system() != "Windows":
-            raise tk.TclError("No display available")
+            raise TclError("No display available")
+
+        if tk is None:
+            raise ImportError("Tkinter is not available")
 
         app = PersonalizationApp(xml_path, content, defaults)
         app.mainloop()
-    except (tk.TclError, ImportError) as e:
+    except (TclError, ImportError) as e:
         print(f"GUI not available ({e}). Falling back to CLI mode...")
         try:
             cli_main(xml_path, content, defaults)
