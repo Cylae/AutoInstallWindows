@@ -108,3 +108,41 @@ function Download-File {
 
     return $downloaded
 }
+
+function Set-RegistryKey {
+    param(
+        [string]$Path,
+        [string]$Name,
+        [string]$Value,
+        [string]$Type = "String"
+    )
+
+    # Map HKCU/HKLM to PowerShell drives
+    $psPath = $Path -replace "^HKLM\\", "HKLM:\" -replace "^HKCU\\", "HKCU:\"
+    # Map HKU or HKEY_USERS to Registry::HKEY_USERS
+    $psPath = $psPath -replace "^HKU\\", "Registry::HKEY_USERS\" -replace "^HKEY_USERS\\", "Registry::HKEY_USERS\"
+
+    # Split the path into parts
+    $parts = $psPath -split "\\\\"
+    $parentPath = $parts[0]
+
+    # Check if root ends with colon or starts with Registry::
+    if (-not ($parentPath.EndsWith(":") -or $parentPath.StartsWith("Registry::"))) {
+        Write-Log "Invalid registry path root: $parentPath"
+        return
+    }
+
+    # Iteratively create parent paths
+    for ($i = 1; $i -lt $parts.Length; $i++) {
+        $parentPath = Join-Path $parentPath $parts[$i]
+        if (-not (Test-Path $parentPath)) {
+            New-Item -Path $parentPath -Force | Out-Null
+        }
+    }
+
+    if ($Name -eq "(default)") {
+        Set-Item -Path $parentPath -Value $Value | Out-Null
+    } else {
+        Set-ItemProperty -Path $parentPath -Name $Name -Value $Value -Type $Type | Out-Null
+    }
+}
