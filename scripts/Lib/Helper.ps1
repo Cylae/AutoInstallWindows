@@ -21,7 +21,7 @@ function Get-InstallerFile {
     return $null
 }
 
-function Write-Log {
+function Write-SetupLog {
     param(
         [string]$Message,
         [string]$Path = "$env:SystemRoot\Panther\Autounattend_Log.txt"
@@ -37,7 +37,7 @@ function Write-Log {
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
 }
 
-function Download-File {
+function Get-RemoteFile {
     param(
         [string]$Url,
         [string]$Destination,
@@ -49,7 +49,7 @@ function Download-File {
 
     if ([string]::IsNullOrWhiteSpace($Url)) { return $false }
 
-    Write-Log "Attempting to download $Name from $Url..."
+    Write-SetupLog "Attempting to download $Name from $Url..."
 
     # Increase timeout to ~5 minutes (150 * 2s) to handle slow network initialization
     $maxRetries = 150
@@ -74,7 +74,7 @@ function Download-File {
     }
 
     if (-not $connected) {
-        Write-Log "No network connectivity to download $Name."
+        Write-SetupLog "No network connectivity to download $Name."
         return $false
     }
 
@@ -93,18 +93,68 @@ function Download-File {
 
             # Verify file size > 1KB (1024 bytes) to ensure valid download
             if (Test-Path -Path $Destination -And (Get-Item $Destination).Length -gt 1024) {
-                Write-Log "Download of $Name successful."
+                Write-SetupLog "Download of $Name successful."
                 $downloaded = $true
             } else {
-                Write-Log "Download of $Name failed (file too small or empty)."
+                Write-SetupLog "Download of $Name failed (file too small or empty)."
                 throw "File too small"
             }
         } catch {
             $dRetry++
-            Write-Log "Failed to download $Name (Attempt $dRetry/$downloadRetries): $_"
+            Write-SetupLog "Failed to download $Name (Attempt $dRetry/$downloadRetries): $_"
             Start-Sleep -Seconds 5
         }
     }
 
     return $downloaded
+}
+
+function Set-RegistryKey {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$Path,
+
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+
+        [Parameter(Mandatory=$true)]
+        [string]$Value,
+
+        [Parameter(Mandatory=$true)]
+        [string]$Type
+    )
+
+    # Handle Hive prefixes for PowerShell Registry Provider
+    if ($Path -match "^HKU\\") {
+        $Path = $Path -replace "^HKU\\", "Registry::HKEY_USERS\"
+    } elseif ($Path -match "^HKEY_USERS\\") {
+        $Path = $Path -replace "^HKEY_USERS\\", "Registry::HKEY_USERS\"
+    } elseif ($Path -match "^HKLM\\") {
+        $Path = $Path -replace "^HKLM\\", "HKLM:\"
+    } elseif ($Path -match "^HKCU\\") {
+        $Path = $Path -replace "^HKCU\\", "HKCU:\"
+    }
+
+    # Split path to recursively create missing keys
+    $parts = $Path -split "\\"
+    $parentPath = $parts[0]
+
+    # Ensure root path ends with : or starts with Registry::
+    if (-not ($parentPath -match ":$") -and -not ($parentPath -match "^Registry::")) {
+        $parentPath = $parentPath + ":"
+    }
+
+    for ($i = 1; $i -lt $parts.Length; $i++) {
+        $childPath = Join-Path $parentPath $parts[$i]
+        if (-not (Test-Path $childPath)) {
+            New-Item -Path $childPath -Force | Out-Null
+        }
+        $parentPath = $childPath
+    }
+
+    if ($Name -eq "") {
+        Set-Item -Path $Path -Value $Value -Force | Out-Null
+    } else {
+        Set-ItemProperty -Path $Path -Name $Name -Value $Value -Type $Type -Force | Out-Null
+    }
 }
