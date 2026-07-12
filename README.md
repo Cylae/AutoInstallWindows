@@ -8,6 +8,8 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 
 ## ✨ Features
 
+*   **🔧 Robust Scripts**: Enhanced PowerShell logging (`Write-SetupLog`), reliable registry modifications via `Set-RegistryKey`, and stable headless GUI fallbacks.
+
 *   **⚡ Zero-Interruption Setup**: All software (Chrome, Drivers, etc.) is installed during the `Specialize` pass, *before* the user logs in. No popups, no waiting at the desktop.
 *   **🤫 Totally Silent**: All scripts are optimized to suppress output and windows. You won't see a thing until the "Welcome" screen.
 *   **🛡️ Privacy Hardened**: Disables Telemetry, **Recall** (AI Screenshot), Copilot, Bing Search, Cortana, Advertising ID, **Search Highlights**, **Widgets**, **File Explorer Ads**, **Tips/Suggestions**, **Error Reporting**, **Shared Experiences**, **Location Tracking**, **Delivery Optimization**, and **Typing Insights**. **Restores Classic Context Menu** (Windows 11) and shows file extensions by default.
@@ -156,6 +158,8 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 **La fonctionnalité clé :** Toutes les installations de logiciels et de pilotes se font **totalement silencieusement avant la première connexion utilisateur**, garantissant un environnement impeccable dès l'apparition du bureau.
 
 ## ✨ Fonctionnalités
+
+*   **🔧 Scripts Robustes**: Journalisation PowerShell améliorée (`Write-SetupLog`), modifications fiables du registre via `Set-RegistryKey`, et repli GUI sans affichage (headless) stable.
 
 *   **⚡ Installation Zéro-Interruption**: Tous les logiciels (Chrome, Pilotes, etc.) sont installés durant la phase `Specialize`, **avant** la connexion de l'utilisateur. Aucun popup, aucune attente sur le bureau.
 *   **🤫 Totalement Silencieux**: Tous les scripts sont optimisés pour masquer les sorties et fenêtres. Vous ne verrez rien avant l'écran "Bienvenue".
