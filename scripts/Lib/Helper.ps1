@@ -64,7 +64,7 @@ function Download-File {
                 $null = [System.Net.Dns]::GetHostEntry($hostName)
                 $connected = $true
                 break
-            } catch {}
+            } catch { $_ | Out-Null }
         }
 
         if (-not $connected) {
@@ -86,7 +86,7 @@ function Download-File {
         try {
             # Enable TLS 1.2 and TLS 1.3 (if available)
             $protocols = [Net.SecurityProtocolType]::Tls12
-            try { $protocols = $protocols -bor [Net.SecurityProtocolType]::Tls13 } catch {}
+            try { $protocols = $protocols -bor [Net.SecurityProtocolType]::Tls13 } catch { $_ | Out-Null }
             [Net.ServicePointManager]::SecurityProtocol = $protocols
 
             Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -ErrorAction Stop
@@ -107,4 +107,43 @@ function Download-File {
     }
 
     return $downloaded
+}
+
+function Set-RegistryKey {
+    param(
+        [string]$Path,
+        [string]$Name,
+        [string]$Value,
+        [string]$Type = "String"
+    )
+
+    $Path = $Path -replace "^HKLM\\", "HKLM:\"
+    $Path = $Path -replace "^HKCU\\", "HKCU:\"
+    $Path = $Path -replace "^HKU\\", "Registry::HKEY_USERS\"
+    $Path = $Path -replace "^HKEY_USERS\\", "Registry::HKEY_USERS\"
+
+    $parts = $Path -split "\\"
+    $parentPath = $parts[0]
+
+    for ($i = 1; $i -lt $parts.Length; $i++) {
+        $parentPath = $parentPath + "\" + $parts[$i]
+        if (-not (Test-Path -LiteralPath $parentPath)) {
+            New-Item -LiteralPath $parentPath -Force | Out-Null
+        }
+    }
+
+    switch ($Type.ToUpper()) {
+        "REG_DWORD" { $Type = "DWord" }
+        "REG_SZ"    { $Type = "String" }
+        "REG_QWORD" { $Type = "QWord" }
+        "REG_MULTI_SZ" { $Type = "MultiString" }
+        "REG_EXPAND_SZ" { $Type = "ExpandString" }
+        "REG_BINARY" { $Type = "Binary" }
+    }
+
+    if ($Name -eq "") {
+        Set-Item -LiteralPath $parentPath -Value $Value
+    } else {
+        Set-ItemProperty -LiteralPath $parentPath -Name $Name -Value $Value -Type $Type -Force
+    }
 }
