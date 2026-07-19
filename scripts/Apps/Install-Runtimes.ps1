@@ -2,7 +2,7 @@
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\Lib\Helper.ps1"
 
-Write-Log "Starting Visual C++ Runtimes Installation..."
+Write-SetupLog "Starting Visual C++ Runtimes Installation..."
 
 $mediaRoot = Get-InstallMedia
 
@@ -18,13 +18,13 @@ function Install-Runtime {
     $dest = "$env:TEMP\$DestName"
 
     # 1. Try Download (Online First)
-    if (Download-File -Url $Url -Destination $dest -Name $LogName) {
+    if (Get-RemoteFile -Url $Url -Destination $dest -Name $LogName) {
         $setupPath = $dest
     }
 
     # 2. Try Local (Fallback)
     if (-not $setupPath -and $mediaRoot) {
-        Write-Log "Download of $LogName failed. Checking local storage..."
+        Write-SetupLog "Download of $LogName failed. Checking local storage..."
         $possiblePaths = @(
             (Join-Path $mediaRoot "apps\$LocalFolder"),
             (Join-Path $mediaRoot "drivers\apps\$LocalFolder"),
@@ -43,16 +43,16 @@ function Install-Runtime {
     }
 
     if ($setupPath) {
-        Write-Log "Installing $LogName from $setupPath..."
+        Write-SetupLog "Installing $LogName from $setupPath..."
         try {
             Unblock-File -Path $setupPath -ErrorAction SilentlyContinue
             Start-Process -FilePath $setupPath -ArgumentList @("/install", "/quiet", "/norestart") -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\${DestName}_install.log"
-            Write-Log "$LogName installation completed."
+            Write-SetupLog "$LogName installation completed."
         } catch {
-            Write-Log "Error installing $LogName: $_"
+            Write-SetupLog "Error installing $LogName: $_"
         }
     } else {
-        Write-Log "$LogName installer not found locally and download failed."
+        Write-SetupLog "$LogName installer not found locally and download failed."
     }
 }
 

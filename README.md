@@ -40,6 +40,10 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Fail-Safe Execution**: Scripts include existence checks (e.g., RunOnce) to prevent errors on subsequent logins.
     *   **Advanced Error Handling**: Improved logging and registry handling for fail-safe execution.
 
+
+*   **Robust Personalization GUI**: `personalize.py` safely handles headless environments via a CLI fallback, avoiding Tkinter crashes on remote Linux servers without X11. It also detects non-interactive terminals for fully automated deployments.
+*   **Powershell Improvements**: Core helper functions have been renamed using approved standard verbs (`Write-SetupLog` instead of `Write-Log`, and `Get-RemoteFile` instead of `Download-File`) avoiding conflicts.
+
 ## 📂 Folder Structure
 
 To utilize the offline installation features, organize your USB drive as follows:
