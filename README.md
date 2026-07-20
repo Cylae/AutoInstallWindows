@@ -76,6 +76,7 @@ USB_ROOT/
    ```bash
    python personalize.py
    ```
+   *(Note: On Ubuntu/Linux, if `python3-tk` is missing, the tool will gracefully fall back to a command-line interface).*
 
 ## 🛠️ For Developers
 
@@ -224,6 +225,7 @@ RACINE_USB/
    ```bash
    python personalize.py
    ```
+   *(Note : Sur Ubuntu/Linux, si `python3-tk` est absent, l'outil basculera automatiquement sur une interface en ligne de commande).*
 
 ## 🛠️ Pour les Développeurs
 
