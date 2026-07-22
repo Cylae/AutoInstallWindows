@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def xml_encode(s):
+    # Do not escape single quotes to preserve readability
     s = s.replace("&", "&amp;")
     s = s.replace("<", "&lt;")
     s = s.replace(">", "&gt;")
