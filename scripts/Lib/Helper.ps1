@@ -108,3 +108,61 @@ function Download-File {
 
     return $downloaded
 }
+
+function Set-RegistryKey {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Path,
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+        [Parameter(Mandatory=$true)]
+        [string]$Value,
+        [Parameter(Mandatory=$true)]
+        [string]$Type
+    )
+
+    # Convert paths starting with HKLM\ or HKU\ to PowerShell drives if they aren't already
+    $psPath = $Path
+    if ($psPath -match "^HKLM\\") {
+        $psPath = $psPath -replace "^HKLM\\", "HKLM:\"
+    } elseif ($psPath -match "^HKU\\") {
+        $psPath = $psPath -replace "^HKU\\", "Registry::HKEY_USERS\"
+    } elseif ($psPath -match "^HKEY_USERS\\") {
+        $psPath = $psPath -replace "^HKEY_USERS\\", "Registry::HKEY_USERS\"
+    }
+
+    # Split the path into parts to recursively create parent keys if they don't exist
+    # If using a PS drive, the first part is the drive (e.g. "HKLM:")
+    $parts = $psPath -split "\\"
+    $currentPath = ""
+
+    foreach ($part in $parts) {
+        if ([string]::IsNullOrEmpty($currentPath)) {
+            $currentPath = $part
+        } else {
+            $currentPath = "$currentPath\$part"
+        }
+
+        # Test-Path doesn't work well if path has wildcards unless -LiteralPath is used
+        if (-not (Test-Path -LiteralPath $currentPath)) {
+            try {
+                # New-Item needs the parent path and the new name
+                $parentPath = Split-Path -Path $currentPath -Parent
+                $childName = Split-Path -Path $currentPath -Leaf
+                New-Item -Path $parentPath -Name $childName -Force -ErrorAction Stop | Out-Null
+            } catch {
+                Write-Log "Failed to create registry path: $currentPath"
+            }
+        }
+    }
+
+    try {
+        if ($Name -eq "") {
+            Set-Item -LiteralPath $psPath -Value $Value -Force -ErrorAction Stop
+        } else {
+            Set-ItemProperty -LiteralPath $psPath -Name $Name -Value $Value -Type $Type -Force -ErrorAction Stop
+        }
+    } catch {
+        Write-Log "Failed to set registry value $Name at $psPath"
+    }
+}
