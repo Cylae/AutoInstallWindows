@@ -291,3 +291,6 @@ Si vous préférez éditer le XML manuellement, ajoutez votre profil réseau dur
     </MSM>
 </WLANProfile>
 ```
+
+
+* **Note:** `personalize.py` now safely handles environments without `tkinter` installed, seamlessly falling back to its CLI mode without crashing.
