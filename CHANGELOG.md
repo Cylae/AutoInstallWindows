@@ -5,6 +5,9 @@
 ### 🚀 Enhancements
 *   **User Experience**: Disabled Mouse Acceleration (Enhance Pointer Precision) by default.
 *   **Privacy & Security**: Disabled Location Tracking and Delivery Optimization via registry tweaks.
+*   **Tooling**: Converted GUI `personalize.py` into a smart CLI if Tkinter isn't available.
+*   **Best Practices**: Renamed `Write-Log` and `Download-File` helpers to standard PowerShell verbs.
+*   **Robust Registry Mods**: Migrated from `reg.exe add` to custom `Set-RegistryKey` for safety and missing path creation.
 
 ## [Fixes & Enhancements] - 2024-05-25
 
