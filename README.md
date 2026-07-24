@@ -95,7 +95,7 @@ If you encounter issues, check the log file created during setup:
     *   Ensure other drivers (Nvidia, AMD, etc.) are **`.exe`** installers.
     *   Verify the folder structure on your USB drive matches the example above.
 *   **Apps not downloading?**
-    *   Check your internet connection. The script attempts to connect to `google.com` to verify connectivity.
+    *   Check your internet connection. The script attempts to connect to `google.com`, `cloudflare.com` and `microsoft.com` using HTTPS to verify connectivity.
     *   If offline, place the installers in the corresponding `apps` folder on the USB.
 *   **Script errors?**
     *   Review the log file mentioned above for specific error messages (now with millisecond precision!).
@@ -243,7 +243,7 @@ Si vous rencontrez des problèmes, consultez le fichier journal créé lors de l
     *   Assurez-vous que les autres pilotes (Nvidia, AMD, etc.) sont des installateurs **`.exe`**.
     *   Vérifiez que la structure des dossiers sur votre clé USB correspond à l'exemple ci-dessus.
 *   **Les applications ne se téléchargent pas ?**
-    *   Vérifiez votre connexion Internet. Le script tente de se connecter à `google.com` pour vérifier la connectivité.
+    *   Vérifiez votre connexion Internet. Le script tente de se connecter à `google.com`, `cloudflare.com` et `microsoft.com` en HTTPS pour vérifier la connectivité.
     *   Si vous êtes hors ligne, placez les installateurs dans le dossier `apps` correspondant sur la clé USB.
 *   **Erreurs de script ?**
     *   Consultez le fichier journal mentionné ci-dessus pour les messages d'erreur spécifiques (maintenant avec une précision à la milliseconde !).
