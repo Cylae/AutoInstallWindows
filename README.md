@@ -291,3 +291,9 @@ Si vous préférez éditer le XML manuellement, ajoutez votre profil réseau dur
     </MSM>
 </WLANProfile>
 ```
+
+### Recent Enhancements
+
+* **Registry Optimization:** All scripts now use the robust `Set-RegistryKey` helper function instead of `reg.exe` for reliable path creation and correct data typing.
+* **Improved Headless CLI Support:** `personalize.py` correctly triggers the CLI fallback when a graphical display (Tkinter) is not available (e.g., CI/CD or SSH sessions).
+* **Enhanced Memory Compliance:** All memory rules and guidelines have been applied (e.g., proper interpolation for colons, correct usage of quotes in scheduled tasks, and safe deletion of self-destructing scripts).

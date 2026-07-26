@@ -108,3 +108,54 @@ function Download-File {
 
     return $downloaded
 }
+
+function Set-RegistryKey {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Path,
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+        [Parameter(Mandatory=$true)]
+        [string]$Value,
+        [Parameter(Mandatory=$true)]
+        [string]$Type
+    )
+
+    # Convert common root abbreviations if needed (e.g., HKLM to HKLM:)
+    $Path = $Path -replace '^HKLM\\', 'HKLM:\'
+    $Path = $Path -replace '^HKCU\\', 'HKCU:\'
+    $Path = $Path -replace '^HKU\\', 'Registry::HKEY_USERS\'
+    $Path = $Path -replace '^HKEY_USERS\\', 'Registry::HKEY_USERS\'
+
+    # PowerShell Registry provider doesn't recursively create keys like FileSystem provider
+    # We need to create parent paths if they don't exist
+    $pathParts = $Path -split "\\"
+    if ($pathParts.Count -gt 1) {
+        $parentPath = $pathParts[0]
+        # Append backslash to the drive part if it ends with colon
+        if ($parentPath -match ':$' -or $parentPath -match '^Registry::') {
+            $parentPath = $parentPath + "\"
+        }
+        for ($i = 1; $i -lt $pathParts.Count; $i++) {
+            $parentPath = Join-Path $parentPath $pathParts[$i]
+            if (-not (Test-Path -LiteralPath $parentPath)) {
+                New-Item -Path ($parentPath -replace '\\' + [regex]::Escape($pathParts[$i]) + '$', '') -Name $pathParts[$i] -Force -ErrorAction SilentlyContinue | Out-Null
+            }
+        }
+    } else {
+        if (-not (Test-Path -LiteralPath $Path)) {
+             New-Item -Path (Split-Path $Path) -Name (Split-Path $Path -Leaf) -Force -ErrorAction SilentlyContinue | Out-Null
+        }
+    }
+
+    try {
+        if ([string]::IsNullOrEmpty($Name)) {
+            Set-Item -LiteralPath $Path -Value $Value -Force -ErrorAction Stop
+        } else {
+            Set-ItemProperty -LiteralPath $Path -Name $Name -Value $Value -Type $Type -Force -ErrorAction Stop
+        }
+    } catch {
+        Write-Log "Failed to set registry key: $Path\$Name to $Value. Error: $_"
+        throw $_
+    }
+}
