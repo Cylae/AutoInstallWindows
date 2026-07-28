@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\Lib\Helper.ps1"
 
-Write-Log "Configuring User Account..."
+Write-SetupLog "Configuring User Account..."
 
 # Register Daily Winget Auto-Update Task (Transparent)
 if (Get-Command winget -ErrorAction SilentlyContinue) {
@@ -14,30 +14,30 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
 
     $registered = $false
     try {
-        Write-Log "Attempting to register Winget task with Highest privileges..."
+        Write-SetupLog "Attempting to register Winget task with Highest privileges..."
         Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description "Automatically updates all software via Winget silently." -RunLevel Highest -Force -ErrorAction Stop | Out-Null
         $registered = $true
-        Write-Log "Registered Daily Winget Auto-Update Task (Highest)."
+        Write-SetupLog "Registered Daily Winget Auto-Update Task (Highest)."
     } catch {
-        Write-Log "Failed to register Winget task with Highest privileges: $_"
+        Write-SetupLog "Failed to register Winget task with Highest privileges: $_"
     }
 
     # Attempt 2: Try with Limited (User) privileges if Admin failed (e.g., UAC issue)
     if (-not $registered) {
         try {
-            Write-Log "Attempting to register Winget task with Limited privileges..."
+            Write-SetupLog "Attempting to register Winget task with Limited privileges..."
             Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $taskName -Description "Automatically updates all software via Winget silently." -RunLevel Limited -Force -ErrorAction Stop | Out-Null
             $registered = $true
-            Write-Log "Registered Daily Winget Auto-Update Task (Limited)."
+            Write-SetupLog "Registered Daily Winget Auto-Update Task (Limited)."
         } catch {
-            Write-Log "Failed to register Winget task (Limited): $_"
+            Write-SetupLog "Failed to register Winget task (Limited): $_"
         }
     }
 } else {
-    Write-Log "Winget not found. Skipping auto-update task registration."
+    Write-SetupLog "Winget not found. Skipping auto-update task registration."
 }
 
-Write-Log "User Configuration Completed."
+Write-SetupLog "User Configuration Completed."
 
 # Self-Destruct: Cleanup Scripts
 # Wait 5 seconds then delete the script folder

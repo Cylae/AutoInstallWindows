@@ -85,6 +85,11 @@ This repository uses a build system to generate `autounattend.xml` from modular 
 *   **Modify**: Edit the `.ps1` files in `scripts/` to make changes.
 *   **Build**: Run `python build.py` to regenerate `autounattend.xml` with your changes. (Now uses `pathlib` and `logging` for robust builds).
 
+*   **Helper Functions**: A shared library is available at `scripts/Lib/Helper.ps1`.
+    *   Use `Set-RegistryKey` instead of `reg.exe add` for robust registry modifications.
+    *   Use `Write-SetupLog` to record progress.
+    *   Use `Get-RemoteFile` for downloading files.
+
 ## ❓ Troubleshooting
 
 If you encounter issues, check the log file created during setup:
@@ -232,6 +237,11 @@ Ce dépôt utilise un système de build pour générer `autounattend.xml` à par
 *   **Emplacement des Scripts**: Tous les scripts PowerShell se trouvent dans le répertoire `scripts/`.
 *   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications.
 *   **Construire**: Exécutez `python build.py` pour régénérer `autounattend.xml` avec vos changements. (Utilise désormais `pathlib` et `logging` pour des builds robustes).
+
+*   **Fonctions utilitaires** : Une bibliothèque partagée est disponible dans `scripts/Lib/Helper.ps1`.
+    *   Utilisez `Set-RegistryKey` au lieu de `reg.exe add` pour des modifications robustes du registre.
+    *   Utilisez `Write-SetupLog` pour enregistrer la progression.
+    *   Utilisez `Get-RemoteFile` pour télécharger des fichiers.
 
 ## ❓ Dépannage
 
