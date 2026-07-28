@@ -21,7 +21,7 @@ function Get-InstallerFile {
     return $null
 }
 
-function Write-Log {
+function Write-SetupLog {
     param(
         [string]$Message,
         [string]$Path = "$env:SystemRoot\Panther\Autounattend_Log.txt"
@@ -37,7 +37,7 @@ function Write-Log {
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
 }
 
-function Download-File {
+function Get-RemoteFile {
     param(
         [string]$Url,
         [string]$Destination,
@@ -49,7 +49,7 @@ function Download-File {
 
     if ([string]::IsNullOrWhiteSpace($Url)) { return $false }
 
-    Write-Log "Attempting to download $Name from $Url..."
+    Write-SetupLog "Attempting to download $Name from $Url..."
 
     # Increase timeout to ~5 minutes (150 * 2s) to handle slow network initialization
     $maxRetries = 150
@@ -74,7 +74,7 @@ function Download-File {
     }
 
     if (-not $connected) {
-        Write-Log "No network connectivity to download $Name."
+        Write-SetupLog "No network connectivity to download $Name."
         return $false
     }
 
@@ -93,18 +93,69 @@ function Download-File {
 
             # Verify file size > 1KB (1024 bytes) to ensure valid download
             if (Test-Path -Path $Destination -And (Get-Item $Destination).Length -gt 1024) {
-                Write-Log "Download of $Name successful."
+                Write-SetupLog "Download of $Name successful."
                 $downloaded = $true
             } else {
-                Write-Log "Download of $Name failed (file too small or empty)."
+                Write-SetupLog "Download of $Name failed (file too small or empty)."
                 throw "File too small"
             }
         } catch {
             $dRetry++
-            Write-Log "Failed to download $Name (Attempt $dRetry/$downloadRetries): $_"
+            Write-SetupLog "Failed to download $Name (Attempt $dRetry/$downloadRetries): $_"
             Start-Sleep -Seconds 5
         }
     }
 
     return $downloaded
+}
+
+
+function Set-RegistryKey {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$Path,
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+        [Parameter(Mandatory=$true)]
+        [string]$Value,
+        [string]$Type = "String"
+    )
+
+    # Handle root mapping accurately based on memory
+    $fullPath = $Path -replace '^HKLM\\', 'HKLM:\' `
+                      -replace '^HKCU\\', 'HKCU:\' `
+                      -replace '^HKU\\', 'Registry::HKEY_USERS\' `
+                      -replace '^HKEY_USERS\\', 'Registry::HKEY_USERS\'
+
+    $splitPath = $fullPath -split "\\"
+    $parentPath = $splitPath[0]
+
+    if (-not ($parentPath.EndsWith(":") -or $parentPath.StartsWith("Registry::"))) {
+        Write-SetupLog "Invalid registry root for path: $Path"
+        return
+    }
+
+    # Iteratively create intermediate keys
+    for ($i = 1; $i -lt $splitPath.Count; $i++) {
+        $parentPath = Join-Path -Path $parentPath -ChildPath $splitPath[$i]
+        if (-not (Test-Path -LiteralPath $parentPath)) {
+            try {
+                New-Item -Path ($parentPath -replace "\\[^\\]+$", "") -Name $splitPath[$i] -Force -ErrorAction Stop | Out-Null
+            } catch {
+                Write-SetupLog "Failed to create registry key: $parentPath - $_"
+                return
+            }
+        }
+    }
+
+    # Set value
+    try {
+        if ($Name -eq "") {
+            Set-Item -LiteralPath $fullPath -Value $Value -Force -ErrorAction Stop
+        } else {
+            Set-ItemProperty -LiteralPath $fullPath -Name $Name -Value $Value -Type $Type -Force -ErrorAction Stop
+        }
+    } catch {
+        Write-SetupLog "Failed to set registry value $Name at $fullPath - $_"
+    }
 }
