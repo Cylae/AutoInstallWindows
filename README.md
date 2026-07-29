@@ -76,6 +76,7 @@ USB_ROOT/
    ```bash
    python personalize.py
    ```
+   *Note: In non-interactive environments (e.g. CI/CD pipelines), `personalize.py` gracefully detects the lack of a terminal and automatically applies the default settings without prompting.*
 
 ## 🛠️ For Developers
 
@@ -224,6 +225,7 @@ RACINE_USB/
    ```bash
    python personalize.py
    ```
+   *Remarque : Dans les environnements non interactifs (ex. pipelines CI/CD), `personalize.py` détecte gracieusement l'absence de terminal et applique automatiquement les paramètres par défaut sans demander d'intervention.*
 
 ## 🛠️ Pour les Développeurs
 
