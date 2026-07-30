@@ -1,6 +1,6 @@
 # 🚀 Ultimate Windows Autounattend
 
-**New! Easy Personalization GUI:** We now include a user-friendly graphical tool (`personalize.py`) so you can easily adapt the `autounattend.xml` to your needs before copying it to your USB. Just run `python personalize.py` to open the GUI and configure your Username, Password, Time Zone, Computer Name, Language, and WiFi!
+**New! Easy Personalization GUI:** We now include a user-friendly graphical tool (`personalize.py`) so you can easily adapt the `autounattend.xml` to your needs before copying it to your USB. Just run `python3 personalize.py` to open the GUI or CLI and configure your Username, Password, Time Zone, Computer Name, Language, and WiFi!
 
 This repository contains a highly optimized, modular `autounattend.xml` designed for a **silent**, **clean**, and **robust** Windows installation.
 
@@ -74,7 +74,7 @@ USB_ROOT/
 
 5. **Personalize (Optional but Recommended)**: Before copying `autounattend.xml` to your USB drive, you can run the interactive personalization tool to easily set your Username, Password, Language, Computer Name, TimeZone, and WiFi credentials. *If you run this on your current Windows machine, it will automatically detect and suggest your current settings!*
    ```bash
-   python personalize.py
+   python3 personalize.py
    ```
 
 ## 🛠️ For Developers
@@ -149,7 +149,7 @@ If you prefer to edit the XML manually, add your network profile inside the `<sp
 
 # 🇫🇷 Ultimate Windows Autounattend (Français)
 
-**Nouveau ! Interface de Personnalisation Facile :** Nous incluons désormais un outil graphique convivial (`personalize.py`) pour vous permettre d'adapter facilement le fichier `autounattend.xml` à vos besoins avant de le copier sur votre clé USB. Exécutez simplement `python personalize.py` pour ouvrir l'interface et configurer votre Nom d'utilisateur, Mot de passe, Fuseau horaire, Nom de l'ordinateur, Langue et WiFi !
+**Nouveau ! Interface de Personnalisation Facile :** Nous incluons désormais un outil graphique convivial (`personalize.py`) pour vous permettre d'adapter facilement le fichier `autounattend.xml` à vos besoins avant de le copier sur votre clé USB. Exécutez simplement `python3 personalize.py` pour ouvrir l'interface et configurer votre Nom d'utilisateur, Mot de passe, Fuseau horaire, Nom de l'ordinateur, Langue et WiFi !
 
 Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulaire, conçu pour une installation Windows **silencieuse**, **propre** et **robuste**.
 
@@ -222,7 +222,7 @@ RACINE_USB/
 
 5. **Personnaliser (Optionnel mais Recommandé)**: Avant de copier `autounattend.xml` sur votre clé USB, vous pouvez exécuter l'outil de personnalisation interactif pour définir facilement votre nom d'utilisateur, mot de passe, langue, nom d'ordinateur, fuseau horaire et identifiants WiFi. *Si vous l'exécutez sur votre machine Windows actuelle, il détectera et suggérera automatiquement vos paramètres actuels !*
    ```bash
-   python personalize.py
+   python3 personalize.py
    ```
 
 ## 🛠️ Pour les Développeurs
