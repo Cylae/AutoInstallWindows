@@ -76,6 +76,7 @@ USB_ROOT/
    ```bash
    python personalize.py
    ```
+   *Note: In non-interactive environments (e.g., CI/CD), the CLI tool will automatically detect that it's running headlessly and apply the current defaults without prompting.*
 
 ## 🛠️ For Developers
 
@@ -224,6 +225,7 @@ RACINE_USB/
    ```bash
    python personalize.py
    ```
+   *Note : Dans les environnements non interactifs (par ex., CI/CD), l'outil en ligne de commande détectera automatiquement qu'il s'exécute sans interface (headless) et appliquera les valeurs par défaut sans demander de confirmation.*
 
 ## 🛠️ Pour les Développeurs
 
