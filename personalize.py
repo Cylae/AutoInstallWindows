@@ -3,8 +3,15 @@ import platform
 import re
 import sys
 import subprocess
-import tkinter as tk
-from tkinter import ttk, messagebox
+try:
+    import tkinter as tk
+    from tkinter import ttk, messagebox
+    TclError = tk.TclError
+except ImportError:
+    tk = None
+
+    class TclError(Exception):
+        pass
 from pathlib import Path
 
 
@@ -205,8 +212,10 @@ def apply_personalizations(xml_path, content, data):
         build_cmd, check=True, capture_output=True, text=True)
 
 
-class PersonalizationApp(tk.Tk):
+class PersonalizationApp(tk.Tk if tk else object):
     def __init__(self, xml_path, content, defaults):
+        if tk is None:
+            raise ImportError("Tkinter not available")
         super().__init__()
 
         self.title("Ultimate Windows Autounattend - Personalization Tool")
@@ -315,6 +324,19 @@ def cli_main(xml_path, content, defaults):
     print("\n===============================================================")
     print(" 🚀 Ultimate Windows Autounattend - Easy Personalization Tool")
     print("===============================================================")
+
+    if not sys.stdin.isatty():
+        print("Non-interactive mode. Applying defaults automatically.\n")
+        try:
+            apply_personalizations(xml_path, content, defaults)
+            print("\n[+] Personalization complete! The autounattend.xml "
+                  "is ready for your USB key.")
+        except subprocess.CalledProcessError as e:
+            err_msg = e.stderr if e.stderr else "Unknown error"
+            print("\n[-] Error running build.py:\n" + err_msg)
+            sys.exit(1)
+        return
+
     print("This tool will configure your USB key to automatically "
           "install Windows")
     print("using your preferred settings. Press Enter to accept "
@@ -425,7 +447,7 @@ def main():
         # Check if we are running in an environment without a display
         # e.g., SSH without X11. This is a common failure point for Tkinter
         if not os.environ.get('DISPLAY') and platform.system() != "Windows":
-            raise tk.TclError("No display available")
+            raise TclError("No display available")
 
         app = PersonalizationApp(xml_path, content, defaults)
         app.mainloop()
