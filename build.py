@@ -75,33 +75,36 @@ def update_autounattend(ssid=None, password=None):
         safe_ssid = xml_encode(ssid)
         safe_password = xml_encode(password)
 
-        wlan_profile = f"""
-            <WLANProfile
-                xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
-                <name>{safe_ssid}</name>
-                <SSIDConfig>
-                    <SSID>
-                        <name>{safe_ssid}</name>
-                    </SSID>
-                </SSIDConfig>
-                <connectionType>ESS</connectionType>
-                <connectionMode>auto</connectionMode>
-                <MSM>
-                    <security>
-                        <authEncryption>
-                            <authentication>WPA2PSK</authentication>
-                            <encryption>AES</encryption>
-                            <useOneX>false</useOneX>
-                        </authEncryption>
-                        <sharedKey>
-                            <keyType>passPhrase</keyType>
-                            <protected>false</protected>
-                            <keyMaterial>{safe_password}</keyMaterial>
-                        </sharedKey>
-                    </security>
-                </MSM>
-            </WLANProfile>
-        """
+        wlan_profile = (
+            "            <WLANProfile\n"
+            "                xmlns=\"http://www.microsoft.com/networking/"
+            "WLAN/profile/v1\">\n"
+            f"                <name>{safe_ssid}</name>\n"
+            "                <SSIDConfig>\n"
+            "                    <SSID>\n"
+            f"                        <name>{safe_ssid}</name>\n"
+            "                    </SSID>\n"
+            "                </SSIDConfig>\n"
+            "                <connectionType>ESS</connectionType>\n"
+            "                <connectionMode>auto</connectionMode>\n"
+            "                <MSM>\n"
+            "                    <security>\n"
+            "                        <authEncryption>\n"
+            "                            <authentication>WPA2PSK"
+            "</authentication>\n"
+            "                            <encryption>AES</encryption>\n"
+            "                            <useOneX>false</useOneX>\n"
+            "                        </authEncryption>\n"
+            "                        <sharedKey>\n"
+            "                            <keyType>passPhrase</keyType>\n"
+            "                            <protected>false</protected>\n"
+            f"                            <keyMaterial>{safe_password}"
+            "</keyMaterial>\n"
+            "                        </sharedKey>\n"
+            "                    </security>\n"
+            "                </MSM>\n"
+            "            </WLANProfile>\n"
+        )
 
         specialize_pattern = (
             r'(<settings pass="specialize">)(.*?)(</settings>)'
@@ -133,16 +136,20 @@ def update_autounattend(ssid=None, password=None):
                     flags=re.DOTALL)
             else:
                 logger.info("Adding Microsoft-Windows-Wlan-Svc component...")
-                wlan_component = f"""
-            <component name="Microsoft-Windows-Wlan-Svc"
-                processorArchitecture="amd64"
-                publicKeyToken="31bf3856ad364e35" language="neutral"
-                versionScope="nonSxS"
-                xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State"
-                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-                {wlan_profile}
-            </component>
-                """
+                wlan_component = (
+                    "            <component name=\"Microsoft-Windows-Wlan"
+                    "-Svc\"\n"
+                    "                processorArchitecture=\"amd64\"\n"
+                    "                publicKeyToken=\"31bf3856ad364e35\" "
+                    "language=\"neutral\"\n"
+                    "                versionScope=\"nonSxS\"\n"
+                    "                xmlns:wcm=\"http://schemas.microsoft"
+                    ".com/WMIConfig/2002/State\"\n"
+                    "                xmlns:xsi=\"http://www.w3.org/2001/"
+                    "XMLSchema-instance\">\n"
+                    f"                {wlan_profile}\n"
+                    "            </component>\n"
+                )
                 new_specialize_content = specialize_content + wlan_component
 
             full_replacement = match_specialize.group(
