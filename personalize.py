@@ -3,8 +3,17 @@ import platform
 import re
 import sys
 import subprocess
-import tkinter as tk
-from tkinter import ttk, messagebox
+try:
+    import tkinter as tk
+    from tkinter import ttk, messagebox
+    TclError = tk.TclError
+except ImportError:
+    tk = None
+    ttk = None
+    messagebox = None
+
+    class TclError(Exception):
+        pass
 from pathlib import Path
 
 
@@ -205,8 +214,10 @@ def apply_personalizations(xml_path, content, data):
         build_cmd, check=True, capture_output=True, text=True)
 
 
-class PersonalizationApp(tk.Tk):
+class PersonalizationApp(tk.Tk if tk else object):
     def __init__(self, xml_path, content, defaults):
+        if tk is None:
+            raise ImportError("tkinter is not available")
         super().__init__()
 
         self.title("Ultimate Windows Autounattend - Personalization Tool")
@@ -315,46 +326,53 @@ def cli_main(xml_path, content, defaults):
     print("\n===============================================================")
     print(" 🚀 Ultimate Windows Autounattend - Easy Personalization Tool")
     print("===============================================================")
-    print("This tool will configure your USB key to automatically "
-          "install Windows")
-    print("using your preferred settings. Press Enter to accept "
-          "the detected defaults.\n")
 
-    new_username = prompt_cli("👤 Username", defaults.get('username'))
-    new_password = prompt_cli("🔑 Password", defaults.get('password'))
-    new_computer_name = prompt_cli(
-        "💻 Computer Name", defaults.get('computer_name'))
-    new_timezone = prompt_cli("🌍 Time Zone", defaults.get('timezone'))
+    if not sys.stdin.isatty():
+        print("Non-interactive environment detected. "
+              "Applying defaults automatically...")
+        data = defaults.copy()
+        data['wifi_pass'] = ""
+    else:
+        print("This tool will configure your USB key to automatically "
+              "install Windows")
+        print("using your preferred settings. Press Enter to accept "
+              "the detected defaults.\n")
 
-    print("\n--- Advanced Locale Settings ---")
-    new_ui_language = prompt_cli(
-        "UI Language (e.g., fr-FR, en-US)", defaults.get('ui_language'))
-    new_sys_locale = prompt_cli(
-        "System Locale (e.g., fr-FR, en-US)", defaults.get('sys_locale'))
-    new_user_locale = prompt_cli(
-        "User Locale (e.g., fr-FR, en-US)", defaults.get('user_locale'))
-    new_input_locale = prompt_cli(
-        "Input Locale (e.g., 040c:0000040c)", defaults.get('input_locale'))
+        new_username = prompt_cli("👤 Username", defaults.get('username'))
+        new_password = prompt_cli("🔑 Password", defaults.get('password'))
+        new_computer_name = prompt_cli(
+            "💻 Computer Name", defaults.get('computer_name'))
+        new_timezone = prompt_cli("🌍 Time Zone", defaults.get('timezone'))
 
-    print("\n--- WiFi Configuration ---")
-    new_wifi_ssid = prompt_cli(
-        "📡 WiFi SSID (leave blank to skip)", defaults.get('wifi_ssid'))
-    new_wifi_pass = ""
-    if new_wifi_ssid:
-        new_wifi_pass = input("🔐 WiFi Password: ").strip()
+        print("\n--- Advanced Locale Settings ---")
+        new_ui_language = prompt_cli(
+            "UI Language (e.g., fr-FR, en-US)", defaults.get('ui_language'))
+        new_sys_locale = prompt_cli(
+            "System Locale (e.g., fr-FR, en-US)", defaults.get('sys_locale'))
+        new_user_locale = prompt_cli(
+            "User Locale (e.g., fr-FR, en-US)", defaults.get('user_locale'))
+        new_input_locale = prompt_cli(
+            "Input Locale (e.g., 040c:0000040c)", defaults.get('input_locale'))
 
-    data = {
-        'username': new_username,
-        'password': new_password,
-        'computer_name': new_computer_name,
-        'timezone': new_timezone,
-        'ui_language': new_ui_language,
-        'sys_locale': new_sys_locale,
-        'user_locale': new_user_locale,
-        'input_locale': new_input_locale,
-        'wifi_ssid': new_wifi_ssid,
-        'wifi_pass': new_wifi_pass
-    }
+        print("\n--- WiFi Configuration ---")
+        new_wifi_ssid = prompt_cli(
+            "📡 WiFi SSID (leave blank to skip)", defaults.get('wifi_ssid'))
+        new_wifi_pass = ""
+        if new_wifi_ssid:
+            new_wifi_pass = input("🔐 WiFi Password: ").strip()
+
+        data = {
+            'username': new_username,
+            'password': new_password,
+            'computer_name': new_computer_name,
+            'timezone': new_timezone,
+            'ui_language': new_ui_language,
+            'sys_locale': new_sys_locale,
+            'user_locale': new_user_locale,
+            'input_locale': new_input_locale,
+            'wifi_ssid': new_wifi_ssid,
+            'wifi_pass': new_wifi_pass
+        }
 
     try:
         apply_personalizations(xml_path, content, data)
@@ -422,14 +440,24 @@ def main():
     }
 
     try:
+        if tk is None:
+            raise ImportError("tkinter is not available")
         # Check if we are running in an environment without a display
         # e.g., SSH without X11. This is a common failure point for Tkinter
         if not os.environ.get('DISPLAY') and platform.system() != "Windows":
             raise tk.TclError("No display available")
+        if not sys.stdin.isatty():
+            # Non-interactive environments are rarely able to use the GUI
+            # properly and can cause deadlocks if they try to fall back.
+            # Check this beforehand
+            print("Non-interactive environment detected. "
+                  "Falling back to CLI mode...")
+            cli_main(xml_path, content, defaults)
+            return
 
         app = PersonalizationApp(xml_path, content, defaults)
         app.mainloop()
-    except (tk.TclError, ImportError) as e:
+    except (TclError, ImportError) as e:
         print(f"GUI not available ({e}). Falling back to CLI mode...")
         try:
             cli_main(xml_path, content, defaults)
