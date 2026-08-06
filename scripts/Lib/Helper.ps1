@@ -108,3 +108,42 @@ function Download-File {
 
     return $downloaded
 }
+
+
+function Set-RegistryKey {
+    param (
+        [string]$Path,
+        [string]$Name,
+        $Value,
+        [string]$Type = "String"
+    )
+
+    if ($Path -match "^HKLM\\") {
+        $Path = $Path -replace "^HKLM\\", "HKLM:\"
+    } elseif ($Path -match "^HKCU\\") {
+        $Path = $Path -replace "^HKCU\\", "HKCU:\"
+    } elseif ($Path -match "^HKU\\") {
+        $Path = $Path -replace "^HKU\\", "Registry::HKEY_USERS\"
+    } elseif ($Path -match "^HKEY_USERS\\") {
+        $Path = $Path -replace "^HKEY_USERS\\", "Registry::HKEY_USERS\"
+    }
+
+    $parts = $Path -split "\\"
+    if ($parts.Length -gt 0) {
+        $parentPath = $parts[0]
+        if ($parentPath -match "^[A-Za-z]+:$" -or $parentPath -match "^Registry::") {
+            for ($i = 1; $i -lt $parts.Length; $i++) {
+                $parentPath = "$parentPath\$($parts[$i])"
+                if (-not (Test-Path -LiteralPath $parentPath)) {
+                    New-Item -Path ($parentPath -replace '\\[^\\]+$', '') -Name $parts[$i] -Force | Out-Null
+                }
+            }
+        }
+    }
+
+    if ([string]::IsNullOrEmpty($Name)) {
+        Set-Item -LiteralPath $Path -Value $Value -Force
+    } else {
+        Set-ItemProperty -LiteralPath $Path -Name $Name -Value $Value -Type $Type -Force
+    }
+}
