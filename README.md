@@ -76,6 +76,7 @@ USB_ROOT/
    ```bash
    python personalize.py
    ```
+   *Note: If a graphical environment (Tkinter) is not available, the tool will automatically fall back to a Command Line Interface (CLI) mode. In non-interactive environments (like CI/CD), it will automatically apply the default settings without prompting.*
 
 ## 🛠️ For Developers
 
@@ -224,6 +225,7 @@ RACINE_USB/
    ```bash
    python personalize.py
    ```
+   *Remarque : Si aucun environnement graphique (Tkinter) n'est disponible, l'outil passera automatiquement en mode Interface en Ligne de Commande (CLI). Dans les environnements non interactifs (comme CI/CD), il appliquera automatiquement les paramètres par défaut sans demander.*
 
 ## 🛠️ Pour les Développeurs
 
