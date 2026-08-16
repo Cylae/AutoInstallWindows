@@ -39,6 +39,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
     *   **Smart Media Detection**: Filters for Fixed and Removable drives to prevent hangs on network/floppy drives.
     *   **Fail-Safe Execution**: Scripts include existence checks (e.g., RunOnce) to prevent errors on subsequent logins.
     *   **Advanced Error Handling**: Improved logging and registry handling for fail-safe execution.
+*   **Robust Registry modifications**: Use native PowerShell with `Set-RegistryKey` helper for robust registry handling with PSDrive path conversions and automatic parent path creation.
 
 ## 📂 Folder Structure
 
@@ -72,7 +73,7 @@ USB_ROOT/
 4.  **Relax**: The system will install Windows, drivers, and apps, and clean itself up automatically. When you see the desktop, it's ready.
 
 
-5. **Personalize (Optional but Recommended)**: Before copying `autounattend.xml` to your USB drive, you can run the interactive personalization tool to easily set your Username, Password, Language, Computer Name, TimeZone, and WiFi credentials. *If you run this on your current Windows machine, it will automatically detect and suggest your current settings!*
+5. **Personalize (Optional but Recommended)**: Before copying `autounattend.xml` to your USB drive, you can run the interactive personalization tool to easily set your Username, Password, Language, Computer Name, TimeZone, and WiFi credentials. *If you run this on your current Windows machine, it will automatically detect and suggest your current settings!* The tool has a Tkinter GUI but gracefully falls back to a command-line interface on systems without Tkinter or a display.
    ```bash
    python personalize.py
    ```
@@ -187,6 +188,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
     *   **Téléchargements Sécurisés**: Supporte **TLS 1.2 et 1.3** pour des téléchargements sécurisés.
     *   **Détection Intelligente**: Filtre les lecteurs Fixes et Amovibles pour éviter les blocages.
     *   **Gestion d'Erreurs Avancée**: Journaux améliorés et gestion robuste du registre pour une exécution sans faille.
+*   **Modifications Robustes du Registre**: Utilisation de PowerShell natif avec l'aide `Set-RegistryKey` pour une gestion robuste du registre avec conversions de chemins PSDrive et création automatique des chemins parents.
 
 ## 📂 Structure des Dossiers
 
@@ -220,7 +222,7 @@ RACINE_USB/
 4.  **Détendez-vous**: Le système installera Windows, les pilotes et les applications, et se nettoiera automatiquement. Quand vous voyez le bureau, c'est prêt.
 
 
-5. **Personnaliser (Optionnel mais Recommandé)**: Avant de copier `autounattend.xml` sur votre clé USB, vous pouvez exécuter l'outil de personnalisation interactif pour définir facilement votre nom d'utilisateur, mot de passe, langue, nom d'ordinateur, fuseau horaire et identifiants WiFi. *Si vous l'exécutez sur votre machine Windows actuelle, il détectera et suggérera automatiquement vos paramètres actuels !*
+5. **Personnaliser (Optionnel mais Recommandé)**: Avant de copier `autounattend.xml` sur votre clé USB, vous pouvez exécuter l'outil de personnalisation interactif pour définir facilement votre nom d'utilisateur, mot de passe, langue, nom d'ordinateur, fuseau horaire et identifiants WiFi. *Si vous l'exécutez sur votre machine Windows actuelle, il détectera et suggérera automatiquement vos paramètres actuels !* L'outil dispose d'une interface graphique Tkinter mais bascule gracieusement sur une interface en ligne de commande sur les systèmes sans Tkinter ou sans affichage.
    ```bash
    python personalize.py
    ```

@@ -108,3 +108,41 @@ function Download-File {
 
     return $downloaded
 }
+
+function Set-RegistryKey {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$Path,
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+        [Parameter(Mandatory=$true)]
+        [string]$Value,
+        [Parameter(Mandatory=$true)]
+        [string]$Type
+    )
+
+    # Handle PSDrive conversion
+    $psPath = $Path -replace "^HKLM\\", "HKLM:\"
+    $psPath = $psPath -replace "^HKU\\", "Registry::HKEY_USERS\"
+    $psPath = $psPath -replace "^HKEY_USERS\\", "Registry::HKEY_USERS\"
+    $psPath = $psPath -replace "^HKCU\\", "HKCU:\"
+
+    # Create missing parent paths
+    $pathParts = $psPath -split "\\"
+    $currentPath = ""
+    if ($pathParts[0].EndsWith(":") -or $pathParts[0].StartsWith("Registry::")) {
+        $currentPath = $pathParts[0]
+        for ($i = 1; $i -lt $pathParts.Count; $i++) {
+            $currentPath += "\" + $pathParts[$i]
+            if (-not (Test-Path -LiteralPath $currentPath)) {
+                New-Item -LiteralPath $currentPath -Force | Out-Null
+            }
+        }
+    }
+
+    if ($Name -eq "") {
+        Set-Item -LiteralPath $psPath -Value $Value -Force
+    } else {
+        Set-ItemProperty -LiteralPath $psPath -Name $Name -Value $Value -Type $Type -Force
+    }
+}
