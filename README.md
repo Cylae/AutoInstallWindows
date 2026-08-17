@@ -1,6 +1,6 @@
 # 🚀 Ultimate Windows Autounattend
 
-**New! Easy Personalization GUI:** We now include a user-friendly graphical tool (`personalize.py`) so you can easily adapt the `autounattend.xml` to your needs before copying it to your USB. Just run `python personalize.py` to open the GUI and configure your Username, Password, Time Zone, Computer Name, Language, and WiFi!
+**New! Easy Personalization GUI:** We now include a user-friendly graphical tool (`personalize.py`) so you can easily adapt the `autounattend.xml` to your needs before copying it to your USB. Just run `python3 personalize.py` to open the GUI and configure your Username, Password, Time Zone, Computer Name, Language, and WiFi!
 
 This repository contains a highly optimized, modular `autounattend.xml` designed for a **silent**, **clean**, and **robust** Windows installation.
 
@@ -74,7 +74,7 @@ USB_ROOT/
 
 5. **Personalize (Optional but Recommended)**: Before copying `autounattend.xml` to your USB drive, you can run the interactive personalization tool to easily set your Username, Password, Language, Computer Name, TimeZone, and WiFi credentials. *If you run this on your current Windows machine, it will automatically detect and suggest your current settings!*
    ```bash
-   python personalize.py
+   python3 personalize.py
    ```
 
 ## 🛠️ For Developers
@@ -83,7 +83,7 @@ This repository uses a build system to generate `autounattend.xml` from modular 
 
 *   **Scripts Location**: All PowerShell scripts are located in the `scripts/` directory.
 *   **Modify**: Edit the `.ps1` files in `scripts/` to make changes.
-*   **Build**: Run `python build.py` to regenerate `autounattend.xml` with your changes. (Now uses `pathlib` and `logging` for robust builds).
+*   **Build**: Run `python3 build.py` to regenerate `autounattend.xml` with your changes. (Now uses `pathlib` and `logging` for robust builds).
 
 ## ❓ Troubleshooting
 
@@ -110,7 +110,7 @@ For a **Zero-Interruption** experience, a wired Ethernet connection is strongly 
 You can automatically inject your WiFi credentials into `autounattend.xml` using the build script:
 
 ```bash
-python build.py --wifi-ssid "MyNetwork" --wifi-pass "MyPassword"
+python3 build.py --wifi-ssid "MyNetwork" --wifi-pass "MyPassword"
 ```
 
 ### Manual Method
@@ -149,7 +149,7 @@ If you prefer to edit the XML manually, add your network profile inside the `<sp
 
 # 🇫🇷 Ultimate Windows Autounattend (Français)
 
-**Nouveau ! Interface de Personnalisation Facile :** Nous incluons désormais un outil graphique convivial (`personalize.py`) pour vous permettre d'adapter facilement le fichier `autounattend.xml` à vos besoins avant de le copier sur votre clé USB. Exécutez simplement `python personalize.py` pour ouvrir l'interface et configurer votre Nom d'utilisateur, Mot de passe, Fuseau horaire, Nom de l'ordinateur, Langue et WiFi !
+**Nouveau ! Interface de Personnalisation Facile :** Nous incluons désormais un outil graphique convivial (`personalize.py`) pour vous permettre d'adapter facilement le fichier `autounattend.xml` à vos besoins avant de le copier sur votre clé USB. Exécutez simplement `python3 personalize.py` pour ouvrir l'interface et configurer votre Nom d'utilisateur, Mot de passe, Fuseau horaire, Nom de l'ordinateur, Langue et WiFi !
 
 Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulaire, conçu pour une installation Windows **silencieuse**, **propre** et **robuste**.
 
@@ -222,8 +222,20 @@ RACINE_USB/
 
 5. **Personnaliser (Optionnel mais Recommandé)**: Avant de copier `autounattend.xml` sur votre clé USB, vous pouvez exécuter l'outil de personnalisation interactif pour définir facilement votre nom d'utilisateur, mot de passe, langue, nom d'ordinateur, fuseau horaire et identifiants WiFi. *Si vous l'exécutez sur votre machine Windows actuelle, il détectera et suggérera automatiquement vos paramètres actuels !*
    ```bash
-   python personalize.py
+   python3 personalize.py
    ```
+
+## 🛠️ For Developers
+
+This repository uses a build system to generate `autounattend.xml` from modular PowerShell scripts. `build.py` automatically injects scripts, creates `<File>` blocks if they are missing, and removes empty XML blocks for a cleaner file.
+
+*   **Script Location**: All PowerShell scripts are located in the `scripts/` directory.
+*   **Modify**: Edit the `.ps1` files in `scripts/` to make changes.
+*   **Build**: Run `python3 build.py` to regenerate `autounattend.xml` with your changes. (Now uses `pathlib` and `logging` for robust builds).
+*   **Best Practices**:
+    *   Registry modifications use the custom `Set-RegistryKey` function instead of `reg.exe` for enhanced robustness.
+    *   Logging is handled via `Write-SetupLog`.
+    *   Remote downloads use `Get-RemoteFile`.
 
 ## 🛠️ Pour les Développeurs
 
@@ -231,7 +243,7 @@ Ce dépôt utilise un système de build pour générer `autounattend.xml` à par
 
 *   **Emplacement des Scripts**: Tous les scripts PowerShell se trouvent dans le répertoire `scripts/`.
 *   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications.
-*   **Construire**: Exécutez `python build.py` pour régénérer `autounattend.xml` avec vos changements. (Utilise désormais `pathlib` et `logging` pour des builds robustes).
+*   **Construire**: Exécutez `python3 build.py` pour régénérer `autounattend.xml` avec vos changements. (Utilise désormais `pathlib` et `logging` pour des builds robustes).
 
 ## ❓ Dépannage
 
@@ -258,7 +270,7 @@ Pour une expérience **Zéro-Interruption**, une connexion Ethernet filaire est 
 Vous pouvez injecter automatiquement vos identifiants WiFi dans `autounattend.xml` en utilisant le script de construction :
 
 ```bash
-python build.py --wifi-ssid "MonReseau" --wifi-pass "MonMotDePasse"
+python3 build.py --wifi-ssid "MonReseau" --wifi-pass "MonMotDePasse"
 ```
 
 ### Méthode Manuelle
