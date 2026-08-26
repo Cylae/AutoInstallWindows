@@ -64,7 +64,7 @@ function Download-File {
                 $null = [System.Net.Dns]::GetHostEntry($hostName)
                 $connected = $true
                 break
-            } catch {}
+            } catch { $_ | Out-Null }
         }
 
         if (-not $connected) {
@@ -86,7 +86,7 @@ function Download-File {
         try {
             # Enable TLS 1.2 and TLS 1.3 (if available)
             $protocols = [Net.SecurityProtocolType]::Tls12
-            try { $protocols = $protocols -bor [Net.SecurityProtocolType]::Tls13 } catch {}
+            try { $protocols = $protocols -bor [Net.SecurityProtocolType]::Tls13 } catch { $_ | Out-Null }
             [Net.ServicePointManager]::SecurityProtocol = $protocols
 
             Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -ErrorAction Stop
@@ -107,4 +107,60 @@ function Download-File {
     }
 
     return $downloaded
+}
+
+function Set-RegistryKey {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$Path,
+        [Parameter(Mandatory=$true)]
+        [AllowEmptyString()]
+        [string]$Name,
+        [Parameter(Mandatory=$true)]
+        [AllowEmptyString()]
+        [string]$Value,
+        [Parameter(Mandatory=$true)]
+        [ValidateSet('String', 'ExpandString', 'Binary', 'DWord', 'MultiString', 'QWord', 'Unknown')]
+        [string]$Type
+    )
+
+    # Handle PSDrive conversion
+    if ($Path -match "^HKU\\") {
+        $Path = $Path -replace "^HKU\\", "Registry::HKEY_USERS\"
+    } elseif ($Path -match "^HKEY_USERS\\") {
+        $Path = $Path -replace "^HKEY_USERS\\", "Registry::HKEY_USERS\"
+    } elseif ($Path -match "^HKLM\\") {
+        $Path = $Path -replace "^HKLM\\", "HKLM:\"
+    } elseif ($Path -match "^HKCU\\") {
+        $Path = $Path -replace "^HKCU\\", "HKCU:\"
+    }
+
+    # Recursively create missing parent keys
+    $pathParts = $Path -split "\\"
+    $currentPath = ""
+
+    if ($pathParts[0] -match ":$") {
+        $currentPath = $pathParts[0]
+        $startIndex = 1
+    } elseif ($pathParts[0] -match "^Registry::") {
+        $currentPath = $pathParts[0]
+        $startIndex = 1
+    } else {
+        $currentPath = $pathParts[0]
+        $startIndex = 1
+    }
+
+    for ($i = $startIndex; $i -lt $pathParts.Length; $i++) {
+        $currentPath = Join-Path -Path $currentPath -ChildPath $pathParts[$i]
+        if (-not (Test-Path -LiteralPath $currentPath)) {
+            New-Item -LiteralPath $currentPath -Force | Out-Null
+        }
+    }
+
+    # Set value
+    if ($Name -eq "") {
+        Set-Item -LiteralPath $Path -Value $Value -Force | Out-Null
+    } else {
+        Set-ItemProperty -LiteralPath $Path -Name $Name -Value $Value -Type $Type -Force | Out-Null
+    }
 }
