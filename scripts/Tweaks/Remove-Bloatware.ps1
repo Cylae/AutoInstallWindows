@@ -7,7 +7,7 @@ $packagesToRemove = @(
     'Microsoft.WindowsCamera',
     'Clipchamp.Clipchamp',
     'Microsoft.WindowsAlarms',
-    'Microsoft.549981C3F5F10', # Cortana
+    'Microsoft.549981C3F5F10',
     'Microsoft.Copilot',
     'Microsoft.Windows.DevHome',
     'MicrosoftCorporationII.MicrosoftFamily',
@@ -44,7 +44,11 @@ $packagesToRemove = @(
     'Microsoft.XboxGamingOverlay',
     'Microsoft.XboxIdentityProvider',
     'Microsoft.XboxSpeechToTextOverlay',
-    'Microsoft.Windows.ParentalControls'
+    'Microsoft.Windows.ParentalControls',
+    'BingFinance',
+    'BingSports',
+    'ZuneMusic',
+    'XboxApp'
 )
 
 $packagesToKeep = @(
@@ -101,7 +105,7 @@ foreach ($capName in $capabilitiesToRemove) {
         try {
             Remove-WindowsCapability -Online -Name $cap.Name -ErrorAction Continue | Out-Null
         } catch {
-            Write-Log "Failed to remove capability $capName: $_"
+            Write-Log "Failed to remove capability $($capName): $_"
         }
     }
 }
@@ -113,7 +117,7 @@ foreach ($feature in $featuresToRemove) {
         try {
             Disable-WindowsOptionalFeature -Online -FeatureName $feature -Remove -NoRestart -ErrorAction Continue | Out-Null
         } catch {
-            Write-Log "Failed to disable feature $feature: $_"
+            Write-Log "Failed to disable feature $($feature): $_"
         }
     }
 }

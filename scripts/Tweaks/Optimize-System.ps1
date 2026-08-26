@@ -21,7 +21,7 @@ try {
 }
 
 # 3. Disable Game DVR (Background recording)
-reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR" /v AllowGameDVR /t REG_DWORD /d 0 /f
+Set-RegistryKey -Path "HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Name "AllowGameDVR" -Value "0" -Type "DWord"
 
 # 4. Disable Last Access Timestamp (Reduces disk I/O)
 try {
@@ -32,7 +32,11 @@ try {
 }
 
 # 5. Disable App Launch Tracking
-reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\EdgeUI" /v DisableMFUTracking /t REG_DWORD /d 1 /f
-reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v NoInstrumentation /t REG_DWORD /d 1 /f
+Set-RegistryKey -Path "HKLM\SOFTWARE\Policies\Microsoft\Windows\EdgeUI" -Name "DisableMFUTracking" -Value "1" -Type "DWord"
+Set-RegistryKey -Path "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoInstrumentation" -Value "1" -Type "DWord"
+
+
+# Disable Fast Startup (Requires Hibernation disabled, but ensuring it via registry)
+Set-RegistryKey -Path "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Name "HiberbootEnabled" -Value "0" -Type "DWord"
 
 Write-Log "System Optimizations Applied."
