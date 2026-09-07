@@ -22,7 +22,7 @@ foreach ($script in $scripts) {
         try {
             & $script
         } catch {
-            Write-Log "Error executing $script: $_"
+            Write-Log "Error executing $($script): $_"
         }
     } else {
         Write-Log "Script not found: $script"

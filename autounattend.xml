@@ -789,7 +789,7 @@ foreach ($script in $scripts) {
         try {
             &amp; $script
         } catch {
-            Write-Log &quot;Error executing $script: $_&quot;
+            Write-Log &quot;Error executing $($script): $_&quot;
         }
     } else {
         Write-Log &quot;Script not found: $script&quot;
