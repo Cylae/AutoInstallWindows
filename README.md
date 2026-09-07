@@ -1,6 +1,6 @@
 # 🚀 Ultimate Windows Autounattend
 
-**New! Easy Personalization GUI:** We now include a user-friendly graphical tool (`personalize.py`) so you can easily adapt the `autounattend.xml` to your needs before copying it to your USB. Just run `python personalize.py` to open the GUI and configure your Username, Password, Time Zone, Computer Name, Language, and WiFi!
+**New! Easy Personalization GUI:** We now include a user-friendly graphical tool (`personalize.py`) so you can easily adapt the `autounattend.xml` to your needs before copying it to your USB. Just run `python personalize.py` to open the GUI (or CLI fallback in headless environments) and configure your Username, Password, Time Zone, Computer Name, Language, and WiFi!
 
 This repository contains a highly optimized, modular `autounattend.xml` designed for a **silent**, **clean**, and **robust** Windows installation.
 
@@ -84,6 +84,7 @@ This repository uses a build system to generate `autounattend.xml` from modular 
 *   **Scripts Location**: All PowerShell scripts are located in the `scripts/` directory.
 *   **Modify**: Edit the `.ps1` files in `scripts/` to make changes.
 *   **Build**: Run `python build.py` to regenerate `autounattend.xml` with your changes. (Now uses `pathlib` and `logging` for robust builds).
+*   **Linting & Testing**: The project uses `pytest` for unit testing, `flake8` for linting, and `Invoke-ScriptAnalyzer` for PowerShell scripts.
 
 ## ❓ Troubleshooting
 
@@ -149,7 +150,7 @@ If you prefer to edit the XML manually, add your network profile inside the `<sp
 
 # 🇫🇷 Ultimate Windows Autounattend (Français)
 
-**Nouveau ! Interface de Personnalisation Facile :** Nous incluons désormais un outil graphique convivial (`personalize.py`) pour vous permettre d'adapter facilement le fichier `autounattend.xml` à vos besoins avant de le copier sur votre clé USB. Exécutez simplement `python personalize.py` pour ouvrir l'interface et configurer votre Nom d'utilisateur, Mot de passe, Fuseau horaire, Nom de l'ordinateur, Langue et WiFi !
+**Nouveau ! Interface de Personnalisation Facile :** Nous incluons désormais un outil graphique convivial (`personalize.py`) pour vous permettre d'adapter facilement le fichier `autounattend.xml` à vos besoins avant de le copier sur votre clé USB. Exécutez simplement `python personalize.py` pour ouvrir l'interface (ou le repli CLI dans les environnements sans interface graphique) et configurer votre Nom d'utilisateur, Mot de passe, Fuseau horaire, Nom de l'ordinateur, Langue et WiFi !
 
 Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulaire, conçu pour une installation Windows **silencieuse**, **propre** et **robuste**.
 
@@ -232,6 +233,7 @@ Ce dépôt utilise un système de build pour générer `autounattend.xml` à par
 *   **Emplacement des Scripts**: Tous les scripts PowerShell se trouvent dans le répertoire `scripts/`.
 *   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications.
 *   **Construire**: Exécutez `python build.py` pour régénérer `autounattend.xml` avec vos changements. (Utilise désormais `pathlib` et `logging` pour des builds robustes).
+*   **Linting et Tests**: Le projet utilise `pytest` pour les tests unitaires, `flake8` pour le linting, et `Invoke-ScriptAnalyzer` pour les scripts PowerShell.
 
 ## ❓ Dépannage
 
