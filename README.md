@@ -17,6 +17,7 @@ This repository contains a highly optimized, modular `autounattend.xml` designed
 *   **📜 Log Persistence**: Setup logs are preserved in `C:\Windows\Panther\Autounattend_Log.txt` for troubleshooting.
 *   **🚀 System Optimization**:
     *   **High Performance**: Automatically sets the "High Performance" power plan.
+   *   **Robust Registry Tweaks**: Custom PowerShell functions use proper recursive registry handling with `-LiteralPath` for enhanced safety.
     *   **Power User**: Enables "End Task" in Taskbar context menu, shows **Seconds in System Clock**, and Disables Transparency effects.
     *   **User Experience**: Disables "Finish setting up your device", "Lock Screen Tips", "Welcome Experience", "Sync Provider Notifications", **Widgets (News and Interests)**, **Chat/Teams** icon, **Mouse Acceleration** (Enhance Pointer Precision), and prevents accidental **Accessibility Shortcuts** (Sticky Keys).
     *   **Space Saving**: Disables Hibernation to save disk space (`hiberfil.sys`).
@@ -166,6 +167,7 @@ Ce dépôt contient un fichier `autounattend.xml` hautement optimisé et modulai
 *   **📜 Journaux**: Les journaux d'installation sont conservés dans `C:\Windows\Panther\Autounattend_Log.txt` pour le dépannage.
 *   **🚀 Optimisation Système**:
     *   **Haute Performance**: Active automatiquement le plan d'alimentation "Haute Performance".
+    *   **Modifications de Registre Robustes** : Fonctions PowerShell personnalisées pour une gestion sûre et récursive du registre avec `-LiteralPath`.
     *   **Utilisateur Avancé**: Active "Fin de tâche" dans le menu contextuel, affiche les **Secondes dans l'horloge**, et désactive la transparence.
     *   **Expérience Utilisateur**: Désactive "Terminer la configuration de votre appareil", les astuces de l'écran de verrouillage, l'expérience de bienvenue, **Widgets (Actualités)**, l'icône **Chat/Teams**, l'**Accélération de la souris** (Améliorer la précision du pointeur) et empêche l'activation accidentelle des **Raccourcis d'accessibilité** (Touches rémanentes).
     *   **Gain d'Espace**: Désactive l'hibernation pour économiser de l'espace disque (`hiberfil.sys`).
