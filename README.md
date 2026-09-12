@@ -76,6 +76,7 @@ USB_ROOT/
    ```bash
    python personalize.py
    ```
+   *(Note: On Linux, if the GUI is unavailable due to a missing `tkinter` or display server, the script will safely fall back to a command-line interactive mode).*
 
 ## 🛠️ For Developers
 
@@ -224,6 +225,7 @@ RACINE_USB/
    ```bash
    python personalize.py
    ```
+   *(Note : Sur Linux, si l'interface graphique n'est pas disponible en raison d'un `tkinter` manquant ou d'une absence de serveur d'affichage, le script basculera automatiquement vers un mode interactif en ligne de commande).*
 
 ## 🛠️ Pour les Développeurs
 
