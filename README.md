@@ -73,6 +73,7 @@ USB_ROOT/
 
 
 5. **Personalize (Optional but Recommended)**: Before copying `autounattend.xml` to your USB drive, you can run the interactive personalization tool to easily set your Username, Password, Language, Computer Name, TimeZone, and WiFi credentials. *If you run this on your current Windows machine, it will automatically detect and suggest your current settings!*
+   *(Note: To use the graphical interface on Linux/Ubuntu, ensure `python3-tk` is installed. Otherwise, the tool will fall back to CLI mode.)*
    ```bash
    python personalize.py
    ```
@@ -221,6 +222,7 @@ RACINE_USB/
 
 
 5. **Personnaliser (Optionnel mais Recommandé)**: Avant de copier `autounattend.xml` sur votre clé USB, vous pouvez exécuter l'outil de personnalisation interactif pour définir facilement votre nom d'utilisateur, mot de passe, langue, nom d'ordinateur, fuseau horaire et identifiants WiFi. *Si vous l'exécutez sur votre machine Windows actuelle, il détectera et suggérera automatiquement vos paramètres actuels !*
+   *(Note : Pour utiliser l'interface graphique sous Linux/Ubuntu, assurez-vous que `python3-tk` est installé. Sinon, l'outil basculera en mode CLI.)*
    ```bash
    python personalize.py
    ```
