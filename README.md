@@ -82,8 +82,9 @@ USB_ROOT/
 This repository uses a build system to generate `autounattend.xml` from modular PowerShell scripts. `build.py` automatically injects scripts, creates `<File>` blocks if they are missing, and removes empty XML blocks for a cleaner file.
 
 *   **Scripts Location**: All PowerShell scripts are located in the `scripts/` directory.
-*   **Modify**: Edit the `.ps1` files in `scripts/` to make changes.
+*   **Modify**: Edit the `.ps1` files in `scripts/` to make changes. Use the custom helper functions `Write-SetupLog` (for logging) and `Get-RemoteFile` (for downloading files) to ensure consistency.
 *   **Build**: Run `python build.py` to regenerate `autounattend.xml` with your changes. (Now uses `pathlib` and `logging` for robust builds).
+*   **Testing**: Use `pytest` to run tests for `personalize.py` and the python scripts.
 
 ## ❓ Troubleshooting
 
@@ -230,8 +231,10 @@ RACINE_USB/
 Ce dépôt utilise un système de build pour générer `autounattend.xml` à partir de scripts PowerShell modulaires. `build.py` injecte automatiquement les scripts, crée des blocs `<File>` s'ils sont manquants et supprime les blocs XML vides pour un fichier plus propre.
 
 *   **Emplacement des Scripts**: Tous les scripts PowerShell se trouvent dans le répertoire `scripts/`.
-*   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications.
+*   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications. Utilisez les fonctions intégrées `Write-SetupLog` (pour la journalisation) et `Get-RemoteFile` (pour le téléchargement) pour la cohérence.
 *   **Construire**: Exécutez `python build.py` pour régénérer `autounattend.xml` avec vos changements. (Utilise désormais `pathlib` et `logging` pour des builds robustes).
+*   **Tests**: Exécutez `pytest` pour tester `personalize.py` et l'environnement Python.
+
 
 ## ❓ Dépannage
 

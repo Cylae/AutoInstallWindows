@@ -2,7 +2,7 @@
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\Lib\Helper.ps1"
 
-Write-Log "Configuring Default User..."
+Write-SetupLog "Configuring Default User..."
 
 # Load Default User Hive
 $defaultUserHive = "HKU\DefaultUser"
@@ -10,21 +10,21 @@ $weLoadedIt = $false
 
 # Robustly load hive: Check if already loaded first
 if (-not (Test-Path "Registry::$defaultUserHive")) {
-    Write-Log "Loading Default User hive..."
+    Write-SetupLog "Loading Default User hive..."
     try {
         $result = reg.exe load $defaultUserHive "C:\Users\Default\NTUSER.DAT" 2>&1
         if ($LASTEXITCODE -eq 0) {
             $weLoadedIt = $true
         } else {
-            Write-Log "Failed to load Default User hive: $result"
+            Write-SetupLog "Failed to load Default User hive: $result"
             return
         }
     } catch {
-        Write-Log "Exception loading Default User hive: $_"
+        Write-SetupLog "Exception loading Default User hive: $_"
         return
     }
 } else {
-    Write-Log "Default User hive already loaded."
+    Write-SetupLog "Default User hive already loaded."
 }
 
 try {
@@ -93,12 +93,12 @@ try {
     reg.exe add "$defaultUserHive\Software\Microsoft\Windows\CurrentVersion\RunOnce" /v "UnattendedSetup" /t REG_SZ /d $runOnceCmd /f
 }
 catch {
-    Write-Log "Error applying Default User tweaks: $_"
+    Write-SetupLog "Error applying Default User tweaks: $_"
 }
 finally {
     # Only unload if we loaded it to avoid disrupting other processes
     if ($weLoadedIt) {
-        Write-Log "Unloading Default User hive..."
+        Write-SetupLog "Unloading Default User hive..."
         [GC]::Collect() # Force GC to release handles
 
         $maxRetries = 5
@@ -110,24 +110,24 @@ finally {
                 $result = reg.exe unload $defaultUserHive 2>&1
                 if ($LASTEXITCODE -eq 0) {
                     $unloaded = $true
-                    Write-Log "Default User hive unloaded successfully."
+                    Write-SetupLog "Default User hive unloaded successfully."
                 } else {
-                    Write-Log "Failed to unload Default User hive (Attempt $($retry+1)): $result"
+                    Write-SetupLog "Failed to unload Default User hive (Attempt $($retry+1)): $result"
                     Start-Sleep -Seconds 2
                     [GC]::Collect()
                     $retry++
                 }
             } catch {
-                Write-Log "Exception unloading Default User hive (Attempt $($retry+1)): $_"
+                Write-SetupLog "Exception unloading Default User hive (Attempt $($retry+1)): $_"
                 Start-Sleep -Seconds 2
                 $retry++
             }
         }
 
         if (-not $unloaded) {
-            Write-Log "CRITICAL: Could not unload Default User hive after $maxRetries attempts."
+            Write-SetupLog "CRITICAL: Could not unload Default User hive after $maxRetries attempts."
         }
     }
 }
 
-Write-Log "Default User Configuration Completed."
+Write-SetupLog "Default User Configuration Completed."
