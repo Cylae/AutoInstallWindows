@@ -58,13 +58,13 @@ function Download-File {
 
     # Wait for network
     while (-not $connected -and $retry -lt $maxRetries) {
-        $testHosts = @("google.com", "microsoft.com", "cloudflare.com")
-        foreach ($hostName in $testHosts) {
+        $testHosts = @("https://google.com", "https://microsoft.com", "https://cloudflare.com")
+        foreach ($url in $testHosts) {
             try {
-                $null = [System.Net.Dns]::GetHostEntry($hostName)
+                $null = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
                 $connected = $true
                 break
-            } catch {}
+            } catch { $_ | Out-Null }
         }
 
         if (-not $connected) {
