@@ -84,6 +84,12 @@ This repository uses a build system to generate `autounattend.xml` from modular 
 *   **Scripts Location**: All PowerShell scripts are located in the `scripts/` directory.
 *   **Modify**: Edit the `.ps1` files in `scripts/` to make changes.
 *   **Build**: Run `python build.py` to regenerate `autounattend.xml` with your changes. (Now uses `pathlib` and `logging` for robust builds).
+*   **Linting and Testing**: We use several tools to ensure code quality:
+    *   `pytest`: Run `pytest` to execute unit tests.
+    *   `flake8`: Run `flake8 <file.py>` to lint Python files (enforcing a 79-character maximum line length).
+    *   `autopep8`: Run `autopep8 --in-place --aggressive --aggressive <file.py>` to format Python files.
+    *   `autoflake`: Run `autoflake --in-place --remove-all-unused-imports <file.py>` to remove unused imports.
+    *   `Invoke-ScriptAnalyzer`: Use PSScriptAnalyzer to lint PowerShell scripts (e.g., `Invoke-ScriptAnalyzer -Path .\scripts\`).
 
 ## ❓ Troubleshooting
 
@@ -232,6 +238,12 @@ Ce dépôt utilise un système de build pour générer `autounattend.xml` à par
 *   **Emplacement des Scripts**: Tous les scripts PowerShell se trouvent dans le répertoire `scripts/`.
 *   **Modifier**: Éditez les fichiers `.ps1` dans `scripts/` pour apporter des modifications.
 *   **Construire**: Exécutez `python build.py` pour régénérer `autounattend.xml` avec vos changements. (Utilise désormais `pathlib` et `logging` pour des builds robustes).
+*   **Tests et Qualité du Code**: Nous utilisons plusieurs outils pour garantir la qualité du code :
+    *   `pytest`: Exécutez `pytest` pour lancer les tests unitaires.
+    *   `flake8`: Exécutez `flake8 <fichier.py>` pour l'analyse statique des fichiers Python (longueur maximale de 79 caractères par ligne).
+    *   `autopep8`: Exécutez `autopep8 --in-place --aggressive --aggressive <fichier.py>` pour formater le code Python.
+    *   `autoflake`: Exécutez `autoflake --in-place --remove-all-unused-imports <fichier.py>` pour supprimer les imports inutilisés.
+    *   `Invoke-ScriptAnalyzer`: Utilisez PSScriptAnalyzer pour analyser les scripts PowerShell (ex: `Invoke-ScriptAnalyzer -Path .\scripts\`).
 
 ## ❓ Dépannage
 
