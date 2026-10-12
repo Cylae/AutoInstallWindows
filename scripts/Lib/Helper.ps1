@@ -21,7 +21,7 @@ function Get-InstallerFile {
     return $null
 }
 
-function Write-Log {
+function Write-SetupLog {
     param(
         [string]$Message,
         [string]$Path = "$env:SystemRoot\Panther\Autounattend_Log.txt"
@@ -37,7 +37,7 @@ function Write-Log {
     Add-Content -Path $Path -Value $logEntry -ErrorAction SilentlyContinue
 }
 
-function Download-File {
+function Get-RemoteFile {
     param(
         [string]$Url,
         [string]$Destination,
@@ -49,7 +49,7 @@ function Download-File {
 
     if ([string]::IsNullOrWhiteSpace($Url)) { return $false }
 
-    Write-Log "Attempting to download $Name from $Url..."
+    Write-SetupLog "Attempting to download $Name from $Url..."
 
     # Increase timeout to ~5 minutes (150 * 2s) to handle slow network initialization
     $maxRetries = 150
@@ -64,7 +64,7 @@ function Download-File {
                 $null = [System.Net.Dns]::GetHostEntry($hostName)
                 $connected = $true
                 break
-            } catch {}
+            } catch { $_ | Out-Null }
         }
 
         if (-not $connected) {
@@ -74,7 +74,7 @@ function Download-File {
     }
 
     if (-not $connected) {
-        Write-Log "No network connectivity to download $Name."
+        Write-SetupLog "No network connectivity to download $Name."
         return $false
     }
 
@@ -86,25 +86,80 @@ function Download-File {
         try {
             # Enable TLS 1.2 and TLS 1.3 (if available)
             $protocols = [Net.SecurityProtocolType]::Tls12
-            try { $protocols = $protocols -bor [Net.SecurityProtocolType]::Tls13 } catch {}
+            try { $protocols = $protocols -bor [Net.SecurityProtocolType]::Tls13 } catch { $_ | Out-Null }
             [Net.ServicePointManager]::SecurityProtocol = $protocols
 
             Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -ErrorAction Stop
 
             # Verify file size > 1KB (1024 bytes) to ensure valid download
             if (Test-Path -Path $Destination -And (Get-Item $Destination).Length -gt 1024) {
-                Write-Log "Download of $Name successful."
+                Write-SetupLog "Download of $Name successful."
                 $downloaded = $true
             } else {
-                Write-Log "Download of $Name failed (file too small or empty)."
+                Write-SetupLog "Download of $Name failed (file too small or empty)."
                 throw "File too small"
             }
         } catch {
             $dRetry++
-            Write-Log "Failed to download $Name (Attempt $dRetry/$downloadRetries): $_"
+            Write-SetupLog "Failed to download $Name (Attempt $dRetry/$downloadRetries): $_"
             Start-Sleep -Seconds 5
         }
     }
 
     return $downloaded
+}
+
+function Set-RegistryKey {
+    [CmdletBinding(SupportsShouldProcess=$true)]
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$Path,
+
+        [Parameter(Mandatory=$true)]
+        [AllowEmptyString()]
+        [string]$Name,
+
+        [Parameter(Mandatory=$true)]
+        [AllowEmptyString()]
+        [string]$Value,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateSet("String", "ExpandString", "Binary", "DWord", "MultiString", "QWord", "Unknown")]
+        [string]$Type
+    )
+
+    # Handle custom PSDrives for offline hives
+    $rootPath = $Path
+    if ($Path -match "^HKU\\") {
+        $rootPath = $Path -replace "^HKU\\", "Registry::HKEY_USERS\"
+    } elseif ($Path -match "^HKEY_USERS\\") {
+        $rootPath = $Path -replace "^HKEY_USERS\\", "Registry::HKEY_USERS\"
+    } elseif ($Path -match "^HKLM\\") {
+        $rootPath = $Path -replace "^HKLM\\", "HKLM:\"
+    } elseif ($Path -match "^HKCU\\") {
+        $rootPath = $Path -replace "^HKCU\\", "HKCU:\"
+    }
+
+    # Split the path to recursively create parent keys if missing
+    # Important: Regex escape the split character '\'
+    $parts = $rootPath -split "\\"
+    $currentPath = ""
+    foreach ($part in $parts) {
+        if ($currentPath -eq "") {
+            $currentPath = $part
+        } else {
+            $currentPath = "$currentPath\$part"
+        }
+
+        if (-not (Test-Path -LiteralPath $currentPath)) {
+            New-Item -LiteralPath $currentPath -Force | Out-Null
+        }
+    }
+
+    # Set the registry value using LiteralPath to handle paths with brackets like CLSIDs
+    if ($Name -eq "") {
+        Set-Item -LiteralPath $rootPath -Value $Value -Force
+    } else {
+        Set-ItemProperty -LiteralPath $rootPath -Name $Name -Value $Value -Type $Type -Force
+    }
 }
